@@ -1,0 +1,38 @@
+package {producerPkg};
+
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.enterprise.inject.spi.InjectionPoint;
+
+import javax.inject.Named;
+import javax.inject.Qualifier;
+
+import ml.alternet.discover.DiscoveryService;
+import ml.alternet.misc.OmgException;
+
+@javax.annotation.Generated(value="ml.alternet.discover.gen.LookupKeyProducerGenerator")
+public class {producerClassName} {
+
+    @javax.enterprise.inject.Produces
+    @ml.alternet.discover.Injection.LookupKey(variant="{variant}")
+    public {className} create{shortClassName}(@Any Instance<{className}> instance, InjectionPoint ip) {
+        try {
+            Class<{className}> clazz = DiscoveryService.lookup("{lookupKey}");
+            List<Annotation> annotations = new ArrayList<Annotation>();
+            for (Annotation ann : clazz.getAnnotations()) {
+                if (ann.annotationType().isAnnotationPresent(Qualifier.class) ||
+                    ann.annotationType().isAnnotationPresent(Named.class)) {
+                    annotations.add(ann);
+                }
+            }
+            return instance.select(clazz, annotations.toArray(new Annotation[annotations.size()])).get();
+        } catch (ClassNotFoundException e) {
+            throw new OmgException(e);
+        }
+    }
+
+}
