@@ -1,0 +1,39 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>alternet-scanner</artifactId>
+    <packaging>jar</packaging>
+
+    <parent>
+        <groupId>ml.alternet</groupId>
+        <artifactId>alternet-libs</artifactId>
+        <version>1.0</version>
+        <relativePath>../alternet-libs</relativePath>
+    </parent>
+
+    <name>Alternet Scanner</name>
+    <description>Alternet Scanner supply means to scan character streams.</description>
+    <url>http://alternet.ml/alternet-libs/scanner/scanner.html</url>
+
+    <properties>
+        <shortName>scanner</shortName>
+        <site.deploy.dir>${project.build.directory}/../../alternet-libs/target/staging/${shortName}</site.deploy.dir>
+    </properties>
+
+    <distributionManagement>
+        <site>
+            <id>${project.artifactId}-site</id>
+            <url>http://alternet.ml/alternet-libs/${shortName}</url>
+        </site>
+    </distributionManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>ml.alternet</groupId>
+            <artifactId>alternet-tools</artifactId>
+            <version>1.0</version>
+        </dependency>
+    </dependencies>
+
+</project>

@@ -1,0 +1,16 @@
+  .navbar.affix {
+    top: 50px;
+  }
+
+h1[id]:before,
+h2[id]:before,
+h3[id]:before,
+h4[id]:before,
+h5[id]:before,
+h6[id]:before,
+a[name]:before {
+    display:block; 
+    content:""; 
+    height:9px; 
+    margin:-9px 0 0; 
+}
