@@ -7,12 +7,12 @@ import ml.alternet.security.impl.WeakPasswordManager;
 
 /**
  * A factory that can supply different flavors of PasswordManager.
- * 
+ *
  * {@link #getDefaultPasswordManager()} is mapped to the implementation defined
  * by the discovery service.
- * 
+ *
  * @see DiscoveryService
- * 
+ *
  * @author Philippe Poulard
  */
 public final class PasswordManagerFactory {
@@ -21,7 +21,7 @@ public final class PasswordManagerFactory {
      * Used when creating the concrete instance of a password manager is costly
      * (when a lookup is performed or when the constructor is greedy
      */
-    private static abstract class DelegatePasswordManager implements PasswordManager {
+    private abstract static class DelegatePasswordManager implements PasswordManager {
         PasswordManager pm;
 
         @Override
@@ -53,11 +53,11 @@ public final class PasswordManagerFactory {
      * Get the default password manager, according to the configuration, which
      * can be any of the supplied password manager (see other methods) or also a
      * custom configuration.
-     * 
+     *
      * If not overridden, the default is {@link StandardPasswordManager}.
-     * 
+     *
      * To override, use the {@link DiscoveryService}
-     * 
+     *
      * @return The password manager.
      */
     public static PasswordManager getDefaultPasswordManager() {
@@ -72,9 +72,9 @@ public final class PasswordManagerFactory {
      * in the system, such as a database password which has been read from a
      * configuration file aside the system, which therefore already appears
      * clear.
-     * 
+     *
      * @see WeakPasswordManager
-     * 
+     *
      * @return The weak password manager.
      */
     public static PasswordManager getWeakPasswordManager() {
@@ -85,9 +85,9 @@ public final class PasswordManagerFactory {
 
     /**
      * Return the standard password manager where passwords are Base64 encoded.
-     * 
+     *
      * @see StandardPasswordManager
-     * 
+     *
      * @return The standard password manager.
      */
     public static PasswordManager getStandardPasswordManager() {
@@ -109,9 +109,9 @@ public final class PasswordManagerFactory {
     /**
      * Return the strong password manager where passwords are encrypted,
      * therefore not easy to find in the memory.
-     * 
+     *
      * @see StrongPasswordManager
-     * 
+     *
      * @return The strong password manager.
      */
     public static PasswordManager getStrongPasswordManager() {

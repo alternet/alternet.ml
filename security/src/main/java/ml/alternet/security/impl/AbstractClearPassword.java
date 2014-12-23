@@ -5,7 +5,7 @@ import ml.alternet.util.BytesUtil;
 
 /**
  * Base implementation of a clear password.
- * 
+ *
  * @author Philippe Poulard
  */
 public abstract class AbstractClearPassword implements Password.Clear {
@@ -25,14 +25,14 @@ public abstract class AbstractClearPassword implements Password.Clear {
 
     /**
      * Indicates whether the underlying password has been invalidated.
-     * 
+     *
      * @return The state of the password.
      */
     protected abstract boolean isInvalid();
 
     /**
      * Deobfuscate the underlying password.
-     * 
+     *
      * @return A clear copy of the password.
      */
     protected abstract char[] getClearCopy();

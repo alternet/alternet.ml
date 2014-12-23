@@ -2,6 +2,11 @@ package ml.alternet.security;
 
 import ml.alternet.misc.ToDo;
 
+/**
+ * Todo
+ *
+ * @author Philippe Poulard
+ */
 @ToDo
 public interface SensitiveData {
 

@@ -21,10 +21,10 @@ import ml.alternet.util.BytesUtil;
 
 /**
  * A password manager that encrypt passwords.
- * 
+ *
  * <h3>Note</h3> Passwords are encrypted, but the key to decrypt such password
  * is still stored somewhere in the memory.
- * 
+ *
  * @author Philippe Poulard
  */
 public class StrongPasswordManager extends AbstractPasswordManager implements PasswordManager {
@@ -35,6 +35,9 @@ public class StrongPasswordManager extends AbstractPasswordManager implements Pa
     // used to crypt/decrypt
     private final SecretKey secret;
 
+    /**
+     * Create a strong password manager that encrypt passwords.
+     */
     public StrongPasswordManager() {
         try {
             KeyGenerator kg = KeyGenerator.getInstance("AES");
@@ -60,7 +63,9 @@ public class StrongPasswordManager extends AbstractPasswordManager implements Pa
             byte[] clearBytes = BytesUtil.cast(password);
             obfuscate = jcaCipher.doFinal(clearBytes);
             BytesUtil.unset(clearBytes); // clear intermediate data
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
+                InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e)
+        {
             throw WtfException.throwException(e);
         }
         return new AbstractPassword() {
@@ -76,7 +81,9 @@ public class StrongPasswordManager extends AbstractPasswordManager implements Pa
                             char[] clearChars = BytesUtil.cast(clearBytes);
                             BytesUtil.unset(clearBytes); // clear intermediate data
                             return clearChars;
-                        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
+                        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
+                                InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e)
+                        {
                             throw WtfException.throwException(e);
                         }
                     }
