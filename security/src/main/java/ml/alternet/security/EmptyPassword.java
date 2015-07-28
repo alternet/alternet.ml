@@ -35,7 +35,7 @@ public class EmptyPassword implements Password {
      * this method does nothing.
      */
     @Override
-    public void invalidate() { }
+    public void destroy() { }
 
     /**
      * Return <code>Empty</code>

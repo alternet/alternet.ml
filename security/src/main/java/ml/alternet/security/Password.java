@@ -1,5 +1,7 @@
 package ml.alternet.security;
 
+import javax.security.auth.Destroyable;
+
 /**
  * A safe password, stored obfuscate.
  *
@@ -45,12 +47,36 @@ package ml.alternet.security;
  *
  * @author Philippe Poulard
  */
-public interface Password {
+public interface Password extends Destroyable {
+
+    /**
+     * Obfuscate the given password in a new Password instance.
+     *
+     * This is a convenient shortcut method that lookup for the default
+     * password manager set in the platform (that can be override).
+     *
+     * @param password
+     *            The password to obfuscate ; may be null or empty ; that char
+     *            array is cleared when returning
+     * @return The password
+     *
+     * @see EmptyPassword#SINGLETON
+     * @see PasswordManagerFactory#getDefaultPasswordManager()
+     */
+    static Password newPassword(char[] password) {
+        return PasswordManagerFactory.getDefaultPasswordManager().newPassword(password);
+    }
+
+    @Override
+    default boolean isDestroyed() {
+        return state() == PasswordState.Invalid;
+    }
 
     /**
      * Invalidate this password.
      */
-    void invalidate();
+    @Override
+    void destroy();
 
     /**
      * Return the state of this password.
@@ -88,7 +114,7 @@ public interface Password {
      * The user has to ensure to keep the try-with-resource block as short as
      * possible, and to not make copies of the char array if possible.
      *
-     * Once closed, a ClearPassword can't be reused.
+     * Once closed, a Password.Clear can't be reused.
      *
      * @author Philippe Poulard
      */
