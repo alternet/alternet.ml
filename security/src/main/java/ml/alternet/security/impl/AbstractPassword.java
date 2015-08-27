@@ -24,7 +24,7 @@ public abstract class AbstractPassword implements Password {
     }
 
     @Override
-    public final void invalidate() {
+    public final void destroy() {
         this.state = PasswordState.Invalid;
         byte[] pwd = getPrivatePassword();
         BytesUtil.unset(pwd);

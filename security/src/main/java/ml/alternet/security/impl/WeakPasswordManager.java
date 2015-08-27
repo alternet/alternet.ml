@@ -27,7 +27,7 @@ public class WeakPasswordManager extends AbstractPasswordManager implements Pass
                     }
 
                     @Override
-                    protected boolean isInvalid() {
+                    protected boolean isDestroyed() {
                         return state() == PasswordState.Invalid;
                     }
                 };

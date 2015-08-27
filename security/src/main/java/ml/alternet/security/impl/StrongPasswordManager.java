@@ -30,7 +30,7 @@ import ml.alternet.util.BytesUtil;
 public class StrongPasswordManager extends AbstractPasswordManager implements PasswordManager {
 
     // for IV generation
-    private static SecureRandom random = new SecureRandom();
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     // used to crypt/decrypt
     private final SecretKey secret;
@@ -56,15 +56,15 @@ public class StrongPasswordManager extends AbstractPasswordManager implements Pa
     public Password newValidPassword(char[] password) {
         final byte[] iv = new byte[16];
         final byte[] obfuscate;
-        random.nextBytes(iv);
+        RANDOM.nextBytes(iv);
         try {
             Cipher jcaCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
             jcaCipher.init(Cipher.ENCRYPT_MODE, secret, new IvParameterSpec(iv));
             byte[] clearBytes = BytesUtil.cast(password);
             obfuscate = jcaCipher.doFinal(clearBytes);
             BytesUtil.unset(clearBytes); // clear intermediate data
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
-                InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e)
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException
+                | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e)
         {
             throw WtfException.throwException(e);
         }
@@ -81,15 +81,16 @@ public class StrongPasswordManager extends AbstractPasswordManager implements Pa
                             char[] clearChars = BytesUtil.cast(clearBytes);
                             BytesUtil.unset(clearBytes); // clear intermediate data
                             return clearChars;
-                        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
-                                InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e)
+                        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException
+                                | InvalidAlgorithmParameterException | IllegalBlockSizeException
+                                | BadPaddingException e)
                         {
                             throw WtfException.throwException(e);
                         }
                     }
 
                     @Override
-                    protected boolean isInvalid() {
+                    protected boolean isDestroyed() {
                         return state() == PasswordState.Invalid;
                     }
                 };

@@ -39,7 +39,7 @@ public class StandardPasswordManager extends AbstractPasswordManager implements 
                     }
 
                     @Override
-                    protected boolean isInvalid() {
+                    protected boolean isDestroyed() {
                         return state() == PasswordState.Invalid;
                     }
                 };

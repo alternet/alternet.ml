@@ -38,6 +38,16 @@ public class EmptyPassword implements Password {
     public void destroy() { }
 
     /**
+     * Return false.
+     *
+     * @return <code>false</code>
+     */
+    @Override
+    public boolean isDestroyed() {
+        return false;
+    }
+
+    /**
      * Return <code>Empty</code>
      *
      * @return The empty state

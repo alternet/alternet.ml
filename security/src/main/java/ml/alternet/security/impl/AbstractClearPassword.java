@@ -14,7 +14,7 @@ public abstract class AbstractClearPassword implements Password.Clear {
 
     @Override
     public final char[] get() {
-        if (isInvalid()) {
+        if (isDestroyed()) {
             throw new IllegalStateException("This password has been invalidated");
         }
         if (this.clearPassword == null) {
@@ -28,7 +28,7 @@ public abstract class AbstractClearPassword implements Password.Clear {
      *
      * @return The state of the password.
      */
-    protected abstract boolean isInvalid();
+    protected abstract boolean isDestroyed();
 
     /**
      * Deobfuscate the underlying password.
