@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.Properties;
 
 import ml.alternet.discover.DiscoveryService;
-import ml.alternet.security.auth.impl.ColonCryptFormat;
+import ml.alternet.security.auth.formats.ColonCryptFormat;
 import ml.alternet.util.Util;
 
 /**
