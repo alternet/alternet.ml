@@ -3,8 +3,9 @@ package ml.alternet.security.auth;
 import java.security.InvalidAlgorithmParameterException;
 import java.util.Properties;
 
+import ml.alternet.discover.DiscoveryService;
+import ml.alternet.misc.Thrower;
 import ml.alternet.security.Password;
-import ml.alternet.security.auth.impl.PBKDF2Hasher;
 
 /**
  * Computes/checks a password to/with a crypt.
@@ -21,20 +22,37 @@ import ml.alternet.security.auth.impl.PBKDF2Hasher;
  * @see ml.alternet.discover.DiscoveryService
  * @see CryptFormat#family()
  * @see HashUtil
+ * @see Credentials
  *
  * @author Philippe Poulard
  */
 public interface Hasher {
 
     /**
-     * Return the default hasher.
+     * The default variant of this class to lookup is "/ColonCryptFormat/PBKDF2".
      *
-     * @return The PBKDF2 hasher.
+     * @see ml.alternet.discover.DiscoveryService#lookupSingleton(String)
+     * @see #getDefault()
+     */
+    public static String DEFAULT_VARIANT = "/ColonCryptFormat/PBKDF2";
+
+    /**
+     * Return the default hasher. The lookup key is :
+     * "<code>ml.alternet.security.auth.Hasher/ColonCryptFormat/PBKDF2</code>".
      *
-     * @see PBKDF2Hasher
+     * <p>Note that Alternet Security supply an implementation of this hasher
+     * available in the separate module : <code>ml.alternet:alternet-security-auth-impl</code></p>
+     *
+     * @return The PBKDF2 hasher implementation.
+     *
+     * @see #DEFAULT_VARIANT
      */
     static Hasher getDefault() {
-        return new PBKDF2Hasher();
+        try {
+            return DiscoveryService.lookupSingleton(Hasher.class.getName() + DEFAULT_VARIANT);
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+            return Thrower.doThrow(e);
+        }
     }
 
     /**
@@ -63,6 +81,19 @@ public interface Hasher {
     Properties getConfiguration();
 
     /**
+     * Compute a crypt from credentials.
+     *
+     * <p>By default, the user is ignored.</p>
+     *
+     * @param credentials Credentials, that must contain at least the password.
+     *
+     * @return A crypt.
+     *
+     * @throws InvalidAlgorithmParameterException When the hash algorithm fails.
+     */
+    String encrypt(Credentials credentials) throws InvalidAlgorithmParameterException;
+
+    /**
      * Compute a crypt from a password.
      *
      * <p>By default, the user is ignored.</p>
@@ -75,7 +106,7 @@ public interface Hasher {
      * @throws InvalidAlgorithmParameterException When the hash algorithm fails.
      */
     default String encrypt(String user, char[] password) throws InvalidAlgorithmParameterException {
-        return encrypt(password);
+        return encrypt(Credentials.fromUserPassword(user, password));
     }
 
     /**
@@ -87,7 +118,9 @@ public interface Hasher {
      *
      * @throws InvalidAlgorithmParameterException When the hash algorithm fails.
      */
-    String encrypt(char[] password) throws InvalidAlgorithmParameterException;
+    default String encrypt(char[] password) throws InvalidAlgorithmParameterException {
+        return encrypt(Credentials.fromPassword(password));
+    }
 
     /**
      * Compute a crypt from a password.
@@ -103,7 +136,7 @@ public interface Hasher {
      * @throws InvalidAlgorithmParameterException When the hash algorithm fails.
      */
     default String encrypt(String user, Password password) throws InvalidAlgorithmParameterException {
-        return encrypt(password);
+        return encrypt(Credentials.fromUserPassword(user, password));
     }
 
     /**
@@ -115,34 +148,41 @@ public interface Hasher {
      *
      * @throws InvalidAlgorithmParameterException When the hash algorithm fails.
      */
-    String encrypt(Password password) throws InvalidAlgorithmParameterException;
+    default String encrypt(Password password) throws InvalidAlgorithmParameterException {
+        return encrypt(Credentials.fromPassword(password));
+    }
 
     /**
      * Check whether a password matches a crypt.
      *
-     * @param user The user name (sometimes required by some hasher), or <tt>null</tt>
-     * @param password The password to check.
+     * @param credentials Credentials, that must contain at least the password.
+     *
      * @param crypt The crypt that has been previously computed by
      *          the same hasher.
+     *
      * @return <code>true</code> if the password matches the crypt,
      *          <code>false</code> otherwise.
      *
      * @throws InvalidAlgorithmParameterException When the hash algorithm fails.
      */
-    boolean check(String user, char[] password, String crypt) throws InvalidAlgorithmParameterException;
+    boolean check(Credentials credentials, String crypt) throws InvalidAlgorithmParameterException;
 
     /**
-     * Check whether a password matches a crypt.
+     * Compare bytes array in length constant time in order to prevent "timing attack".
      *
-     * @param user The user name (sometimes required by some hasher), or <tt>null</tt>
-     * @param password The password to check.
-     * @param crypt The crypt that has been previously computed by
-     *          the same hasher.
-     * @return <code>true</code> if the password matches the crypt,
-     *          <code>false</code> otherwise.
+     * @param a A non-null byte array.
+     * @param b A non-null byte array.
      *
-     * @throws InvalidAlgorithmParameterException When the hash algorithm fails.
+     * @return <code>true</true> if all the bytes are equals, <code>false</true> otherwise.
      */
-    boolean check(String user, Password password, String crypt) throws InvalidAlgorithmParameterException;
+    static boolean compare(byte[] a, byte[] b) {
+        // do not use Arrays.equals(hash, pwdHash);
+        int res = a.length ^ b.length;
+        for (int i = 0; i < a.length && i < b.length; i++) {
+            // do not use == , may be compiled / interpreted as a branch
+            res |= a[i] ^ b[i];
+        }
+        return res == 0;
+    }
 
 }

@@ -6,11 +6,12 @@ import java.util.Optional;
 import java.util.Properties;
 
 import ml.alternet.discover.DiscoveryService;
-import ml.alternet.security.Password;
+import ml.alternet.security.auth.impl.ColonCryptFormat;
 import ml.alternet.util.Util;
 
 /**
- * Allow to find a specific hasher, or to check a password regarding a crypt.
+ * Allow to find a specific hasher, or to check credentials (a password)
+ * regarding a crypt.
  *
  * @author Philippe Poulard
  */
@@ -37,9 +38,12 @@ public class HashUtil {
      * @see CryptFormat#family()
      * @see DiscoveryService
      */
-    public static Optional<Hasher> lookup(String cryptFormatFamilyName, String scheme, Properties properties) throws InvalidAlgorithmParameterException {
+    public static Optional<Hasher> lookup(String cryptFormatFamilyName, String scheme, Properties properties)
+            throws InvalidAlgorithmParameterException
+    {
         try {
-            Hasher hasher = DiscoveryService.newInstance(Hasher.class.getName() + '/' + cryptFormatFamilyName + '/' + scheme);
+            Hasher hasher = DiscoveryService.newInstance(Hasher.class.getName()
+                    + '/' + cryptFormatFamilyName + '/' + scheme);
             if (properties != null) {
                 hasher.configure(properties);
             }
@@ -71,7 +75,9 @@ public class HashUtil {
      * @see CryptFormat#family()
      * @see DiscoveryService
      */
-    public static Optional<Hasher> lookup(CryptFormat cryptFormat, String scheme, Properties properties) throws InvalidAlgorithmParameterException {
+    public static Optional<Hasher> lookup(CryptFormat cryptFormat, String scheme, Properties properties)
+            throws InvalidAlgorithmParameterException
+    {
         return lookup(cryptFormat.family(), scheme, properties);
     }
 
@@ -87,9 +93,12 @@ public class HashUtil {
      *
      * @return The hasher.
      *
-     * @throws InvalidAlgorithmParameterException
+     * @throws InvalidAlgorithmParameterException When a property is
+     *      not supported by this hasher.
      */
-    public static Optional<Hasher> lookup(String crypt, Properties properties, CryptFormat... cryptFormats) throws InvalidAlgorithmParameterException {
+    public static Optional<Hasher> lookup(String crypt, Properties properties, CryptFormat... cryptFormats)
+            throws InvalidAlgorithmParameterException
+    {
         Hasher hasher = Arrays.stream(cryptFormats)
                 .map(c -> c.resolve(crypt))
                 .filter(Optional::isPresent)
@@ -106,8 +115,7 @@ public class HashUtil {
      * Check a password with a crypt ; the hasher is looked up among a list
      * of crypt formats regarding the format of the crypt.
      *
-     * @param user The user name (sometimes required by some hasher), or <tt>null</tt>
-     * @param password The password to check.
+     * @param credentials Credentials, that must contain at least the password.
      * @param crypt The crypt, that has the format of one of the crypt formats
      * @param cryptFormats The candidate crypt formats
      * @return <code>true</code> if the password matches the crypt,
@@ -116,33 +124,18 @@ public class HashUtil {
      * @throws InvalidAlgorithmParameterException When the hash algorithm fails or when
      *      the crypt doesn't have the expected format.
      */
-    public static boolean check(String user, char[] password, String crypt, CryptFormat... cryptFormats) throws InvalidAlgorithmParameterException {
+    public static boolean check(Credentials credentials, String crypt, CryptFormat... cryptFormats)
+            throws InvalidAlgorithmParameterException
+    {
         try {
             Hasher hasher = lookup(crypt, null, cryptFormats)
                 .orElseThrow(() -> new InvalidAlgorithmParameterException("Hasher not found"));
-            return hasher.check(user, password, crypt);
+            return hasher.check(credentials, crypt);
         } catch (InvalidAlgorithmParameterException e) {
             throw e;
         } catch (Exception e) {
             throw new InvalidAlgorithmParameterException(e);
         }
-    }
-
-    /**
-     * Check a password with a crypt ; the hasher is looked up among a list
-     * of crypt formats regarding the format of the crypt.
-     *
-     * @param password The password to check.
-     * @param crypt The crypt, that has the format of one of the crypt formats
-     * @param cryptFormats The candidate crypt formats
-     * @return <code>true</code> if the password matches the crypt,
-     *          <code>false</code> otherwise.
-     *
-     * @throws InvalidAlgorithmParameterException When the hash algorithm fails or when
-     *      the crypt doesn't have the expected format.
-     */
-    public static boolean check(char[] password, String crypt, CryptFormat... cryptFormats) throws InvalidAlgorithmParameterException {
-        return check(null, password, crypt, cryptFormats);
     }
 
     /**
@@ -153,8 +146,7 @@ public class HashUtil {
      *
      * @see {@link #lookup(String, Properties, CryptFormat...)
      *
-     * @param user The user name (sometimes required by some hasher), or <tt>null</tt>
-     * @param password The password to check.
+     * @param credentials Credentials, that must contain at least the password.
      * @param crypt The crypt, that has the format "<code>[scheme]:[schemeSpecificPart]</code>"
      * @return <code>true</code> if the password matches the crypt,
      *          <code>false</code> otherwise.
@@ -162,13 +154,13 @@ public class HashUtil {
      * @throws InvalidAlgorithmParameterException When the hash algorithm fails or when
      *      the crypt doesn't have the expected format.
      *
-     * @see CryptFormat#COLON_CRYPT_FORMAT
+     * @see #DEFAULT
      */
-    public static boolean check(String user, char[] password, String crypt) throws InvalidAlgorithmParameterException {
+    public static boolean check(Credentials credentials, String crypt) throws InvalidAlgorithmParameterException {
         try {
-            Hasher hasher = lookup(crypt, null, CryptFormat.COLON_CRYPT_FORMAT)
+            Hasher hasher = lookup(crypt, null, DEFAULT)
                 .orElseThrow(() -> new InvalidAlgorithmParameterException("Hasher not found"));
-            return hasher.check(user, password, crypt);
+            return hasher.check(credentials, crypt);
         } catch (InvalidAlgorithmParameterException e) {
             throw e;
         } catch (Exception e) {
@@ -177,62 +169,10 @@ public class HashUtil {
     }
 
     /**
-     * Check a password with a crypt.
+     * The default crypt format.
      *
-     * The hasher corresponding to the scheme of the crypt
-     * is first looked up.
-     *
-     * @see {@link #lookup(String, Properties, CryptFormat...)
-     *
-     * @param password The password to check.
-     * @param crypt The crypt, that has the format "<code>[scheme]:[schemeSpecificPart]</code>"
-     * @return <code>true</code> if the password matches the crypt,
-     *          <code>false</code> otherwise.
-     *
-     * @throws InvalidAlgorithmParameterException When the hash algorithm fails or when
-     *      the crypt doesn't have the expected format.
-     *
-     * @see CryptFormat.ALTERNET_CRYPT_FORMAT
+     * @see ColonCryptFormat#SINGLETON
      */
-    public static boolean check(char[] password, String crypt) throws InvalidAlgorithmParameterException {
-        return check(null, password, crypt);
-    }
-
-    /**
-     * Check a password with a crypt.
-     *
-     * @param user The user name (sometimes required by some hasher), or <tt>null</tt>
-     * @param password The password to check.
-     * @param crypt The crypt, that has the format "<code>[scheme]:[schemeSpecificPart]</code>"
-     * @return <code>true</code> if the password match the crypt,
-     *          <code>false</code> otherwise.
-     *
-     * @throws InvalidAlgorithmParameterException When the hash algorithm fails or when
-     *      the crypt doesn't have the expected format.
-     *
-     * @see CryptFormat#COLON_CRYPT_FORMAT
-     */
-    public static boolean check(String user, Password password, String crypt) throws InvalidAlgorithmParameterException {
-        try (Password.Clear pwd = password.getClearCopy()) {
-            return check(pwd.get(), crypt);
-        }
-    }
-
-    /**
-     * Check a password with a crypt.
-     *
-     * @param password The password to check.
-     * @param crypt The crypt, that has the format "<code>[scheme]:[schemeSpecificPart]</code>"
-     * @return <code>true</code> if the password match the crypt,
-     *          <code>false</code> otherwise.
-     *
-     * @throws InvalidAlgorithmParameterException When the hash algorithm fails or when
-     *      the crypt doesn't have the expected format.
-     *
-     * @see CryptFormat.ALTERNET_CRYPT_FORMAT
-     */
-    public static boolean check(Password password, String crypt) throws InvalidAlgorithmParameterException {
-        return check(null, password, crypt);
-    }
+    public static CryptFormat DEFAULT = ColonCryptFormat.SINGLETON;
 
 }
