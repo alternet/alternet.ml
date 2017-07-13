@@ -32,7 +32,7 @@ public class EnumUtil {
      *
      *    MyEnum() {
      *        // replace the "_" in the name by a " "
-     *       EnumUtil.replace(MyEnum.class, this, s -> s.replace('_', ' '));
+     *       EnumUtil.replace(MyEnum.class, this, s -&gt; s.replace('_', ' '));
      *    }
      *}</pre>
      * Usage :
@@ -59,6 +59,34 @@ public class EnumUtil {
         } catch (Exception e) {
             Logger.getLogger(enumClass.getName())
             .severe("Unable to access to \"name\" field of class " + enumClass.getName());
+            Thrower.doThrow(e);
+        }
+    }
+
+    /**
+     * Replace the ordinal of an enum instance by another ordinal.
+     *
+     * @param enumClass The enum class to patch
+     * @param enumValue The instance to change
+     * @param transformer Apply a transformation on the ordinal of the instance
+     */
+    public static void reorder(Class<? extends Enum<?>> enumClass, Object enumValue, UnaryOperator<Integer> transformer) {
+        try {
+            Field fieldName = enumClass.getSuperclass().getDeclaredField("ordinal");
+            AccessController.doPrivileged((PrivilegedAction<Void>) (() -> {
+                fieldName.setAccessible(true);
+                return null;
+            }));
+            int value = (int) fieldName.get(enumValue);
+            value = transformer.apply(value);
+            fieldName.set(enumValue, value);
+            AccessController.doPrivileged((PrivilegedAction<Void>) (() -> {
+                fieldName.setAccessible(false);
+                return null;
+            }));
+        } catch (Exception e) {
+            Logger.getLogger(enumClass.getName())
+            .severe("Unable to access to \"ordinal\" field of class " + enumClass.getName());
             Thrower.doThrow(e);
         }
     }
