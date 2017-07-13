@@ -1,4 +1,4 @@
-package ml.alternet.util;
+package ml.alternet.io;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -16,10 +16,11 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 
-import ml.alternet.misc.InputStreamAggregator;
 import ml.alternet.misc.OmgException;
+import ml.alternet.util.Util;
 
 /**
  * A set of constants and static methods related to I/O.
@@ -29,11 +30,8 @@ import ml.alternet.misc.OmgException;
 @Util
 public class IOUtil {
 
-    /** EOF = (char) -1 */
-    public final static char EOF = (char) -1;
-
-    /** UTF-8 charset */
-    public final static Charset UTF8 = Charset.forName("UTF-8");
+    /** EOF = -1 */
+    public final static int EOF = -1;
 
     /** The void input stream. */
     public static final InputStream VOID_INPUT_STREAM = new InputStream() {
@@ -109,7 +107,7 @@ public class IOUtil {
      * @return A character stream of bytes decoded in UTF-8.
      */
     public static Reader asReader(InputStream input) {
-        return asReader(input, UTF8);
+        return asReader(input, StandardCharsets.UTF_8);
     }
 
     /**
@@ -138,7 +136,7 @@ public class IOUtil {
      *             When an I/O error occurs.
      */
     public static InputStream asInputStream(Reader input) throws IOException {
-        return asInputStream(input, UTF8);
+        return asInputStream(input, StandardCharsets.UTF_8);
     }
 
     /**
@@ -215,7 +213,7 @@ public class IOUtil {
      * @return A byte stream of characters encoded in UTF-8.
      */
     public static OutputStream asOutputStream(Writer output) {
-        return asOutputStream(output, UTF8);
+        return asOutputStream(output, StandardCharsets.UTF_8);
     }
 
     /**
@@ -304,7 +302,7 @@ public class IOUtil {
      * @return A character stream of bytes encoded in UTF-8.
      */
     public static Writer asWriter(OutputStream output) {
-        return asWriter(output, UTF8);
+        return asWriter(output, StandardCharsets.UTF_8);
     }
 
     /**

@@ -1,4 +1,4 @@
-package ml.alternet.misc;
+package ml.alternet.io;
 
 import java.io.IOException;
 import java.io.Reader;
