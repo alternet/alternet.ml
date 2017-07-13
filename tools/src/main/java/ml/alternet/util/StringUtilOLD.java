@@ -2,11 +2,12 @@ package ml.alternet.util;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.Normalizer;
 import java.text.Normalizer.Form;
+import java.util.Iterator;
 
 import ml.alternet.misc.WtfException;
 
@@ -18,9 +19,10 @@ import ml.alternet.misc.WtfException;
 @Util
 public final class StringUtil {
 
-    private StringUtil() { }
+    private StringUtil() {
+    }
 
-    private static final char[] HEXES = "0123456789ABCDEF".toCharArray();
+    private static final String HEXES = "0123456789ABCDEF";
 
     /**
      * Convert an array of bytes to an hexa string.
@@ -31,7 +33,14 @@ public final class StringUtil {
      *         represented with 2 hexa chars.
      */
     public static String getHex(byte[] raw) {
-        return getHex(raw, 0, raw.length);
+        if (raw == null) {
+            return null;
+        }
+        final StringBuilder hex = new StringBuilder(2 * raw.length);
+        for (final byte b : raw) {
+            hex.append(HEXES.charAt(b & 0xF0) >> 4).append(HEXES.charAt(b & 0x0F));
+        }
+        return hex.toString();
     }
 
     /**
@@ -50,14 +59,13 @@ public final class StringUtil {
         if (raw == null) {
             return null;
         }
-        char[] hexChars = new char[length * 2];
-        int v = -1;
-        for (int i = 0; i < length; i++) {
-            v = raw[i + start] & 0xFF;
-            hexChars[i * 2] = HEXES[v >>> 4];
-            hexChars[i * 2 + 1] = HEXES[v & 0x0F];
+        final StringBuilder hex = new StringBuilder(2 * length);
+        byte b = 0;
+        for (int i = start; i < start + length; i++) {
+            b = raw[i];
+            hex.append(HEXES.charAt(b & 0xF0) >> 4).append(HEXES.charAt(b & 0x0F));
         }
-        return new String(hexChars);
+        return hex.toString();
     }
 
     /**
@@ -69,43 +77,6 @@ public final class StringUtil {
      */
     public static String getHash(String string) {
         return getHash(string.toCharArray());
-    }
-
-    /**
-     * Convert an hexa string to bytes.
-     *
-     * @param string The hexa string to convert
-     * @return The bytes
-     */
-    public static byte[] hexToBin(char[] string) {
-        final int len = string.length;
-        // "111" is not a valid hex encoding.
-        if (len % 2 != 0) {
-            throw new IllegalArgumentException("hexBinary needs to be even-length: " + new String(string));
-        }
-        byte[] out = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            int h = hexToBin(string[i]);
-            int l = hexToBin(string[i + 1]);
-            if (h == -1 || l == -1) {
-                throw new IllegalArgumentException("contains illegal character for hexBinary: " + new String(string));
-            }
-            out[i / 2] = (byte) (h * 16 + l);
-        }
-        return out;
-    }
-
-    private static int hexToBin(char ch) {
-        if ('0' <= ch && ch <= '9') {
-            return ch - '0';
-        }
-        if ('A' <= ch && ch <= 'F') {
-            return ch - 'A' + 10;
-        }
-        if ('a' <= ch && ch <= 'f') {
-            return ch - 'a' + 10;
-        }
-        return -1;
     }
 
     /**
@@ -125,28 +96,28 @@ public final class StringUtil {
     }
 
     /**
-     * Convert a char array to an array of bytes with an UTF-8 encoding.
-     *
+     * Convert a char array to an array of bytes
+     * 
      * @param string
      *            The char array.
      * @return The byte array.
      */
     public static byte[] convert(char[] string) {
-        ByteBuffer bb = StandardCharsets.UTF_8.encode(CharBuffer.wrap(string));
+        ByteBuffer bb = Charset.forName("UTF-8").encode(CharBuffer.wrap(string));
         byte[] b = new byte[bb.remaining()];
         bb.get(b);
         return b;
     }
 
     /**
-     * Convert a byte array to a char array with an UTF-8 decoding.
-     *
+     * Convert a byte array to a char array
+     * 
      * @param string
      *            The byte array.
      * @return The char array.
      */
     public static char[] convert(byte[] string) {
-        CharBuffer cb = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(string));
+        CharBuffer cb = Charset.forName("UTF-8").decode(ByteBuffer.wrap(string));
         char[] c = new char[cb.remaining()];
         cb.get(c);
         return c;
@@ -214,6 +185,44 @@ public final class StringUtil {
         String normalized = Normalizer.normalize(input, Form.NFKD);
         String cleared = normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
         return cleared;
+    }
+
+    /**
+     * Iterate on the unicode code points of a string (a code point is made of 1
+     * or 2 chars).
+     *
+     * @param string
+     *            The actual non-null string.
+     * @return An iterator on its unicode code points.
+     */
+    public static Iterable<Integer> unicodeCodePoints(final String string) {
+        return new Iterable<Integer>() {
+            String text = string;
+
+            @Override
+            public Iterator<Integer> iterator() {
+                return new Iterator<Integer>() {
+                    int nextIndex = 0;
+
+                    @Override
+                    public boolean hasNext() {
+                        return nextIndex < text.length();
+                    }
+
+                    @Override
+                    public Integer next() {
+                        int result = text.codePointAt(nextIndex);
+                        nextIndex += Character.charCount(result);
+                        return result;
+                    }
+
+                    @Override
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+                };
+            }
+        };
     }
 
 }
