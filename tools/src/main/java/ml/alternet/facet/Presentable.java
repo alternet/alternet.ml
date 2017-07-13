@@ -17,8 +17,8 @@ public interface Presentable {
      *
      * @return A new string buffer.
      */
-    default StringBuffer toPrettyString() {
-        return toPrettyString(new StringBuffer());
+    default StringBuilder toPrettyString() {
+        return toPrettyString(new StringBuilder());
     }
 
     /**
@@ -29,6 +29,6 @@ public interface Presentable {
      *
      * @return The buffer given.
      */
-    StringBuffer toPrettyString(StringBuffer buf);
+    StringBuilder toPrettyString(StringBuilder buf);
 
 }
