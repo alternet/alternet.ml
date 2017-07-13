@@ -13,12 +13,12 @@ public final class BytesUtil {
     /**
      * Byte-to-byte copy of an array of chars to an array of bytes without
      * conversion (a char contains 2 bytes).
-     * 
+     *
      * This method converts non-ASCII chars.
-     * 
+     *
      * @param chars
      *            The chars to cast.
-     * 
+     *
      * @return The same input, but as bytes.
      */
     public static byte[] cast(char[] chars) {
@@ -34,12 +34,12 @@ public final class BytesUtil {
     /**
      * Byte-to-byte copy of an array of bytes to an array of chars without
      * conversion. (a char contains 2 bytes).
-     * 
+     *
      * This method converts from non-ASCII chars.
-     * 
+     *
      * @param bytes
      *            The bytes to cast.
-     * 
+     *
      * @return The same input, but as chars.
      */
     public static char[] cast(byte[] bytes) {
@@ -53,8 +53,31 @@ public final class BytesUtil {
     }
 
     /**
+     * Byte-to-byte copy of an array of bytes to an array of chars without
+     * conversion. (a char contains 2 bytes).
+     *
+     * This method converts from non-ASCII chars.
+     *
+     * @param bytes
+     *            The bytes to cast.
+     * @param offset The offset from which to start the cast.
+     * @param len The number of bytes to cast.
+     *
+     * @return The same input, but as chars.
+     */
+    public static char[] cast(byte[] bytes, int offset, int len) {
+        char[] chars = new char[len >> 1];
+        for (int i = 0; i < chars.length; i++) {
+            int pos = i << 1;
+            char c = (char) (((bytes[offset + pos] & 0x00FF) << 8) + (bytes[offset + pos + 1] & 0x00FF));
+            chars[i] = c;
+        }
+        return chars;
+    }
+
+    /**
      * Unset an array of bytes.
-     * 
+     *
      * @param bytes
      *            The actual array of bytes.
      */
@@ -66,7 +89,7 @@ public final class BytesUtil {
 
     /**
      * Unset an array of chars.
-     * 
+     *
      * @param chars
      *            The actual array of chars.
      */
