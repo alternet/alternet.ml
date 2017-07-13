@@ -1,5 +1,9 @@
 package ml.alternet.facet;
 
+import java.util.Optional;
+
+import ml.alternet.misc.Position;
+
 /**
  * A trackable object can supply informations about its position (within an
  * input stream).
@@ -9,17 +13,12 @@ package ml.alternet.facet;
 public interface Trackable {
 
     /**
-     * Return the current column number.
+     * When available, return the given position.
      *
-     * @return The current column number
-     */
-    int getColumnNumber();
-
-    /**
-     * Return the current line number.
+     * @return The current position.
      *
-     * @return The current line number.
+     * @see Position#$(long, long, long)
      */
-    int getLineNumber();
+    Optional<Position> getPosition();
 
 }
