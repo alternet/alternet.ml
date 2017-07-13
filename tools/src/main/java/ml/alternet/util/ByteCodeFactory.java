@@ -173,11 +173,8 @@ public abstract class ByteCodeFactory {
      * compile time.
      *
      * @param className The name of the class to generate.
-     * @param parentClassName The name of the parent class ;
-     *      can be "<code>java/lang/Object</code>"
      * @param interfaceName The name of the interface, must exist as a Class.
      * @param interfaceType The interface type as in bytecode signature.
-     * @param singletonName The name of the singleton is "SINGLETON".
      *
      * @return The byte code of the class.
      *
