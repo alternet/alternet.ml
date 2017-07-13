@@ -23,29 +23,30 @@ import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 
 import ml.alternet.discover.Injection;
+import ml.alternet.discover.Injection.LookupKey;
 import ml.alternet.discover.Injection.Producer;
 import ml.alternet.discover.Injection.Producers;
 import ml.alternet.util.AnnotationProcessorUtil;
 
 /**
  * Generate a producer that inject classes.
- * 
- * @see Injection.LookupKey
+ *
+ * @see LookupKey
  * @see javax.inject.Inject
- * 
+ *
  * @author Philippe Poulard
  */
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class LookupKeyProducerGenerator extends AbstractProcessor {
 
-    static Set<String> TYPES = new HashSet<String>();
+    static Set<String> TYPES = new HashSet<>();
 
     static {
         TYPES.add(Producer.class.getCanonicalName());
         TYPES.add(Producers.class.getCanonicalName());
     }
 
-    Set<Mapping> mappings = new HashSet<Mapping>();
+    Set<Mapping> mappings = new HashSet<>();
 
     static class Mapping {
 
