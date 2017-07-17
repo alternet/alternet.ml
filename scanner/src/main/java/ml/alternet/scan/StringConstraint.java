@@ -10,31 +10,12 @@ import java.io.IOException;
  * <p>An implementation is also responsible of the way the
  * characters have to be appended to the target string, for
  * example when some characters can be escaped in the source.</p>
- * 
+ *
  * <p>Notice that stop characters MUST NOT be consumed.</p>
  *
  * @author Philippe Poulard
  */
 public interface StringConstraint extends Constraint {
-
-    /**
-     * Read only Java whitespaces.
-     *
-     * @see Character#isWhitespace(char)
-     */
-    StringConstraint WS_CONSTRAINT = new StringConstraint() {
-        public int append(int sourceIndex, int targetLength, Scanner scanner,
-                StringBuilder buf) throws IOException {
-            char c = scanner.lookAhead();
-            buf.append( c );
-            return 1;
-        }
-        public boolean stopCondition(int sourceIndex, int targetLength,
-                Scanner scanner) throws IOException {
-            // stop as soon as the next char is not a whitespace
-            return ! Character.isWhitespace( scanner.lookAhead() );
-        }
-    };
 
     /**
      * A string constraint that reads the characters until
@@ -43,25 +24,33 @@ public interface StringConstraint extends Constraint {
      *
      * @author Philippe Poulard
      */
-    class Read_UntilString implements StringConstraint {
+    class ReadUntilString implements StringConstraint {
+
         String stopString;
+
         /**
          * Read until a given stop string; the stop
          * string is NOT consumed and NOT added to the buffer.
          *
          * @param stopString The stop string
          */
-        public Read_UntilString(String stopString) {
+        public ReadUntilString(String stopString) {
             this.stopString = stopString;
         }
+
+        @Override
         public int append(int sourceIndex, int targetLength, Scanner scanner,
-                StringBuilder buf) throws IOException {
-            char c = scanner.lookAhead();
-            buf.append( c );
+                StringBuilder buf) throws IOException
+        {
+            int c = scanner.lookAhead();
+            buf.append( Character.toChars(c) );
             return 1;
         }
+
+        @Override
         public boolean stopCondition(int sourceIndex, int targetLength,
-                Scanner scanner) throws IOException {
+                Scanner scanner) throws IOException
+        {
             // stop as soon as the new next string is the stop string
             return scanner.hasNextString(this.stopString, false);
         }
@@ -75,7 +64,9 @@ public interface StringConstraint extends Constraint {
      * @author Philippe Poulard
      */
     class ReadUntilChar implements StringConstraint {
+
         String stopChars;
+
         /**
          * Read until a given stop char; the stop
          * char is NOT consumed and NOT added to the buffer.
@@ -85,17 +76,56 @@ public interface StringConstraint extends Constraint {
         public ReadUntilChar(String stopChars) {
             this.stopChars = stopChars;
         }
+
+        @Override
         public int append(int sourceIndex, int targetLength, Scanner scanner,
-                StringBuilder buf) throws IOException {
-            char c = scanner.lookAhead();
-            buf.append( c );
+                StringBuilder buf) throws IOException
+        {
+            int c = scanner.lookAhead();
+            buf.append( Character.toChars(c) );
             return 1;
         }
+
+        @Override
         public boolean stopCondition(int sourceIndex, int targetLength,
-                Scanner scanner) throws IOException {
+                Scanner scanner) throws IOException
+        {
             // stop as soon as the new next string is any of the stop chars
             return scanner.hasNextChar(this.stopChars, false);
         }
+    }
+
+    /**
+     * A string constraint that reads the characters until
+     * the given length.
+     *
+     * @author Philippe Poulard
+     */
+    class ReadLength implements StringConstraint {
+
+        int length;
+
+        /**
+         * Read until a given length.
+         *
+         * @param length The number of characters to read.
+         */
+        public ReadLength(int length) {
+            this.length = length;
+        }
+
+        @Override
+        public boolean stopCondition(int sourceIndex, int targetLength, Scanner scanner) throws IOException {
+            return length-- <= 0;
+        }
+
+        @Override
+        public int append(int sourceIndex, int targetLength, Scanner scanner, StringBuilder buf) throws IOException {
+            int c = scanner.lookAhead();
+            buf.append( Character.toChars(c) );
+            return 1;
+        }
+
     }
 
     /**
@@ -106,7 +136,9 @@ public interface StringConstraint extends Constraint {
      * @author Philippe Poulard
      */
     class ReadUntilSingleChar implements StringConstraint {
+
         char stopChar;
+
         /**
          * Read until a given stop char; the stop
          * char is NOT consumed and NOT added to the buffer.
@@ -116,14 +148,20 @@ public interface StringConstraint extends Constraint {
         public ReadUntilSingleChar(char stopChar) {
             this.stopChar = stopChar;
         }
+
+        @Override
         public int append(int sourceIndex, int targetLength, Scanner scanner,
-                StringBuilder buf) throws IOException {
-            char c = scanner.lookAhead();
-            buf.append( c );
+                StringBuilder buf) throws IOException
+        {
+            int c = scanner.lookAhead();
+            buf.append( Character.toChars(c) );
             return 1;
         }
+
+        @Override
         public boolean stopCondition(int sourceIndex, int targetLength,
-                Scanner scanner) throws IOException {
+                Scanner scanner) throws IOException
+        {
             // stop as soon as the new next char is the stop char
             return scanner.hasNextChar(this.stopChar, false);
         }
@@ -136,20 +174,20 @@ public interface StringConstraint extends Constraint {
      * if it has to append characters to the current buffer.</p>
      *
      * @param sourceIndex The number of characters read so far ;
-     * 		might be useful in certain stop conditions.
+     *         might be useful in certain stop conditions.
      * @param targetLength The number of characters put in the
-     * 		target buffer so far ; might be useful in certain
-     * 		stop conditions, for example to limit the length
-     * 		of the string to return.
+     *         target buffer so far ; might be useful in certain
+     *         stop conditions, for example to limit the length
+     *         of the string to return.
      * @param scanner The scanner that reads the input.
-     * 		According to the parsing strategy, if the sequence
-     * 		of characters involved in the stop condition (if any)
-     * 		don't have to be consumed, the relevant methods of
-     * 		the scanner should be involved.
+     *         According to the parsing strategy, if the sequence
+     *         of characters involved in the stop condition (if any)
+     *         don't have to be consumed, the relevant methods of
+     *         the scanner should be involved.
      *
      * @return <code>true</code> to indicate that the current scan
-     * 		must stop, <code>false</code> if more characters have
-     * 		to be read.
+     *         must stop, <code>false</code> if more characters have
+     *         to be read.
      *
      * @throws IOException When the scanner cause an error.
      *
@@ -166,12 +204,12 @@ public interface StringConstraint extends Constraint {
      * as well). Several characters can be produced as well.</p>
      *
      * @param sourceIndex The position of the index read so far.
-     * 		Start at 0.
+     *         Start at 0.
      * @param targetLength The number of characters put in the
-     * 		target buffer so far.
+     *         target buffer so far.
      * @param scanner The scanner that reads the input. The characters
-     * 		to read can be scanned as well (if necessary, marks can be
-     * 		used safely).
+     *         to read can be scanned as well (if necessary, marks can be
+     *         used safely).
      * @param buf The buffer where the accepted characters will be appended.
      *
      * @return The number of characters actually appended to the buffer.

@@ -5,7 +5,6 @@ import java.io.Reader;
 import java.util.Optional;
 
 import ml.alternet.facet.Trackable;
-import ml.alternet.misc.Position;
 
 /**
  * A scanner that tracks the current line, column, and offset.
@@ -68,7 +67,7 @@ public class TrackableScanner extends Scanner implements Trackable {
 
     private void setNextLocation() {
         if ( hasNext() ) {
-            char c = lookAhead();
+            char c = (char) lookAhead();
             if ( c == '\r' ) {
                 this.position.nextLine++;
                 this.position.nextColumn = 0;
@@ -132,12 +131,10 @@ public class TrackableScanner extends Scanner implements Trackable {
      * Mark the current position.
      * The current column and line are saved.
      *
-     * @throws IOException When an I/O error occur.
-     *
      * @see Reader#mark(int)
      */
     @Override
-    public void mark() throws IOException {
+    public void mark() {
         this.scanner.mark();
     }
 
@@ -145,11 +142,10 @@ public class TrackableScanner extends Scanner implements Trackable {
      * Cancel the current mark.
      * The previous column and line are restored.
      *
-     * @throws IOException When an I/O error occur.
      * @throws IllegalStateException When no mark have been previously saved.
      */
     @Override
-    public void cancel() throws IOException, IllegalStateException {
+    public void cancel() throws IllegalStateException {
         if (this.state.cursors.isEmpty()) {
             throw new IllegalStateException( "Can't cancel the reading since no position was marked." );
         } else {
@@ -162,11 +158,9 @@ public class TrackableScanner extends Scanner implements Trackable {
     /**
      * Consume the characters read so far.
      * The previous column and line are removed.
-     *
-     * @throws IOException When an I/O error occur.
      */
     @Override
-    public void consume() throws IOException {
+    public void consume() {
         this.scanner.consume(); // just drop the last saved position
     }
 

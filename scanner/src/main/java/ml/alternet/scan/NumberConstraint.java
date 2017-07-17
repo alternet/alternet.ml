@@ -22,11 +22,14 @@ public interface NumberConstraint extends Constraint {
      * is unexpected in the input sequence.</p>
      */
     NumberConstraint NO_CONSTRAINT = new NumberConstraint() {
+        @Override
         public boolean stopCondition(StringBuffer buf, int sourceIndex,
                 int dotIndex, int exponentIndex, Scanner scanner)
-                throws IOException {
+                throws IOException
+        {
             return false;
         }
+        @Override
         public Class<? extends Number> getNumberType() {
             return null;
         }
@@ -40,11 +43,14 @@ public interface NumberConstraint extends Constraint {
      * @see Byte#MIN_VALUE
      */
     NumberConstraint BYTE_CONSTRAINT = new NumberClassConstraint() {
+        @Override
         public boolean stopCondition(StringBuffer buf, int sourceIndex,
                 int dotIndex, int exponentIndex, Scanner scanner)
-                throws IOException {
+                throws IOException
+        {
             return checkInteger( scanner ) || checkDigits( buf, scanner, MIN_BYTE, MAX_BYTE );
         }
+        @Override
         public Class<? extends Number> getNumberType() {
             return Byte.class;
         }
@@ -58,11 +64,14 @@ public interface NumberConstraint extends Constraint {
      * @see Short#MIN_VALUE
      */
     NumberConstraint SHORT_CONSTRAINT = new NumberClassConstraint() {
+        @Override
         public boolean stopCondition(StringBuffer buf, int sourceIndex,
                 int dotIndex, int exponentIndex, Scanner scanner)
-                throws IOException {
+                throws IOException
+        {
             return checkInteger( scanner ) || checkDigits( buf, scanner, MIN_SHORT, MAX_SHORT );
         }
+        @Override
         public Class<? extends Number> getNumberType() {
             return Short.class;
         }
@@ -76,11 +85,14 @@ public interface NumberConstraint extends Constraint {
      * @see Integer#MIN_VALUE
      */
     NumberConstraint INT_CONSTRAINT = new NumberClassConstraint() {
+        @Override
         public boolean stopCondition(StringBuffer buf, int sourceIndex,
                 int dotIndex, int exponentIndex, Scanner scanner)
-                throws IOException {
+                throws IOException
+        {
             return checkInteger( scanner ) || checkDigits( buf, scanner, MIN_INTEGER, MAX_INTEGER );
         }
+        @Override
         public Class<? extends Number> getNumberType() {
             return Integer.class;
         }
@@ -93,11 +105,14 @@ public interface NumberConstraint extends Constraint {
      * @see BigInteger
      */
     NumberConstraint INTEGER_CONSTRAINT = new NumberClassConstraint() {
+        @Override
         public boolean stopCondition(StringBuffer buf, int sourceIndex,
                 int dotIndex, int exponentIndex, Scanner scanner)
-                throws IOException {
+                throws IOException
+        {
             return checkInteger( scanner );
         }
+        @Override
         public Class<? extends Number> getNumberType() {
             return BigInteger.class;
         }
@@ -111,11 +126,14 @@ public interface NumberConstraint extends Constraint {
      * @see Long#MIN_VALUE
      */
     NumberConstraint LONG_CONSTRAINT = new NumberClassConstraint() {
+        @Override
         public boolean stopCondition(StringBuffer buf, int sourceIndex,
                 int dotIndex, int exponentIndex, Scanner scanner)
-                throws IOException {
+                throws IOException
+        {
             return checkInteger( scanner ) || checkDigits( buf, scanner, MIN_LONG, MAX_LONG );
         }
+        @Override
         public Class<? extends Number> getNumberType() {
             return Long.class;
         }
@@ -129,11 +147,14 @@ public interface NumberConstraint extends Constraint {
      * @see BigDecimal
      */
     NumberConstraint DECIMAL_CONSTRAINT = new NumberClassConstraint() {
+        @Override
         public boolean stopCondition(StringBuffer buf, int sourceIndex,
                 int dotIndex, int exponentIndex, Scanner scanner)
-                throws IOException {
+                throws IOException
+        {
             return checkExponent( scanner );
         }
+        @Override
         public Class<? extends Number> getNumberType() {
             return BigDecimal.class;
         }
@@ -146,12 +167,15 @@ public interface NumberConstraint extends Constraint {
      * @see Double
      */
     NumberConstraint DOUBLE_CONSTRAINT = new NumberConstraint() {
+        @Override
         public Class<? extends Number> getNumberType() {
             return Double.class;
         }
+        @Override
         public boolean stopCondition(StringBuffer buf, int sourceIndex,
                 int dotIndex, int exponentIndex, Scanner scanner)
-                throws IOException {
+                throws IOException
+        {
             return false;
         }
     };
@@ -163,23 +187,50 @@ public interface NumberConstraint extends Constraint {
      * @see Float
      */
     NumberConstraint FLOAT_CONSTRAINT = new NumberConstraint() {
+        @Override
         public Class<? extends Number> getNumberType() {
             return Float.class;
         }
+        @Override
         public boolean stopCondition(StringBuffer buf, int sourceIndex,
                 int dotIndex, int exponentIndex, Scanner scanner)
-                throws IOException {
+                throws IOException
+        {
             return false;
         }
     };
 
+    /**
+     * "-128"
+     */
     String MIN_BYTE = "" + Byte.MIN_VALUE;
+    /**
+     * "127"
+     */
     String MAX_BYTE = "" + Byte.MAX_VALUE;
+    /**
+     * "-32768"
+     */
     String MIN_SHORT = "" + Short.MIN_VALUE;
+    /**
+     * "32767"
+     */
     String MAX_SHORT = "" + Short.MAX_VALUE;
+    /**
+     * "-2147483648"
+     */
     String MIN_INTEGER = "" + Integer.MIN_VALUE;
+    /**
+     * "2147483647"
+     */
     String MAX_INTEGER = "" + Integer.MAX_VALUE;
+    /**
+     * "-9223372036854775808"
+     */
     String MIN_LONG = "" + Long.MIN_VALUE;
+    /**
+     * "9223372036854775807"
+     */
     String MAX_LONG = "" + Long.MAX_VALUE;
 
     /**
@@ -197,7 +248,7 @@ public interface NumberConstraint extends Constraint {
         }
         /**
          * Check the digits of a buffer.
-         * 
+         *
          * @param buf The buffer
          * @param scanner The scanner
          * @param min For negative values only. Inclusive.
@@ -213,7 +264,7 @@ public interface NumberConstraint extends Constraint {
             }
             String number = "" + scanner.lookAhead();
             // skip sign and leading zeroes
-            for (int i = neg?1:0; i < bl; i++ ) {
+            for (int i = neg ? 1 : 0; i < bl; i++ ) {
                 if ( buf.charAt( i ) != '0' ) {
                     number = buf.substring( i ) + scanner.lookAhead();
                     break;
@@ -254,35 +305,36 @@ public interface NumberConstraint extends Constraint {
      * if it has to append characters to the current buffer.</p>
      *
      * @param buf The buffer that receive the input characters
-     * 		so far. It can be used by this method to evaluate
-     * 		the stop condition.
-     * 		For example if negative numbers are not allowed, the
-     * 		first character of the buffer can't be "-".
+     *      so far. It can be used by this method to evaluate
+     *      the stop condition.
+     *      For example if negative numbers are not allowed, the
+     *      first character of the buffer can't be "-".
      * @param sourceIndex The number of characters read so far ;
-     * 		might be useful in certain stop conditions.
+     *      might be useful in certain stop conditions.
      * @param dotIndex The index where the dot character was
-     * 		encountered, or -1 if not found so far.
+     *      encountered, or -1 if not found so far.
      * @param exponentIndex The index where the exponent character
-     * 		was encountered, or -1 if not found so far.
+     *      was encountered, or -1 if not found so far.
      * @param scanner The scanner that reads the input.
-     * 		According to the parsing strategy, if the sequence
-     * 		of characters involved in the stop condition (if any)
-     * 		don't have to be consumed, the relevant methods of
-     * 		the scanner should be involved.
+     *      According to the parsing strategy, if the sequence
+     *      of characters involved in the stop condition (if any)
+     *      don't have to be consumed, the relevant methods of
+     *      the scanner should be involved.
      *
      * @return <code>true</code> to indicate that the current scan
-     * 		must stop, <code>false</code> if more characters have
-     * 		to be read.
+     *      must stop, <code>false</code> if more characters have
+     *      to be read.
      *
      * @throws IOException When the scanner cause an error.
      */
-    boolean stopCondition(StringBuffer buf, int sourceIndex, int dotIndex, int exponentIndex, Scanner scanner) throws IOException;
+    boolean stopCondition(StringBuffer buf, int sourceIndex, int dotIndex, int exponentIndex, Scanner scanner)
+            throws IOException;
 
     /**
      * Enforce a number to be of a specific type.
      *
      * @return The type of the number, or <code>null</code>
-     * 		if the type have to be the more suitable.
+     *         if the type have to be the more suitable.
      */
     Class<? extends Number> getNumberType();
 
@@ -300,9 +352,9 @@ public interface NumberConstraint extends Constraint {
         /**
          *
          * @param numberClass Used to enforce the number to be an
-         * 		instance of the class given. The class must implement
-         * 		{@link Number} and belong either to <tt>java.lang</tt>
-         * 		or to <tt>java.math</tt>.
+         *         instance of the class given. The class must implement
+         *         {@link Number} and belong either to <tt>java.lang</tt>
+         *         or to <tt>java.math</tt>.
          */
         public Type( Class<? extends Number> numberClass ) {
             this.clazz = numberClass;
@@ -311,6 +363,7 @@ public interface NumberConstraint extends Constraint {
         /**
          * Return the type of the number.
          */
+        @Override
         public Class<? extends Number> getNumberType() {
             return this.clazz;
         }
@@ -321,9 +374,11 @@ public interface NumberConstraint extends Constraint {
          *
          * @return <code>false</code>
          */
+        @Override
         public boolean stopCondition(StringBuffer buf, int sourceIndex,
                 int dotIndex, int exponentIndex, Scanner scanner)
-                throws IOException {
+                throws IOException
+        {
             return false;
         }
     }

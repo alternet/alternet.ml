@@ -2,14 +2,22 @@ package ml.alternet.scan;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.TreeMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
+import ml.alternet.facet.Presentable;
 import ml.alternet.misc.CharArray;
 import ml.alternet.misc.Thrower;
+import ml.alternet.util.StringBuilderUtil;
 
 /**
  * Wraps an enum class or a list of string values to a hierarchy
@@ -28,7 +36,7 @@ import ml.alternet.misc.Thrower;
  * @see EnumValues#from(String...)
  * @see EnumValues#from(Stream)
  */
-public class EnumValues<T> { // is a set of EnumValues
+public class EnumValues<T> implements Readable<T>, Presentable { // is a set of EnumValues
 
     // the start index in the string value (val and values are complete strings, char may be partial)
     int start = 0;
@@ -171,6 +179,7 @@ public class EnumValues<T> { // is a set of EnumValues
      *
      * @throws IOException When an I/O error occurs.
      */
+    @Override
     public java.util.Optional<T> nextValue(Scanner scanner) throws IOException {
         return nextValuePart(scanner, 0); // part is complete from 0
     }
@@ -254,8 +263,8 @@ public class EnumValues<T> { // is a set of EnumValues
             int i = index;
             // try to dispatch recursively each set-by-char
             Set<EnumValues<T>> enumValues = enumByChar.entrySet().stream()
-                //            EnumValue(char,       Set<EnumValue>)
-                .map(e -> new EnumValues<T>(e.getKey(), e.getValue(), i))
+                //                            EnumValue<>(char,       Set<EnumValue>)
+                .<EnumValues<T>> map(e -> new EnumValues<>(e.getKey(), e.getValue(), i))
                 .map(e -> e.dispatch(i + 1)) // dispatch Set<EnumValue> for the next index
                 .collect(Collectors.toSet());
             if (dispatchable.get(false).isEmpty()) {
@@ -272,6 +281,47 @@ public class EnumValues<T> { // is a set of EnumValues
             return this;
             // note that this.val and this.values can be set together
         }
+    }
+
+    @Override
+    public StringBuilder toPrettyString(StringBuilder buf) {
+        return values()
+            .map(o -> "'" + o.toString() + "'")
+            .sorted(Comparator.comparing(String::length).thenComparing(s -> s))
+            .collect(StringBuilderUtil.collectorOf("( ", " | ", " )", buf));
+    }
+
+    private static int FLAGS =
+            Spliterator.CONCURRENT | Spliterator.DISTINCT |
+            Spliterator.IMMUTABLE | Spliterator.NONNULL |
+            Spliterator.ORDERED;
+
+    /**
+     * Return all the values inside.
+     *
+     * @return The values, in alphabetical order.
+     */
+    public Stream<T> values() {
+        // looks heavy, but it's lazy !
+        return Stream.concat(
+            // concat this.val if it exist...
+            Optional.ofNullable(this.val)
+                .map(Stream::of)
+                .orElseGet(Stream::empty),
+            // ...with this.values.forEach(EnumValues::values) if it exist
+            StreamSupport.stream(
+                new Spliterators.AbstractSpliterator<T>(Long.MAX_VALUE, FLAGS) {
+                    Spliterator<T> stream = Optional.ofNullable(EnumValues.this.values)
+                        .map(values -> values.stream().flatMap(v -> v.values()))
+                        .orElseGet(() -> Stream.<T>empty())
+                        .spliterator();
+                    @Override
+                    public boolean tryAdvance(Consumer<? super T> action) {
+                        return stream.tryAdvance(action);
+                    }
+                },
+                false)
+        );
     }
 
 }

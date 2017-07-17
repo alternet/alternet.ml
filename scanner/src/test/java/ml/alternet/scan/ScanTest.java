@@ -208,7 +208,7 @@ public abstract class ScanTest {
     public void enumValues_Should_beEnumeratedBySize() throws IOException {
         Assertions.assertThat(
             EnumValues.from(Protocol.class).toPrettyString().toString()
-        ).isEqualTo("( ftp | file | ftps | http | mailto )");
+        ).isEqualTo("( 'ftp' | 'file' | 'ftps' | 'http' | 'mailto' )");
     }
 
     public void scanner_Should_parseEnum() throws IOException {
@@ -257,8 +257,10 @@ public abstract class ScanTest {
         String text = "1234";
         Scanner scan = scanner(text);
         Number one234 = scan.nextNumber();
+        Assertions.assertThat(one234.intValue()).isEqualTo(1234);
+
         Assertions.assertThat(scan.hasNext()).isFalse();
-        scan.mark();
+        scan.mark(); // validates StringScanner#mark() on EOF
         scan.cancel();
         Assertions.assertThat(scan.hasNext()).isFalse();
     }

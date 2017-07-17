@@ -12,8 +12,8 @@ import ml.alternet.util.XMLUtil;
 public class XMLWhitespace extends JavaWhitespace {
 
     @Override
-    public boolean test(Character ch) {
-        return XMLUtil.isWhitespace(ch);
+    public boolean test(Integer cp) {
+        return XMLUtil.isWhitespace((char) cp.intValue());
     }
 
 }

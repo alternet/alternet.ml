@@ -3,50 +3,61 @@ package ml.alternet.scan;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.Optional;
 
-import ml.alternet.util.IOUtil;
+import ml.alternet.io.IOUtil;
+import ml.alternet.misc.Thrower;
 
 /**
  * A scanner for sequences of chars (i.e. strings).
  *
  * @see ReaderScanner
  *
+ * @see Scanner#of(Reader)
+ * @see Scanner#of(CharSequence)
+ *
  * @author Philippe Poulard
  */
 public class StringScanner extends Scanner {
 
     /** The underlying sequence of chars. */
-    private final CharSequence sequence;
+    private final String sequence;
 
     /**
      * Create a new scanner.
      *
      * @param sequence The input to read, can be {@code null}.
+     *
+     * @throws IOException When an I/O error occur.
      */
-    public StringScanner( CharSequence sequence ) {
-        this.sequence = sequence;
+    public StringScanner( CharSequence sequence ) throws IOException {
+        this.sequence = sequence.toString();
         if (this.sequence == null) {
-            this.end = true;
-            this.next = IOUtil.EOF;
+            this.state.end = true;
+            this.state.next = IOUtil.EOF;
         } else {
-            read();
+            this.state.source.read();
         }
     }
 
     /**
-     * Read the next character.
+     * Read the next Unicode character.
      *
-     * @see #hasNextChar(char, boolean)
+     * @see #hasNextChar(int, boolean)
      * @see #nextChar()
      * @see #lookAhead()
      */
     @Override
     public void read() {
-        if ( this.cursor == this.sequence.length() ) {
-            this.end = true;
-            this.next = IOUtil.EOF;
+        if ( this.state.cursor == this.sequence.length() ) {
+            this.state.end = true;
+            this.state.next = IOUtil.EOF;
         } else {
-            this.next = this.sequence.charAt( this.cursor++ );
+            this.state.next = this.sequence.codePointAt( this.state.cursor++ );
+            this.state.end = false; // need this on cancel after mark and read til the end
+            if (Character.isSupplementaryCodePoint(this.state.next)) {
+                this.state.cursor++; // because codePointAt() takes the codepoint at the char index
+            }
         }
     }
 
@@ -63,17 +74,14 @@ public class StringScanner extends Scanner {
      * {@link #lookAhead()}, {@link #nextChar()}, {@link #hasNextChar(char, boolean)}
      * and {@link #hasNextChar(String, boolean)}.</p>
      *
-     * @param limit The maximum number of characters
-     * 		that can be read before loosing the mark.
-     *
      * @see Reader#mark(int)
      * @see #cancel()
      * @see #consume()
      */
     @Override
-    public void mark( int limit ) {
-        // the current cursor has read a char in advance
-        push( this.cursor - 1 );
+    public void mark() {
+        // the current cursor has read a char in advance, except on EOF
+        this.state.source.push( this.state.cursor - (this.state.end?0:1) );
     }
 
     /**
@@ -81,18 +89,21 @@ public class StringScanner extends Scanner {
      * (the next read will start from the last marked position).
      *
      * @throws IllegalStateException When this method is called
-     * 					whereas no position was marked so far.
+     *          whereas no position was marked so far.
      *
-     * @see #mark(int)
+     * @see #mark()
      */
     @Override
-    public void cancel() {
-        if ( this.pos == 0 ) {
+    public void cancel() throws IllegalStateException {
+        if (this.state.cursors.isEmpty()) {
             throw new IllegalStateException( "Can't cancel the reading since no position was marked." );
         } else {
-            int prev = pop();
-            this.cursor = prev;
-            read();
+            this.state.cursor = this.state.source.pop();
+            try {
+                this.state.source.read();
+            } catch (IOException e) {
+                Thrower.doThrow(e);
+            }
         }
     }
 
@@ -105,18 +116,17 @@ public class StringScanner extends Scanner {
      * to go back. If there was at least another one marker,
      * it can be itself cancelled or consumed independently.</p>
      *
-     * @throws IOException When an I/O error occur.
      * @throws IllegalStateException When this method is called
-     * 					whereas no position was marked so far.
+     *              whereas no position was marked so far.
      *
-     * @see #mark(int)
+     * @see #mark()
      */
     @Override
-    public void consume() throws IOException {
-        if ( this.pos == 0 ) {
+    public void consume() throws IllegalStateException {
+        if (this.state.cursors.isEmpty()) {
             throw new IllegalStateException( "Can't consume characters since no position was marked." );
         } else {
-            pop();
+            this.state.source.pop(); // just discard the mark
         }
     }
 
@@ -125,15 +135,15 @@ public class StringScanner extends Scanner {
      * current position.
      *
      * @return The remainder to read, or <code>null</code>
-     * 		if the end was reached.
+     *          if the end was reached.
      */
     @Override
-    public Reader getRemainder() {
-        String remainder = getRemainderString();
-        if ( remainder == null ) {
-            return null;
+    public Optional<Reader> getRemainder() {
+        Optional<String> remainder = getRemainderString();
+        if ( remainder.isPresent() ) {
+            return Optional.of(new StringReader( remainder.get() ));
         } else {
-            return new StringReader( remainder );
+            return Optional.empty();
         }
     }
 
@@ -142,16 +152,27 @@ public class StringScanner extends Scanner {
      * current position.
      *
      * @return The remainder to read, or <code>null</code>
-     * 		if the end was reached.
+     *          if the end was reached.
      */
     @Override
-    public String getRemainderString() {
+    public Optional<String> getRemainderString() {
         // remember that the current character has been already read
-        if ( this.end ) {
-            return null;
+        if ( this.state.end ) {
+            return Optional.empty();
         } else {
-            return this.sequence.toString().substring( this.cursor - 1 );
+            int[] codepoints = this.sequence.codePoints()
+                .skip(this.state.cursor - Character.charCount(this.state.next))
+                .toArray();
+            String remainder = new String(codepoints, 0, codepoints.length);
+            this.state.cursor = this.sequence.length();
+            read(); // just set internal states
+            return Optional.of(remainder);
         }
+    }
+
+    @Override
+    public String toString() {
+        return this.sequence + '\n' + this.state;
     }
 
 }

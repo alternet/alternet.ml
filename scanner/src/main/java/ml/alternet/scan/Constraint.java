@@ -7,4 +7,4 @@ package ml.alternet.scan;
  *
  * @see Scanner
  */
-public interface Constraint {}
+public interface Constraint { }

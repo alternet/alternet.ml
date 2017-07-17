@@ -3,9 +3,12 @@ package ml.alternet.scan;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.Optional;
 
-import ml.alternet.misc.ReaderAggregator;
-import ml.alternet.util.IOUtil;
+import ml.alternet.io.IOUtil;
+import ml.alternet.io.NoCloseReader;
+import ml.alternet.io.ReaderAggregator;
+import ml.alternet.misc.Thrower;
 
 /**
  * A scanner for stream of characters.
@@ -16,54 +19,78 @@ import ml.alternet.util.IOUtil;
  *
  * @see StringScanner
  *
+ * @see Scanner#of(Reader)
+ * @see Scanner#of(CharSequence)
+ *
  * @author Philippe Poulard
  */
 public class ReaderScanner extends Scanner {
 
+    // things to be aware of :
+    // -this.state.cursor = 0 unless there is a mark
+    //        in that case the cursor is the position from the mark
+    // -there is a single phycical mark (set on the underlying reader)
+    //        but several logical marks
+    //        Only setting/unsetting THE FIRST logical mark cause
+    //             setting/unsetting the physical mark
+
     /** The underlying reader. */
     private Reader reader;
     /** The next char to read to restore after canceling the first mark. */
-    private char saveNext;
-    /** The cumulative mark limit. */
-    private int limit;
+    private int saveNext;
+
+    /** The maximum number of characters
+    *      that can be read before loosing the mark. */
+    public int limit = IOUtil.BUFFER_SIZE;
 
     /**
      * Create a new scanner.
      *
      * @param reader The input to read.
-     * 		<span style="color:red">Must support marks.</span>
+     *      <span style="color:red">Must support marks.</span>
      *
      * @throws IOException When an I/O error occur.
      * @throws IllegalArgumentException When the reader doesn't support marks.
      */
-    public ReaderScanner( Reader reader ) throws IOException {
+    public ReaderScanner( Reader reader ) throws IOException, IllegalArgumentException {
+        // TODO : monitor this reader ???
         assert reader.markSupported();
         if ( reader.markSupported() ) {
             this.reader = reader;
-            read();
+            this.state.source.read();
         } else {
             throw new IllegalArgumentException( "The given reader doesn't support marks." );
         }
     }
 
     /**
-     * Read the next character.
+     * Read the next Unicode character.
      *
      * @throws IOException When an I/O error occur.
      *
-     * @see #hasNextChar(char, boolean)
+     * @see #hasNextChar(int, boolean)
      * @see #nextChar()
      * @see #lookAhead()
      */
+    @Override
     public void read() throws IOException {
-        int read = this.reader.read();
-        this.next = (char) read;
-        if ( read == -1 ) {
-            this.end = true;
+        if (this.state.end) {
+            this.state.next = IOUtil.EOF;
         } else {
-            if ( this.pos > 0 ) {
-                // cursors not empty
-                this.cursor++;
+            this.state.next = this.reader.read();
+            this.state.cursor++; // count from the mark
+            if (this.state.next == IOUtil.EOF) {
+                this.state.end = true;
+            } else {
+                if (Character.isHighSurrogate((char) this.state.next)) {
+                    char c = (char) this.reader.read();
+                    this.state.next = Character.toCodePoint((char) this.state.next, c);
+                    this.state.cursor++; // count from the mark
+                }
+                this.state.end = false; // need this on cancel after mark and read til the end
+                if (this.state.cursors.isEmpty()) {
+                    this.state.cursor = 0; // this is a physical mark
+                }
             }
         }
     }
@@ -81,28 +108,25 @@ public class ReaderScanner extends Scanner {
      * {@link #lookAhead()}, {@link #nextChar()}, {@link #hasNextChar(char, boolean)}
      * and {@link #hasNextChar(String, boolean)}.</p>
      *
-     * @param limit The maximum number of characters
-     * 		that can be read before loosing the mark.
-     *
-     * @throws IOException When an I/O error occur.
-     *
      * @see Reader#mark(int)
      * @see #cancel()
      * @see #consume()
      */
-    public void mark( int limit ) throws IOException {
-        if ( this.pos == 0 ) {
-            // when the reader hasn't been marked yet, we need to save the current char
-            this.saveNext = this.next;
-            this.reader.mark( limit );
-            push( 0 );
-            this.limit = limit;
+    @Override
+    public void mark() {
+        if (this.state.cursors.isEmpty()) {
+            // when the reader hasn't been marked yet
+            // we need to save the current char
+            this.saveNext = this.state.next;
+            try {
+                this.reader.mark( this.limit );
+            } catch (IOException e) {
+                Thrower.doThrow(e);
+            }
+            this.state.source.push( 0 );
         } else {
-            this.reader.reset();
-            this.limit = this.cursor + limit;
-            this.reader.mark( this.limit );
-            this.reader.skip( this.cursor );
-            push( this.cursor );
+            // the physical mark has been already set
+            this.state.source.push( this.state.cursor );
         }
     }
 
@@ -110,28 +134,42 @@ public class ReaderScanner extends Scanner {
      * Cancel the characters read since the last marked position
      * (the next read will start from the last marked position).
      *
-     * @throws IOException When an I/O error occur.
      * @throws IllegalStateException When this method is called
-     * 					whereas no position was marked so far.
+     *              whereas no position was marked so far.
      *
-     * @see #mark(int)
+     * @see #mark()
      */
-    public void cancel() throws IOException {
-        if ( this.pos == 0 ) {
+    @Override
+    public void cancel() throws IllegalStateException {
+        if (this.state.cursors.isEmpty()) {
             throw new IllegalStateException( "Can't cancel the reading since no position was marked." );
         } else {
-            int prev = pop();
-            this.cursor = prev;
-            this.reader.reset();
-            if ( prev > 0 ) {
-                this.reader.mark( this.limit );
-                this.reader.skip( this.cursor );
-                read();
-            } else {
-                // everything was canceled : restore the current char
-                this.next = this.saveNext;
+            try {
+                this.state.cursor = this.state.source.pop();
+                this.reader.reset();
+                if ( this.state.cursor == 0 ) { // not necessary empty when several
+                                                // marks were set at the position 0
+                    // restore the char that was saved
+                    this.state.next = saveNext;
+                }
+                if ( ! this.state.cursors.isEmpty() ) {
+                    this.reader.mark( this.limit );
+                    if (this.state.cursor > 0) {
+                        // skip until the previous position...
+                        this.reader.skip( this.state.cursor - Character.charCount(this.state.next));
+                        // ...that allow to read it
+                        this.state.next = (char) this.reader.read();
+                        if (Character.isHighSurrogate((char) this.state.next)) {
+                            char c = (char) this.reader.read();
+                            this.state.next = Character.toCodePoint((char) this.state.next, c);
+                            this.state.cursor++; // count from the mark
+                        }
+                    } // the char that was saved has been restore
+                }
+                this.state.end = (this.state.next == IOUtil.EOF);
+            } catch (IOException e) {
+                Thrower.doThrow(e);
             }
-            this.end = false;
         }
     }
 
@@ -144,25 +182,27 @@ public class ReaderScanner extends Scanner {
      * to go back. If there was at least another one marker,
      * it can be itself cancelled or consumed independently.</p>
      *
-     * @throws IOException When an I/O error occur.
      * @throws IllegalStateException When this method is called
-     * 					whereas no position was marked so far.
+     *              whereas no position was marked so far.
      *
-     * @see #mark(int)
+     * @see #mark()
      */
-    public void consume() throws IOException {
-        if ( this.pos == 0 ) {
+    @Override
+    public void consume() throws IllegalStateException {
+        if (this.state.cursors.isEmpty()) {
             throw new IllegalStateException( "Can't consume characters since no position was marked." );
         } else {
-            int prev = pop();
-            this.reader.reset();
-            if ( prev > 0 ) {
-                this.reader.mark( this.limit );
-            }
-            this.end = false;
-            this.reader.skip( this.cursor - prev );
-            if ( prev == 0 ) {
-                this.cursor = 0;
+            this.state.source.pop();
+            if (this.state.cursors.isEmpty()) {
+                try {
+                    // remove the physical mark
+                    this.reader.reset();
+                    // move to the current place
+                    this.reader.skip( this.state.cursor );
+                    this.state.cursor = 0; // this is a physical mark
+                } catch (IOException e) {
+                    Thrower.doThrow(e);
+                }
             }
         }
     }
@@ -172,19 +212,23 @@ public class ReaderScanner extends Scanner {
      * current position.
      *
      * @return The remainder to read, or <code>null</code>
-     * 		if the end was reached.
+     *          if the end was reached.
      */
-    public Reader getRemainder() {
+    @Override
+    public Optional<Reader> getRemainder() {
         // remember that the current character has been already read
-        char c = lookAhead();
-        if ( c == IOUtil.EOF ) {
-            return null;
+        if ( this.state.end ) {
+            return Optional.empty();
         } else {
-            return new ReaderAggregator(
+            int c = this.state.next;
+            this.state.next = IOUtil.EOF;
+            this.state.end = true;
+            return Optional.of(new ReaderAggregator(
                 // prepend the current char
-                new StringReader( String.valueOf( c ) ),
-                this.reader
-            );
+                new StringReader( new String(Character.toChars(c) ) ),
+                this.state.cursors.isEmpty() ? this.reader :
+                    new NoCloseReader( this.reader ) // allow to reset mark
+            ));
         }
     }
 
@@ -193,16 +237,17 @@ public class ReaderScanner extends Scanner {
      * current position.
      *
      * @return The remainder to read, or <code>null</code>
-     * 		if the end was reached.
+     *          if the end was reached.
      *
      * @throws IOException When an I/O error occur.
      */
-    public String getRemainderString() throws IOException {
-        Reader reader = getRemainder();
-        if ( reader == null ) {
-            return null;
+    @Override
+    public Optional<String> getRemainderString() throws IOException {
+        Optional<Reader> reader = getRemainder();
+        if ( reader.isPresent() ) {
+            return Optional.of(readAll( reader.get() ));
         } else {
-            return readAll( reader );
+            return Optional.empty();
         }
     }
 
@@ -217,12 +262,16 @@ public class ReaderScanner extends Scanner {
     public static String readAll( Reader input ) throws IOException {
         StringBuilder out = new StringBuilder(IOUtil.BUFFER_SIZE);
         char[] c = new char[IOUtil.BUFFER_SIZE];
-        for (int n; (n = input.read(c)) != -1;) {
+        for (int n; (n = input.read(c)) != -1; ) {
             out.append( c, 0, n);
         }
         input.close();
         return out.toString();
     }
 
+    @Override
+    public String toString() {
+        return this.state.toString();
+    }
 
 }

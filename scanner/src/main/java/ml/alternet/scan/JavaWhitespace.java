@@ -12,21 +12,22 @@ import java.util.function.Predicate;
  *
  * @author Philippe Poulard
  */
-public class JavaWhitespace implements StringConstraint, Predicate<Character> {
+public class JavaWhitespace implements StringConstraint, Predicate<Integer> {
 
     @Override
-    public boolean test(Character ch) {
-        return Character.isWhitespace(ch);
+    public boolean test(Integer cp) {
+        return Character.isWhitespace(cp);
     }
 
     @Override
     public int append(int sourceIndex, int targetLength, Scanner scanner,
             StringBuilder buf) throws IOException
     {
-        char c = scanner.lookAhead();
+        int c = scanner.lookAhead();
         buf.append( c );
         return 1;
     }
+
     @Override
     public boolean stopCondition(int sourceIndex, int targetLength,
             Scanner scanner) throws IOException

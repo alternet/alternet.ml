@@ -1,19 +1,28 @@
 package ml.alternet.scan;
 
-import java.io.IOException;
+import static java.util.Spliterator.DISTINCT;
+import static java.util.Spliterator.IMMUTABLE;
+import static java.util.Spliterator.NONNULL;
+import static java.util.Spliterator.ORDERED;
+import static java.util.Spliterator.SIZED;
+import static java.util.Spliterator.SORTED;
+import static ml.alternet.util.StringBuilderUtil.collectorOf;
+
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators.AbstractSpliterator;
 import java.util.TreeSet;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import ml.alternet.facet.Presentable;
-import ml.alternet.util.StringBuilderUtil;
 
 /**
  * Define, merge, and exclude ranges of Unicode characters.
@@ -23,26 +32,23 @@ import ml.alternet.util.StringBuilderUtil;
 public interface CharRange extends Presentable {
 
     /**
-     * Read the next Unicode character that belongs to this range of characters.
-     *
-     * @param scanner The input to read.
-     *
-     * @return <code>empty</code> if this range was not found in the input,
-     *      the actual value otherwise.
-     *
-     * @throws IOException When an I/O error occurs.
-     */
-    Optional<String> nextValue(Scanner scanner) throws IOException;
-
-    /**
      * Indicates whether this range contains the given character or not.
      *
      * @param codepoint The codepoint to check.
      *
-     * @return <code>true</true> if the codepoint is found in this range,
+     * @return <code>true</code> if the codepoint is found in this range,
      *      <code>false</code> otherwise.
      */
     boolean contains(int codepoint);
+
+    /**
+     * Return all the inclusive intervals that compose this range.
+     *
+     * @return All the intervals, in order.
+     *
+     * @see Reversible#includes()
+     */
+    Stream<BoundRange> asIntervals();
 
     /**
      * Exclude a given range to this range.
@@ -54,20 +60,90 @@ public interface CharRange extends Presentable {
     CharRange except(CharRange range);
 
     /**
+     * Exclude the given ranges to this range.
+     *
+     * @param ranges The ranges to exclude from this range.
+     *
+     * @return The new range of characters.
+     */
+    default CharRange except(CharRange... ranges) {
+        return new Ranges(this).except(ranges);
+    }
+
+    /**
      * Merges the given range with this range.
      *
      * @param range The characters to include in this range.
      *
      * @return The new range of characters.
      */
-    CharRange union(CharRange range);
+    default CharRange union(CharRange range) {
+        return new Ranges(this, range);
+    }
 
     /**
-     * Return all the intervals that compose this range from this set.
+     * Merges the given ranges with this range.
      *
-     * @return All the intervals, in order.
+     * @param ranges The ranges to include in this range.
+     *
+     * @return The new range of characters.
      */
-    Stream<BoundCharRange> asIntervals();
+    default CharRange union(CharRange... ranges) {
+        return new Ranges(Stream.concat(Stream.of(this), Stream.of(ranges)));
+    }
+
+    /**
+     * Allow to compare ranges canonically.
+     *
+     * For example, <code>!'b'</code> and
+     * <code>['&#x5C;u0000'-'a'] | ['c'-'&#x5C;u10ffff']</code> are the same.
+     */
+    Comparator<CharRange> CHAR_RANGE_COMPARATOR = (r1, r2) -> {
+        Spliterator<BoundRange> s1 = r1.asIntervals().sorted().distinct().spliterator();
+        Spliterator<BoundRange> s2 = r2.asIntervals().sorted().distinct().spliterator();
+        BoundRange[] br1 = { null };
+        BoundRange[] br2 = { null };
+        while (s1.tryAdvance(br -> br1[0] = br) && s2.tryAdvance(br -> br2[0] = br)) {
+            int c = br1[0].compareTo(br2[0]);
+            if (c != 0) {
+                return c;
+            }
+        } // intervals are NEVER empty, br1 and br2 are NEVER null
+        return br1[0].compareTo(br2[0]);
+        // if one has advanced more, a difference will be reported
+    };
+
+    /**
+     * The empty range.
+     */
+    public static final BoundRange EMPTY = new Range(0, -1) {
+        @Override
+        public boolean contains(int codepoint) {
+            return false; // shortcut
+        }
+        @Override
+        public CharRange except(CharRange range) {
+            return this;
+        }
+        @Override
+        public CharRange union(CharRange range) {
+            return range;
+        }
+    };
+
+    /**
+     * The range for any character.
+     */
+    public static final BoundRange ANY = new Range(Character.MIN_CODE_POINT, Character.MAX_CODE_POINT) {
+        @Override
+        public boolean contains(int codepoint) {
+            return true; // shortcut
+        }
+        @Override
+        public CharRange union(CharRange range) {
+            return this;
+        }
+    };
 
     /**
      * Create a range made of a single character.
@@ -76,7 +152,7 @@ public interface CharRange extends Presentable {
      *
      * @return The range for this single character.
      */
-    static CharRange is(int codepoint) {
+    static Char is(int codepoint) {
         return new Char(true, codepoint);
     }
 
@@ -87,8 +163,44 @@ public interface CharRange extends Presentable {
      *
      * @return The range for all characters except one.
      */
-    static CharRange isNot(int codepoint) {
+    static Char isNot(int codepoint) {
         return new Char(false, codepoint);
+    }
+
+    /**
+     * Create a range made of characters.
+     *
+     * @param characters The characters to include.
+     *
+     * @return The range for the given characters.
+     */
+    static CharRange isOneOf(CharSequence characters) {
+        if (characters.length() == 0) {
+            return EMPTY;
+        } else if (! characters.codePoints().skip(1).findFirst().isPresent()) {
+            // Unicode length == 1 ?
+            return is(characters.codePoints().findFirst().getAsInt());
+        } else {
+            return new Chars(true, characters);
+        }
+    }
+
+    /**
+     * Create a range made of other characters than those given.
+     *
+     * @param characters The characters to exclude.
+     *
+     * @return The range for the other characters than those given.
+     */
+    static CharRange isNotOneOf(CharSequence characters) {
+        if (characters.length() == 0) {
+            return ANY;
+        } else if (! characters.codePoints().skip(1).findFirst().isPresent()) {
+            // Unicode length == 1 ?
+            return isNot(characters.codePoints().findFirst().getAsInt());
+        } else {
+            return new Chars(false, characters);
+        }
     }
 
     /**
@@ -102,16 +214,76 @@ public interface CharRange extends Presentable {
      *
      * @return The actual range.
      */
-    static CharRange range(int start, int end) {
-        return new Range(start, end);
+    static BoundRange range(int start, int end) {
+        if (start > end) {
+            return EMPTY;
+        } else if (end == start) {
+            return new Char(true, start);
+        } else if (start == Character.MIN_CODE_POINT && end == Character.MAX_CODE_POINT) {
+            return ANY;
+        } else {
+            return new Range(start, end);
+        }
+    }
+
+    /**
+     * Allow to specify a set of values in terms of inclusion or exclusion.
+     *
+     * @author Philippe Poulard
+     */
+    interface Reversible {
+
+        /**
+         * Indicates whether a set of values is specified by inclusion or exclusion
+         * of the mentioned values.
+         *
+         * @return <code>true</code> to include values (by default),
+         *      <code>false</code> to exclude values.
+         */
+        default boolean includes() {
+            return true;
+        }
+
+    }
+
+    /**
+     * Base implementation of unbound ranges.
+     *
+     * @see BoundRange
+     *
+     * @author Philippe Poulard
+     */
+    abstract class UnboundRange implements CharRange, Comparable<UnboundRange> {
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof CharRange) {
+                return CHAR_RANGE_COMPARATOR.compare(this, (CharRange) obj) == 0;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return toPrettyString().toString();
+        }
+
+        @Override
+        public int compareTo(UnboundRange range) {
+            return CHAR_RANGE_COMPARATOR.compare(this, range);
+        }
+
     }
 
     /**
      * A single interval with defined start and end boundaries.
      *
+     * @see UnboundRange
+     *
      * @author Philippe Poulard
      */
-    abstract class BoundCharRange implements CharRange {
+    abstract class BoundRange implements CharRange, Reversible, Comparable<BoundRange> {
 
         /**
          * The lower boundary, included.
@@ -138,22 +310,43 @@ public interface CharRange extends Presentable {
             return start() > end();
         }
 
+        /**
+         * Bound char ranges are compared by their start codepoint.
+         *
+         * @param range The range to compare.
+         */
+        @Override
+        public int compareTo(BoundRange range) {
+            if (isEmpty()) {
+                if (range.isEmpty()) {
+                    return 0;
+                } else {
+                    return -1;
+                }
+            } else if (range.isEmpty()) {
+                return 1;
+            } else {
+                return start() - range.start();
+            }
+        }
+
         @Override
         public StringBuilder toPrettyString(StringBuilder buf) {
             if (end() == start()) {
-                return buf.append('\'').append(start()).append('\'');
+                return Char.append(buf.append('\''), start()).append('\'');
             } else if (isEmpty()){
                 return buf.append("''");
             } else {
-                return buf.append("['").append(start()).append("'-'").append(end()).append("']");
+                return Char.append(Char.append(buf.append("['"), start())
+                        .append("'-'"), end()).append("']");
             }
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof BoundCharRange) {
-                BoundCharRange range = (BoundCharRange) obj;
-                return range.start() == start() && range.end() == end();
+            if (obj instanceof BoundRange) {
+                BoundRange range = (BoundRange) obj;
+                return isEmpty() ? range.isEmpty() : range.start() == start() && range.end() == end();
             } else {
                 return false;
             }
@@ -169,32 +362,6 @@ public interface CharRange extends Presentable {
             return toPrettyString().toString();
         }
 
-        /**
-         * Indicates whether the characters specified here are
-         * include, exclude, or whether it is unrelated.
-         *
-         * @return The kind of range.
-         */
-        public Kind getKind() {
-            return Kind.UNRELATED;
-        };
-
-    }
-
-    /**
-     * Indicates whether a range is specified by inclusion or exclusion
-     * of the mentioned characters, or whether it is made of several
-     * ranges (unrelated).
-     *
-     * @author Philippe Poulard
-     */
-    enum Kind {
-        /** The mentioned characters are included in the range. */
-        INCLUSION,
-        /** The mentioned characters are excluded in the range. */
-        EXCLUSION,
-        /** Case of several ranges. */
-        UNRELATED;
     }
 
     /**
@@ -203,7 +370,7 @@ public interface CharRange extends Presentable {
      *
      * @author Philippe Poulard
      */
-    class Char extends BoundCharRange {
+    class Char extends BoundRange {
 
         int car;
         boolean equal;
@@ -214,6 +381,8 @@ public interface CharRange extends Presentable {
          * @param equal <code>true</code> to indicate inclusion,
          *      <code>false</code> to indicate exclusion.
          * @param car The actual character.
+         *
+         * @see Reversible#includes()
          */
         public Char(boolean equal, int car) {
             this.car = car;
@@ -222,35 +391,30 @@ public interface CharRange extends Presentable {
 
         @Override
         public int start() {
-            return car;
+            return this.car;
         }
 
         @Override
         public int end() {
-            return car;
+            return this.car;
         }
 
         @Override
-        public Kind getKind() {
-            return this.equal ? Kind.INCLUSION : Kind.EXCLUSION;
+        public boolean includes() {
+            return this.equal;
         }
 
         @Override
-        public Optional<String> nextValue(Scanner scanner) throws IOException {
-            if (! (this.equal ^ scanner.hasNextChar((char) start(), false))) {
-                // match
-                char c = scanner.nextChar();
-                return Optional.of(String.valueOf(c));
-            }
-            return Optional.empty();
+        public boolean contains(int codepoint) {
+            return this.equal ^ this.car != codepoint;
         }
 
         @Override
-        public Stream<BoundCharRange> asIntervals() {
+        public Stream<BoundRange> asIntervals() {
             if (this.equal) {
                 return Stream.of(this);
             } else {
-                return reverse(IntStream.of(start()));
+                return Chars.reverse(IntStream.of(start()));
             }
         }
 
@@ -264,40 +428,81 @@ public interface CharRange extends Presentable {
 
         @Override
         public CharRange except(CharRange range) {
-            if (range.contains(this.car)) {
-                return new Range(0, -1); // empty
+            if (this.equal) {
+                if (range.contains(this.car)) {
+                    return EMPTY;
+                } else {
+                    return this;
+                }
             } else {
-                return this;
+                return new Ranges(this).except(range);
             }
         }
 
-        public CharRange union(Char range) {
-            if ( ! (this.equal ^ range.equal) ) {
-                return new Chars(this.equal, this.car, range.car);
+        /**
+         * Merges the given range with this range.
+         *
+         * @param car The character to include in this range.
+         *
+         * @return The new range of characters, or the same if
+         *      the given character already belong to this range.
+         */
+        public CharRange union(Char car) {
+            if ( ! (this.equal ^ car.equal) ) {
+                if (car.car == this.car) {
+                    return this; // same
+                } else {
+                    return new Chars(this.equal, this.car, car.car);
+                }
+            } else if (car.car == this.car) {
+                return ANY; // c U !c
             } else {
-                return new Ranges(this, range);
+                return new Ranges(this, car);
             }
         }
 
         @Override
         public CharRange union(CharRange range) {
+            // delegate to Chars, Range, or Ranges
             return range.union(this);
         }
 
-        @Override
-        public boolean contains(int codepoint) {
-            return this.equal ^ this.car != codepoint;
+        private static final char[] HEXES = "0123456789abcdef".toCharArray();
+
+        public static StringBuilder append(StringBuilder buf, int c) {
+            if (Character.isISOControl(c)) {
+                switch(c) {
+                case '\b' : buf.append("\\b"); break;
+                case '\n' : buf.append("\\n"); break;
+                case '\t' : buf.append("\\t"); break;
+                case '\f' : buf.append("\\f"); break;
+                case '\r' : buf.append("\\r"); break;
+                case '\'' : buf.append("\\'"); break;
+                case '\\' : buf.append("\\\\"); break;
+                default :
+                    buf.append("\\u");
+                    buf.append(HEXES[(c >> 12) & 15]);
+                    buf.append(HEXES[(c >> 8) & 15]);
+                    buf.append(HEXES[(c >> 4) & 15]);
+                    buf.append(HEXES[(c) & 15]);
+                }
+            } else if (c > 0xffff || c == 0) {
+                buf.append("\\u").append(Integer.toHexString(c));
+            } else {
+                buf.appendCodePoint(c);
+            }
+            return buf;
         }
 
     }
 
     /**
-     * Create a range of characters made of the characters of a string,
+     * Define a range of characters made of the characters of a string,
      * either by inclusion or exclusion.
      *
      * @author Philippe Poulard
      */
-    class Chars implements CharRange {
+    class Chars extends UnboundRange implements CharRange, Reversible {
 
         String chars;
         boolean equal;
@@ -307,12 +512,12 @@ public interface CharRange extends Presentable {
          *
          * @param equal <code>true</code> to indicate inclusion,
          *      <code>false</code> to indicate exclusion.
-         * @param cars The actual characters.
+         * @param chars The actual characters.
+         *
+         * @see Reversible#includes()
          */
-        public Chars(boolean equal, String cars) {
-            int[] codepoints = cars.chars().sorted().distinct().toArray();
-            this.chars = new String(codepoints, 0, codepoints.length);
-            this.equal = equal;
+        public Chars(boolean equal, CharSequence chars) {
+            this(equal, chars.codePoints());
         }
 
         /**
@@ -320,25 +525,33 @@ public interface CharRange extends Presentable {
          *
          * @param equal <code>true</code> to indicate inclusion,
          *      <code>false</code> to indicate exclusion.
-         * @param cars The actual codepoints.
+         * @param codepoints The actual codepoints.
          */
-        public Chars(boolean equal, int... chars) {
-            this(equal, new String(chars, 0, chars.length));
+        public Chars(boolean equal, int... codepoints) {
+            this(equal, IntStream.of(codepoints));
+        }
+
+        /**
+         * Defines a range with the codepoints given.
+         *
+         * @param equal <code>true</code> to indicate inclusion,
+         *      <code>false</code> to indicate exclusion.
+         * @param codepoints The actual codepoints.
+         */
+        public Chars(boolean equal, IntStream codepoints) {
+              int[] cp = codepoints.sorted().distinct().toArray();
+              this.chars = new String(cp, 0, cp.length);
+              this.equal = equal;
+        }
+
+        @Override
+        public boolean includes() {
+            return this.equal;
         }
 
         @Override
         public boolean contains(int codepoint) {
             return this.equal ^ this.chars.indexOf(codepoint) == -1;
-        }
-
-        @Override
-        public Optional<String> nextValue(Scanner scanner) throws IOException {
-            if (! (equal ^ scanner.hasNextChar(this.chars, false))) {
-                // match
-                char c = scanner.nextChar();
-                return Optional.of(String.valueOf(c));
-            }
-            return Optional.empty();
         }
 
         @Override
@@ -348,84 +561,75 @@ public interface CharRange extends Presentable {
             }
             return this.chars.codePoints()
                 .boxed()
-                .collect( StringBuilderUtil.collectorOf(
+                .collect(collectorOf(
                     "( ", " | ", " )", buf,
-                    cp -> buf.appendCodePoint(cp))
+                    cp -> Char.append(buf.append('\''), cp).append('\''))
                 );
         }
 
         @Override
         public CharRange except(CharRange range) {
-            return null;
+            return new Ranges(this).except(range);
         }
 
-        public CharRange union(Char range) {
-            if ( ! (this.equal ^ range.equal) ) {
-                if (this.chars.indexOf(range.car) == -1) {
-                    return new Chars(this.equal,
-                        Stream.concat(
-                            this.chars.chars().boxed(),
-                            Stream.of(range.car) )
-                        .mapToInt(i -> i)
-                        .toArray()
+        public CharRange union(Char car) {
+            if ( ! (this.equal ^ car.equal) ) {
+                if (this.chars.indexOf(car.car) == -1) {
+                    return new Chars(
+                        this.equal,
+                        IntStream.concat(this.chars.codePoints(), IntStream.of(car.car) )
                     );
                 } else {
                     return this;
                 }
             } else {
-                return new Ranges(this, range);
+                return new Ranges(this, car);
             }
         }
 
-        public CharRange union(Chars range) {
-            if ( ! (this.equal ^ range.equal) ) {
-                StringBuilder sb = new StringBuilder(this.chars);
-                return new Chars(this.equal, range.chars.chars()
-                    .filter(c -> this.chars.indexOf(c) == -1)
-                    .boxed()
-                    .collect(() -> sb,
-                            StringBuilder::appendCodePoint,
-                            StringBuilder::append)
-                    .toString());
+        public CharRange union(Chars chars) {
+            if ( ! (this.equal ^ chars.equal) ) {
+                return new Chars(
+                    this.equal,
+                    IntStream.concat(this.chars.codePoints(), chars.chars.codePoints() )
+                );
             } else {
-                return new Ranges(this, range);
+                return new Ranges(this, chars);
             }
         }
 
         @Override
-        public CharRange union(CharRange range) {
-            return new Ranges(this, range);
-        }
-
-        @Override
-        public Stream<BoundCharRange> asIntervals() {
-            if (this.equal) {
+        public Stream<BoundRange> asIntervals() {
+            if (this.equal) { // case of inclusion
                 if (this.chars.length() == 0) {
                     return Stream.empty();
                 } else {
-                    int[] codepoints = this.chars.chars().sorted().distinct().toArray();
+                    int[] codepoints = this.chars.codePoints().sorted().distinct().toArray();
                     // group consecutive characters to a range, and serve individual ones
-                    Spliterator<BoundCharRange> iter = new AbstractSpliterator<BoundCharRange>(
+                    Spliterator<BoundRange> iter = new AbstractSpliterator<BoundRange>(
                         codepoints.length,
-                        Spliterator.DISTINCT | Spliterator.IMMUTABLE | Spliterator.NONNULL |
-                        Spliterator.ORDERED | Spliterator.SIZED)
+                        DISTINCT | IMMUTABLE | NONNULL | ORDERED | SIZED)
                     {
-                        int i = 1;
+                        int i = 0;
                         boolean end = false;
-                        int firstOfGroup = codepoints[0];
-                        int lastOfGroup = firstOfGroup;
+                        int firstOfGroup = -1;
+                        int lastOfGroup = -1;
 
                         @Override
-                        public boolean tryAdvance(Consumer<? super BoundCharRange> action) {
-                            if (end) {
+                        public boolean tryAdvance(Consumer<? super BoundRange> action) {
+                            if (end && firstOfGroup == - 1) {
                                 return false;
-                            }
-                            for ( ; i < codepoints.length ; i++) {
-                                int cp = codepoints[i];
-                                if (cp == lastOfGroup + 1) {
-                                    lastOfGroup++;
+                            } // else not yet the end OR firstOfGroup not yet consumed
+                            while (i < codepoints.length) {
+                                int cp = codepoints[i++];
+                                if (firstOfGroup == -1) { // first set
+                                    firstOfGroup = cp;
+                                    lastOfGroup = cp;
+                                } else if (cp == lastOfGroup + 1) {
+                                    lastOfGroup++; // expand the range
                                     continue;
                                 } else {
+                                    i--; // cp not consumed in this tryAdvance => reset it
                                     break;
                                 }
                             }
@@ -437,29 +641,75 @@ public interface CharRange extends Presentable {
                             if (i >= codepoints.length) {
                                 end = true;
                             }
+                            firstOfGroup = - 1; // reinit
+                            lastOfGroup = -1;
                             return true;
                         }
                     };
                     return StreamSupport.stream(iter, false);
                 }
-            } else {
-                // range inversion
-                return reverse(this.chars.chars());
+            } else { // case of exclusion
+                if (this.chars.length() == 0) {
+                    return Stream.of(ANY);
+                } else {
+                    // range inversion
+                    return reverse(this.chars.codePoints());
+                }
             }
+        }
+
+        /**
+         * Reverse a sequence of chars.
+         *
+         * @param chars The chars to reverse.
+         *
+         * @return The new stream contains all the chars that are
+         *      not in the input stream.
+         */
+        public static Stream<BoundRange> reverse(IntStream chars) {
+            int[] lower = { Character.MIN_CODE_POINT };
+            // chars are n points, ranges are n+1 intervals
+            return Stream.<BoundRange> concat(
+                chars.sorted()
+                    .distinct()
+                    // filter out consecutive chars
+                    .filter(c -> c == lower[0] ? lower[0]++ < 0 /*false*/ : true)
+                    .mapToObj( c -> {
+                        // the char before because the upper bound must exclude it
+                        Range r = new Range(lower[0], c - 1);
+                        lower[0] = c + 1; // capture the last
+                        return r;
+                    }),
+                Stream.of(
+                    new Range( -1, Character.MAX_CODE_POINT) {
+                        @Override
+                        public int start() {
+                            return lower[0]; // the very last character
+                                    // known at the end
+                        };
+                    })
+            ).filter(r -> ! r.isEmpty());
+                    // when consecutive chars with MIN_CP or MAX_CP are found
         }
 
     }
 
     /**
-     * A character taken from a range of character.
+     * Define an atomic range of characters.
      *
      * @author Philippe Poulard
      */
-    class Range extends BoundCharRange {
+    class Range extends BoundRange {
 
         private int start;
         private int end;
 
+        /**
+         * Create a range.
+         *
+         * @param start The start codepoint (included)
+         * @param end The end codepoint (included)
+         */
         public Range(int start, int end) {
             this.start = start;
             this.end = end;
@@ -476,134 +726,286 @@ public interface CharRange extends Presentable {
         }
 
         @Override
-        public Kind getKind() {
-            return Kind.INCLUSION;
-        }
-
-        @Override
-        public Optional<String> nextValue(Scanner scanner) throws IOException {
-            char c = scanner.lookAhead();
-            if (c >= start() && c <= end()) {
-                // match
-                c = scanner.nextChar(); // consume
-                return Optional.of(String.valueOf(c));
-            }
-            return Optional.empty();
-        }
-
-        @Override
-        public CharRange except(CharRange range) {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        @Override
-        public CharRange union(CharRange range) {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        @Override
-        public Stream<BoundCharRange> asIntervals() {
-            return Stream.of(this);
-        }
-
-        @Override
         public boolean contains(int codepoint) {
             return codepoint >= start() && codepoint <= end();
         }
 
-    }
-
-    class Ranges implements CharRange {
-
-        TreeSet<BoundCharRange> ranges = new TreeSet<>((r1, r2) -> r2.start() - r1.end());
-
-        public Ranges() { }
-
-        public Ranges(CharRange... cr) {
-            Arrays.asList(cr).stream()
-                .flatMap(c -> c.asIntervals())
-                .forEach(r -> add(r));
-        }
-
-        private void add(CharRange cr) { // NOTE : this is not cloned here
-            // TODO : find intersection in ranges
-        }
-
         @Override
-        public Optional<String> nextValue(Scanner scanner) throws IOException {
-            return null;
-        }
-
-        @Override
-        public StringBuilder toPrettyString(StringBuilder buf) {
-            return this.ranges.stream()
-                .collect(
-                    StringBuilderUtil.collectorOf(
-                        "(", " | ", ")", buf,
-                        bcr -> bcr.toPrettyString(buf) )
-            );
+        public Stream<BoundRange> asIntervals() {
+            return Stream.of(this);
         }
 
         @Override
         public CharRange except(CharRange range) {
-            // TODO Auto-generated method stub
-            return null;
+            return new Ranges(this).except(range);
         }
 
-        @Override
-        public CharRange union(CharRange range) {
-            Ranges r = new Ranges();
-            r.ranges.addAll(this.ranges);
-            add(range);
-            return r;
+        public CharRange union(Range range) {
+            if (range.start() == start() && range.end() == end()) {
+                return this;
+            } else if (range.end() < start() || range.start() > end()) {
+                return super.union(range);
+            } else {
+                // extend a range
+                return new Range(Math.min(range.start(), start()), Math.max(range.end(), end()));
+            }
         }
 
-        @Override
-        public Stream<BoundCharRange> asIntervals() {
-            return this.ranges.stream();
+        public CharRange union(Char car) {
+            if (contains(car.car)) {
+                return this;
+            } else {
+                return super.union(car);
+            }
         }
 
-        @Override
-        public boolean contains(int codepoint) {
-            // TODO Auto-generated method stub
-            return false;
+        public CharRange union(Chars chars) {
+            if (chars.chars.codePoints().allMatch(c -> contains(c))) {
+                return this;
+            } else {
+                return super.union(chars);
+            }
         }
 
     }
 
     /**
-     * Reverse a sequence of chars.
+     * Define non-overlapping ranges of characters.
      *
-     * @param chars The chars to reverse.
-     *
-     * @return The new stream contains all the chars that are
-     *      not in the input stream.
+     * @author Philippe Poulard
      */
-    static Stream<BoundCharRange> reverse(IntStream chars) {
-        int[] lower = { Character.MIN_CODE_POINT };
-        // range reversion
-        return Stream.<BoundCharRange> concat(
-            chars.sorted()
+    class Ranges extends UnboundRange {
+
+        // set of successive ranges ordered by start char
+        TreeSet<BoundRange> ranges = new TreeSet<>();
+
+        /**
+         * Create a non-overlapping ranges of characters.
+         *
+         * @param ranges The ranges that compose this set may overlap themselves.
+         */
+        public Ranges(CharRange... ranges) {
+            this(Stream.of(ranges));
+        }
+
+        /**
+         * Create a non-overlapping ranges of characters.
+         *
+         * @param ranges The ranges that compose this set may overlap themselves.
+         */
+        public Ranges(Stream<CharRange> ranges) {
+            ranges.flatMap(c -> c.asIntervals())
+                .filter(r -> ! r.isEmpty())
+                .sorted()
                 .distinct()
-                // filter out consecutive chars
-                .filter(c -> c == lower[0] ? lower[0]++ < 0 : true)
-                .boxed()
-                .map(c -> {
-                    // the char before because the upper bound must exclude it
-                    Range r = new Range(lower[0], c - 1);
-                    lower[0] = c + 1; // capture the last
-                    return r;
-                }),
-            Stream.of(
-                new Range( -1, Character.MAX_CODE_POINT) {
+                .forEach(r -> {
+                    BoundRange exist = this.ranges.floor(r);
+                    if (exist == null || exist.end() < r.start() || exist.start() > r.end()) {
+                        this.ranges.add(r);
+                    } else { // extend a range
+                        this.ranges.remove(exist);
+                        this.ranges.add(new Range(Math.min(exist.start(), r.start()), Math.max(exist.end(), r.end())));
+                    }
+                });
+        }
+
+        @Override
+        public boolean contains(int codepoint) {
+            BoundRange exist = this.ranges.floor(new Char(true, codepoint));
+            return exist != null && exist.contains(codepoint);
+        }
+
+        @Override
+        public StringBuilder toPrettyString(StringBuilder buf) {
+            return this.ranges.stream()
+                .collect(collectorOf(
+                    "(", " | ", ")", buf,
+                    bcr -> bcr.toPrettyString(buf))
+            );
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.ranges);
+        }
+
+        @Override
+        public Stream<BoundRange> asIntervals() {
+            return this.ranges.stream();
+        }
+
+        @Override
+        public CharRange union(CharRange range) {
+            if (range.asIntervals().allMatch(r -> {
+                    // 'r' is in the boundaries of an existing range ?
+                    BoundRange exist = this.ranges.floor(r);
+                    return (exist != null && r.end() <= exist.end());
+            })) { // unchanged
+                return this;
+            } else {
+                return new Ranges(this, range);
+            }
+        }
+
+        @Override
+        public CharRange except(CharRange range) {
+            return except(new CharRange[] { range });
+        }
+
+        @Override
+        public CharRange except(CharRange... ranges) {
+            List<BoundRange> boundRanges = Arrays.asList(ranges)
+                .stream()
+                .flatMap(c -> c.asIntervals())
+                .filter(r -> ! r.isEmpty())
+                .sorted()
+                .distinct()
+                .collect(Collectors.toList());
+            if (boundRanges.stream()
+                .anyMatch(exclude -> {
+                    // 'exclude' is overlapping an existing range ?
+                    BoundRange include = this.ranges.floor(exclude);
+                    // that include element is before exclude element
+                    if (include == null) {
+                        return false;
+                    } else if (include.end() >= exclude.start()) {
+                        return true;
+                    } else { // check the next
+                        include = this.ranges.higher(include);
+                        // that include element is after exclude element
+                        return (include != null && include.start() <= exclude.end());
+                    }
+            })) { // at least one exclusion has an impact on the ranges
+                // => create an iterator that merges 2 sorted cursors
+                Spliterator<BoundRange> iter = new AbstractSpliterator<BoundRange>(
+                        Long.MAX_VALUE, DISTINCT | IMMUTABLE | NONNULL | ORDERED | SORTED )
+                {
+                    Spliterator<BoundRange> cursorInclude = asIntervals().sorted().distinct().spliterator();
+                    BoundRange include; // current to include
+                    Spliterator<BoundRange> cursorExclude;
+                    BoundRange exclude; // current to exclude
+                    boolean end = initInclusion(() -> {
+                        // will be call only if we have something to include
+                        cursorExclude = boundRanges.spliterator();
+                        cursorExclude.tryAdvance(br -> exclude = br);
+                        return false; // end = false
+                    });
+                    // first read
+                    boolean initInclusion(Supplier<Boolean> initExclusion) {
+                        return cursorInclude.tryAdvance(br -> include = br) ? initExclusion.get() : true;
+                    }
+
+                    // accept currentInclude and read the next
+                    boolean includeCurrent(Consumer<? super BoundRange> action) {
+                        action.accept(include);
+                        // read next
+                        end = ! cursorInclude.tryAdvance(br -> include = br);
+                        if (end) {
+                            include = null;
+                        }
+                        return true;
+                    }
+
                     @Override
-                    public int start() {
-                        return lower[0]; // the very last character
-                    };
-                })
-        ).filter(r -> ! r.isEmpty());
+                    public Comparator<? super BoundRange> getComparator() {
+                        return null; // mean : sort in natural order
+                    }
+
+                    @Override
+                    public boolean tryAdvance(Consumer<? super BoundRange> action) {
+                        // read items to include while reading items to exclude
+
+                        // below : [                ] => Unicode range
+                        // we                  IIIIII => include range
+                        // have                EEEEEE => exclude range
+
+                        while (true) {
+                            if (end) { // no more to include
+                                return false;
+                            } else if (exclude == null) { // no more to exclude
+                                // accept all
+                                return includeCurrent(action);
+                            } else // both are present
+                            if (include.end() < exclude.start()) {
+                                // exclusion not yet reached
+                                //     [     IIIIII       ]
+                                //     [             EEE  ]
+                                // => accept IIIIII
+                                return includeCurrent(action);
+                            } else {
+                                if (exclude.end() < include.start()) {
+                                    // inclusion not yet reached
+                                    //        [         IIIIII    ]
+                                    //        [  EEEE             ]
+                                    // => ignore EEEE
+                                    if (! cursorExclude.tryAdvance(br -> exclude = br)) {
+                                        exclude = null;
+                                    }
+                                    // loop
+                                } else // IIIIII and EEEEE are overlapping ; let's find how...
+                                if (exclude.start() <= include.start() && exclude.end() >= include.end()) {
+                                    //    [      IIIIII      ]
+                                    //    [  EEEEEEEEEEEEE   ]
+                                    // ignore => IIIIII
+                                    // read next...
+                                    end = ! cursorInclude.tryAdvance(br -> include = br);
+                                    // ...and loop
+                                } else if (exclude.end() <= include.end()) {
+                                    if (exclude.start() > include.start()) {
+                                        //       [   IIIIIII    ]
+                                        //       [     EE       ]
+                                        // accept => II
+                                        // next =>       III
+                                        action.accept(range(include.start(), exclude.start() - 1));
+                                        include = range(exclude.end() + 1, include.end());
+                                        if (include.isEmpty()) {
+                                            end = ! cursorInclude.tryAdvance(br -> include = br);
+                                        }
+                                        return true;
+                                    } else {
+                                        //   [       IIIIII   ]
+                                        //   [   EEEEEEEE     ]
+                                        // cut =>        II
+                                        include = new Range(exclude.end() + 1, include.end());
+                                        if (include.isEmpty()) {
+                                            end = ! cursorInclude.tryAdvance(br -> include = br);
+                                        }
+                                        // loop
+                                    }
+                                } else {
+                                    //     [     IIIIII       ]
+                                    //     [       EEEEEEEE   ]
+                                    // accept => II
+                                    action.accept(new Range(include.start(), exclude.start() - 1));
+                                    // read next
+                                    end = ! cursorInclude.tryAdvance(br -> include = br);
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                };
+                Ranges newRanges = new Ranges();
+                StreamSupport.<BoundRange> stream(iter , false)
+                    .filter(elem -> ! elem.isEmpty())
+                    .forEach(elem -> newRanges.ranges.add(elem));
+                if (newRanges.ranges.size() == 0) {
+                    return EMPTY;
+                } else if (newRanges.ranges.size() == 1) {
+                    BoundRange r = newRanges.ranges.first();
+                    if (r.start() == Character.MIN_CODE_POINT && r.end() == Character.MAX_CODE_POINT) {
+                        return ANY;
+                    } else {
+                        return r;
+                    }
+                } else {
+                    return newRanges;
+                }
+            } else { // unchanged
+                return this;
+            }
+        }
+
     }
 
 }
