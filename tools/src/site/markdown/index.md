@@ -1,17 +1,19 @@
 # Alternet Tools
 
-Alternet Tools include discovery service tools, concurrent and locking tools, and more.
+Alternet Tools include discovery service tools, concurrent and locking tools, byte code generator and more.
 
 ---
 
 ## ![documentation](../images/docs.png) Documentation
 
 * [Alternet Tools](tools.html)
+* [Generator](../tools-generator/generator.html)
 
 Other Alternet guides :
 
 * [Alternet Scanner](../scanner/scanner.html)
 * [Alternet Security](../security/security.html)
+* [Alternet Parsing](../parsing/parsing.html)
 
 ## ![download](../images/download.png) [Download](../download.html)
 

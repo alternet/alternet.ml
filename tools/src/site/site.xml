@@ -3,7 +3,7 @@
     xsi:schemaLocation="http://maven.apache.org/DECORATION/1.3.0 http://maven.apache.org/xsd/decoration-1.3.0.xsd">
 
     <body>
-        <breadcrumbs combine.self="override">
+        <breadcrumbs><!-- combine.self="override"-->
             <item name="Alternet" href="../.." />
             <item name="Alternet Libs" href="../index.html" />
             <item name="Alternet Tools" href="index.html" />

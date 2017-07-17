@@ -26,6 +26,7 @@ Alternet Tools contains mainly :
 
 * a discovery service that can be optionally used with injection (JSR330)
 * concurrent and locking tools
+* [a class generator](../tools-generator/generator.html)
 * and additional utility classes
 
 This documentation covers the two former ; please consult the [Javadoc API](apidocs/index.html) for the latter.
@@ -126,24 +127,40 @@ directory name has been retained, actually `xservices``(that stands for
 ### Self-registration
 
 The [@LookupKey](apidocs/ml/alternet/discover/LookupKey.html) annotation can be
-used in order to generate automatically an entry in `META-INF/xservices/` :
+used in order to generate automatically an entry under `META-INF/xservices/` :
+
+When no variant is specified, the annotation : 
 
 ```java
-@LookupKey(impClass=org.acme.protocols.HttpProtocol.class)
+@LookupKey(impClass=org.acme.tools.ToolsImpl.class)
+interface Tools {
+    // ... 
+}
+```
+
+…will generate the entry in `META-INF/xservices/org.acme.tools.Tools` that contains :
+
+```
+ # default
+ org.acme.tools.ToolsImpl
+```
+
+A variant can also be specified in the lookup key annotation. The default directive
+can be unset. The annotation can be placed on the target implementation.
+
+```java
+@LookupKey(impClass=org.acme.protocols.HttpProtocol.class, variant="http")
 interface Protocol {
     // ...
 }
 ```
 
-...will generate the entry in `META-INF/xservices/org.acme.Protocol` that contains :
+…will generate the entry in `META-INF/xservices/org.acme.Protocol/http` that contains :
 
 ```
-# default
-org.acme.protocols.HttpProtocol
+ # default
+ org.acme.protocols.HttpProtocol
 ```
-
-A variant can also be specified in the lookup key annotation. The default directive
-can be unset. The annotation can be placed on the target implementation.
 
 ### Injection
 

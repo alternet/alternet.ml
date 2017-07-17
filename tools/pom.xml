@@ -57,6 +57,12 @@
             <version>${version.weld-se}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>ml.alternet</groupId>
+            <artifactId>alternet-tools-generator</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>
