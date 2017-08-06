@@ -130,7 +130,7 @@ public class PasswordTest {
         PasswordManager pm = PasswordManagerFactory.getDefaultPasswordManager();
         char[] pwd = "the password".toCharArray();
         Password password = pm.newPassword(pwd);
-        password.invalidate();
+        password.destroy();
         Assertions.assertThat(password.state()).isSameAs(PasswordState.Invalid);
     }
 
@@ -176,7 +176,7 @@ public class PasswordTest {
         char[] pwd = "the password".toCharArray();
         Password password = pm.newPassword(pwd);
         try (Password.Clear clear = password.getClearCopy()) {
-            password.invalidate();
+            password.destroy();
             clear.get();
         }
     }
@@ -186,7 +186,7 @@ public class PasswordTest {
         PasswordManager pm = PasswordManagerFactory.getStandardPasswordManager();
         char[] pwd = "the password".toCharArray();
         Password password = pm.newPassword(pwd);
-        password.invalidate();
+        password.destroy();
         try (Password.Clear clear = password.getClearCopy()) {
         }
     }

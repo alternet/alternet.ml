@@ -1,0 +1,21 @@
+
+<HTML>
+  <HEAD><TITLE>Authentication and Authorization Test</TITLE>
+  <link rel="stylesheet" type="text/css" href="stylesheet.css"/>
+</HEAD>
+<BODY>
+    <p>You have the choice :</p>
+  <H1> Use BASIC HTTP Authentication </H1>
+    <a href="auth.html">Click here</a>
+  <H1> Use FORM Authentication : </H1>
+  <I> Enter login=me and password=me in order to authenticate successfully</I>
+  <form method="POST" action="j_security_check">
+    <B>Login: </B><input type="text" name="j_username">
+    <P>
+    <B>Password: </B><input type="password" name="j_password">
+    <P>
+    <input type="submit" value="Login"/>
+  </form>
+  <p>
+</BODY>
+</HTML>

@@ -3,11 +3,23 @@
     xsi:schemaLocation="http://maven.apache.org/DECORATION/1.3.0 http://maven.apache.org/xsd/decoration-1.3.0.xsd">
 
     <body>
-        <breadcrumbs combine.self="override">
+        <breadcrumbs>
             <item name="Alternet" href="../.." />
             <item name="Alternet Libs" href="../index.html" />
             <item name="Alternet Security" href="index.html" />
         </breadcrumbs>
     </body>
+
+    <bannerLeft>
+        <name>Alternet Security</name>
+        <href>http://alternet.ml/alternet-libs/security/security.html</href>
+    </bannerLeft>
+
+    <custom>
+        <reflowSkin>
+            <shortTitle>Alternet Security</shortTitle>
+            <slogan>Alternet Security aims to enhance security on passwords handled in the JVM.</slogan>
+        </reflowSkin>
+    </custom>
 
 </project>

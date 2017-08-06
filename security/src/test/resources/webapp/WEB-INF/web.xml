@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
+    <display-name>Test</display-name>
+    <welcome-file-list>
+        <welcome-file>index.html</welcome-file>
+    </welcome-file-list>
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>Role</web-resource-name>
+            <url-pattern>/auth.html</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>role1</role-name>
+        </auth-constraint>
+    </security-constraint>
+    <login-config>
+      <auth-method>FORM</auth-method>
+      <realm-name>Alternet Realm</realm-name>
+      <form-login-config>
+        <form-login-page>/login.html</form-login-page>
+        <form-error-page>/authfail.html</form-error-page>
+      </form-login-config>
+    </login-config>
+    <security-role>
+        <role-name>role1</role-name>
+    </security-role>
+    <context-param>
+        <description>Alternet Security will handle FORM authentication</description>
+        <param-name>ml.alternet.security.web.config.authenticationMethod</param-name>
+        <param-value>Form</param-value>
+    </context-param>
+</web-app>

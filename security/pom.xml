@@ -19,6 +19,9 @@
     <properties>
         <shortName>security</shortName>
         <site.deploy.dir>${project.build.directory}/../../alternet-libs/target/staging/${shortName}</site.deploy.dir>
+
+        <version.org.jodd.jodd-proxetta>3.6.3</version.org.jodd.jodd-proxetta>
+        <version.org.apache.directory.server.apacheds>2.0.0-M20</version.org.apache.directory.server.apacheds>
     </properties>
 
     <distributionManagement>
@@ -28,11 +31,120 @@
         </site>
     </distributionManagement>
 
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>${version.maven-surefire-report-plugin}</version>
+                <configuration>
+                    <reportsDirectories>
+                        <file>${project.build.directory}/surefire-reports/</file>
+                        <file>${basedir}-auth-impl/target/surefire-reports/</file>
+                        <file>${basedir}-jetty-9.1/target/surefire-reports/</file>
+                        <file>${basedir}-tomcat/target/surefire-reports/</file>
+                    </reportsDirectories>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${version.maven-surefire-report-plugin}</version>
+                <configuration>
+                    <excludes>
+                        <exclude>ml.alternet.test.security.web.server.BasicAuthServerTestHarness</exclude>
+                        <exclude>ml.alternet.test.security.web.server.FormAuthServerTestHarness</exclude>
+                        <exclude>ml.alternet.test.security.web.server.ServerTestHarness</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${version.maven-jar-plugin}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>${version.maven-source-plugin}</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>ml.alternet</groupId>
             <artifactId>alternet-tools</artifactId>
             <version>1.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-all</artifactId>
+            <version>${version.org.apache.directory.server.apacheds}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+            <version>2.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jodd</groupId>
+            <artifactId>jodd-proxetta</artifactId>
+            <version>${version.org.jodd.jodd-proxetta}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.glassfish.jersey.test-framework</groupId>
+            <artifactId>jersey-test-framework-core</artifactId>
+            <version>2.13</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.glassfish.jersey.test-framework.providers</groupId>
+            <!-- we need a 'real' servlet container otherwise HttpServletRequest won't be injected properly -->
+            <artifactId>jersey-test-framework-provider-grizzly2</artifactId>
+            <version>2.13</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.10</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
