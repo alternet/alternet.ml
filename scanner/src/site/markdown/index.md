@@ -2,6 +2,9 @@
 
 Alternet Scanner supply means to scan character streams.
 
+This is a low-level library for handling character streams,
+you will find advanced features in [Alternet Parsing](../parsing/parsing.html).
+
 ---
 
 ## ![documentation](../images/docs.png) Documentation
@@ -10,6 +13,7 @@ Alternet Scanner supply means to scan character streams.
 
 Other Alternet guides :
 
+* [Alternet Parsing](../tools/parsing.html)
 * [Alternet Security](../security/security.html)
 * [Alternet Tools](../tools/tools.html)
 

@@ -22,10 +22,16 @@ Other Alternet APIs :
 
 ## Usage
 
-A scanner can read characters from an input stream under conditions.
+A scanner can read characters (Unicode codepoints) from an input stream under conditions.
 
-Convenient methods are available for testing for example whether the next content
-is a number or not, for reading characters, strings and numbers.
+Alternet Scanner is a low level API, you might consider [Alternet Parsing](../parsing/parsing.html)
+for advanced features (parsing expression grammar framework and abstract syntax tree builder).
+
+Convenient methods are available in Alternet Scanner for testing for example whether
+the next content is a number or not, for reading characters, strings and numbers,
+pick a value from a set of possible strings or Enum values, and even pick the next
+character if it belongs to a range of characters (possibly built with union and
+exclusions of other ranges).
 
 Additional classes can help to read an object under constraints, for example "get
 the next number that has less than 5 digits", or the next number that fit in a
