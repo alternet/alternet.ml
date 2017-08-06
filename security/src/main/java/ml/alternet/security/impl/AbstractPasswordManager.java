@@ -7,7 +7,7 @@ import ml.alternet.util.BytesUtil;
 
 /**
  * Base implementation of a password manager.
- * 
+ *
  * @author Philippe Poulard
  */
 public abstract class AbstractPasswordManager implements PasswordManager {
@@ -24,10 +24,13 @@ public abstract class AbstractPasswordManager implements PasswordManager {
 
     /**
      * Obfuscate the given password in a new Password instance.
-     * 
+     *
      * @param password
      *            A non-empty password.
-     * 
+     *            It is useless to unset the chars, because this
+     *            method is called from {@link #newPassword(char[])}
+     *            that do it.
+     *
      * @return A new password
      */
     protected abstract Password newValidPassword(char[] password);
