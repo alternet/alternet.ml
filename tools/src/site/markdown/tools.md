@@ -29,7 +29,7 @@ Alternet Tools contains mainly :
 * [a class generator](../tools-generator/generator.html)
 * and additional utility classes
 
-This documentation covers the two former ; please consult the [Javadoc API](apidocs/index.html) for the latter.
+This documentation covers the two formers ; please consult the [Javadoc API](apidocs/index.html) for the latter.
 
 ## Discovery Service
 
