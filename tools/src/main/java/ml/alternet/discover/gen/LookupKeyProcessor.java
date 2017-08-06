@@ -27,36 +27,36 @@ import ml.alternet.util.AnnotationProcessorUtil;
 
 /**
  * Generate META-INF xservice files.
- * 
+ *
  * For each lookup key, the file :
- * 
+ *
  * <pre>
  * META-INF/xservices/[forClass](/[variant])
  * </pre>
- * 
+ *
  * is generated with the content :
- * 
+ *
  * <pre>
  * (# default)
  * [implClass]
  * </pre>
- * 
+ *
  * @see LookupKey
  * @see DiscoveryService
- * 
+ *
  * @author Philippe Poulard
  */
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class LookupKeyProcessor extends AbstractProcessor {
 
-    static Set<String> TYPES = new HashSet<String>();
+    static Set<String> TYPES = new HashSet<>();
 
     static {
         TYPES.add(LookupKey.class.getCanonicalName());
         TYPES.add(LookupKeys.class.getCanonicalName());
     }
 
-    Set<Mapping> mappings = new HashSet<Mapping>();
+    Set<Mapping> mappings = new HashSet<>();
 
     static class Mapping {
 
@@ -64,7 +64,7 @@ public class LookupKeyProcessor extends AbstractProcessor {
         String implClass;
         boolean byDefault;
 
-        public Mapping(String xservice, String implClass, boolean byDefault) {
+        Mapping(String xservice, String implClass, boolean byDefault) {
             this.xservice = xservice;
             this.implClass = implClass;
             this.byDefault = byDefault;
@@ -99,6 +99,12 @@ public class LookupKeyProcessor extends AbstractProcessor {
         return true;
     }
 
+    /**
+     * Process the annotations.
+     *
+     * @param annotations The annotation types requested to be processed
+     * @param roundEnv Environment for information about the current and prior round
+     */
     public void processAnnotations(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         Elements eltUtils = processingEnv.getElementUtils();
 
@@ -122,6 +128,12 @@ public class LookupKeyProcessor extends AbstractProcessor {
         }
     }
 
+    /**
+     * Define the mapping for a lookup key
+     *
+     * @param element The element that hold the annotation.
+     * @param lk The lookup key annotation.
+     */
     public void processLookupKey(Element element, LookupKey lk) {
         String forClass = null;
         try { // getting a Class cause an exception
@@ -153,6 +165,9 @@ public class LookupKeyProcessor extends AbstractProcessor {
         this.mappings.add(new Mapping(xservice, implClass, lk.byDefault()));
     }
 
+    /**
+     * Generate <code>META-INF/xservices/</code> files.
+     */
     public void generateFiles() {
         for (Mapping mapping : this.mappings) {
             Filer filer = processingEnv.getFiler();

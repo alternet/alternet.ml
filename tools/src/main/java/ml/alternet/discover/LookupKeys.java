@@ -8,16 +8,20 @@ import java.lang.annotation.Target;
 
 /**
  * Allow to repeat a lookup key annotation.
- * 
+ *
  * @see LookupKey
- * 
+ *
  * @author Philippe Poulard
  */
 @Documented
 @Retention(RetentionPolicy.SOURCE)
 @Target({ ElementType.TYPE })
 public @interface LookupKeys {
-    
+
+    /**
+     * Return the lookup keys.
+     * @return The lookup keys.
+     */
     LookupKey[] value();
 
 }

@@ -160,7 +160,7 @@ public final class CharArray implements CharSequence, Comparable<CharSequence>, 
             if (this.length != chars.length()) {
                 return false;
             }
-            for (int i = this.length, j = this.offset + this.length; --i >= 0;) {
+            for (int i = this.length, j = this.offset + this.length ; --i >= 0 ; ) {
                 if (this.chars[--j] != chars.charAt(i)) {
                     return false;
                 }
@@ -178,7 +178,7 @@ public final class CharArray implements CharSequence, Comparable<CharSequence>, 
 
     @Override
     public CharSequence subSequence(int start, int end) {
-        if ((start < 0) || (end < 0) || (start > end) || (end > this.length())) {
+        if (start < 0 || end < 0 || start > end || end > this.length()) {
             throw new IndexOutOfBoundsException();
         }
         return new CharArray(this.chars, this.offset + start, end - start);

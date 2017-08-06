@@ -10,7 +10,7 @@ import java.util.Set;
 
 /**
  * A soft map that discards its entry on memory leaks.
- * 
+ *
  * @param <K>
  *            Key type
  * @param <V>
@@ -19,37 +19,41 @@ import java.util.Set;
 public class SoftHashMap<K, V> extends AbstractMap<K, V> {
 
     /** The internal HashMap that will hold the SoftReference. */
-    private final Map<K, SoftEntry> hash = new HashMap<K, SoftEntry>();
+    private final Map<K, SoftEntry> hash = new HashMap<>();
     /** The number of "hard" references to hold internally. */
-    private final int HARD_SIZE;
+    private final int hardSize;
     /** The FIFO list of hard references, order of last access. */
-    private final LinkedList<V> hardCache = new LinkedList<V>();
+    private final LinkedList<V> hardCache = new LinkedList<>();
     /** Reference queue for cleared SoftReference objects. */
-    private final ReferenceQueue<V> queue = new ReferenceQueue<V>();
+    private final ReferenceQueue<V> queue = new ReferenceQueue<>();
 
+    /**
+     * Create a new soft hash map.
+     */
     public SoftHashMap() {
         this(100);
     }
 
     /**
      * Numbers of items to keep in the map
-     * 
+     *
      * @param hardSize
      *            The number of items for which still exist a hard reference.
      */
     public SoftHashMap(int hardSize) {
-        HARD_SIZE = hardSize;
+        this.hardSize = hardSize;
     }
 
+    @Override
     public V get(Object key) {
         V result = null;
         // We get the SoftReference represented by that key
-        SoftEntry soft_ref = hash.get(key);
-        if (soft_ref != null) {
+        SoftEntry softRef = hash.get(key);
+        if (softRef != null) {
             // From the SoftReference we get the value, which can be
             // null if it was not in the map, or it was removed in
             // the processQueue() method defined below
-            result = soft_ref.get();
+            result = softRef.get();
             if (result == null) {
                 // If the value has been garbage collected, remove the
                 // entry from the HashMap.
@@ -61,7 +65,7 @@ public class SoftHashMap<K, V> extends AbstractMap<K, V> {
                 // we don't want to search through it each time to remove
                 // duplicates.
                 hardCache.addFirst(result);
-                if (hardCache.size() > HARD_SIZE) {
+                if (hardCache.size() > hardSize) {
                     // Remove the last entry if list longer than HARD_SIZE
                     hardCache.removeLast();
                 }
@@ -100,7 +104,13 @@ public class SoftHashMap<K, V> extends AbstractMap<K, V> {
     /**
      * Here we put the key, value pair into the HashMap using a SoftValue
      * object.
+     *
+     * @param key The key
+     * @param value The value
+     * @return The previous value associated with key, or <code>null</code>
+     *           if there was no mapping for key
      */
+    @Override
     public V put(K key, V value) {
         processQueue(); // throw out garbage collected values first
         SoftEntry sv = hash.put(key, new SoftEntry(value, key, queue));
@@ -111,6 +121,7 @@ public class SoftHashMap<K, V> extends AbstractMap<K, V> {
         }
     }
 
+    @Override
     public V remove(Object key) {
         processQueue(); // throw out garbage collected values first
         SoftEntry sv = hash.remove(key);
@@ -121,12 +132,14 @@ public class SoftHashMap<K, V> extends AbstractMap<K, V> {
         }
     }
 
+    @Override
     public void clear() {
         hardCache.clear();
         processQueue(); // throw out garbage collected values
         hash.clear();
     }
 
+    @Override
     public int size() {
         processQueue(); // throw out garbage collected values first
         return hash.size();

@@ -3,7 +3,7 @@
  * handled in the JVM.
  *
  * The idea is to keep low the period where a password
- * appeared in clear in the memory, in order to make it
+ * appear clear in the memory, in order to make it
  * difficult to find when a memory dump is performed.
  *
  * A password can be created thanks to {@link PasswordManager}, that

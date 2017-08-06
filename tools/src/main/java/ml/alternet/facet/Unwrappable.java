@@ -3,9 +3,9 @@ package ml.alternet.facet;
 /**
  * An unwrappable object is an object that wraps another object for
  * compatibility purpose, and that can be safely unwrapped.
- * 
+ *
  * @author Philippe Poulard
- * 
+ *
  * @param <T>
  *            The type of the class to unwrap.
  */
@@ -27,16 +27,16 @@ public interface Unwrappable<T> {
         /**
          * Unusable constructor.
          */
-        private Unwrapper() {}
+        private Unwrapper() { }
 
         /**
          * Unwrap an object.
-         * 
+         *
          * @param o
          *            The object to unwrap
          * @param <T>
          *            The type of the class to unwrap.
-         * 
+         *
          * @return The object itself if it not unwrappable, or the unwrapped
          *         object (recursively).
          */
@@ -59,7 +59,7 @@ public interface Unwrappable<T> {
     /**
      * Return the object wrapped. The object wrapped must be of the same type of
      * the wrapper.
-     * 
+     *
      * @return The wrapped object.
      */
     T unwrap();

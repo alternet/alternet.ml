@@ -3,7 +3,6 @@ package ml.alternet.discover;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -73,12 +72,12 @@ import ml.alternet.web.WebContext;
  * instance to return.</li>
  * <li>The value of the init parameter of the Web application with the name of
  * the key supplied if it exists and is accessible (
- * 
+ *
  * <pre>
  * &lt;web-app&gt;
  *    &lt;context-param&gt;
  * </pre>
- * 
+ *
  * ). During its initialization, the web application must have registered a
  * filter <tt>ml.alternet.web.WebFilter</tt>.</li>
  * <li>The contents of the file "<tt>[discoveryService.properties]</tt>" of the
@@ -113,7 +112,7 @@ import ml.alternet.web.WebContext;
  * directory name has been retained, actually "xservices" (that stands for
  * "extended services").
  * </p>
- * 
+ *
  * <h3>Service names</h3>
  * <p>Inner class names contains a $ sign in their name ; all lookup are
  * performed on keys where the $ sign is replace by a dot. If you define
@@ -150,7 +149,7 @@ public final class DiscoveryService {
      */
     private static Properties PROPERTIES;
 
-    private DiscoveryService() {}
+    private DiscoveryService() { }
 
     /**
      * Load the property file (once) in various locations (current directory,
@@ -171,7 +170,7 @@ public final class DiscoveryService {
                     "lib" + File.separator + "discovery-service.properties" };
             // try with the files, the first found is used
             // and the other are ignored
-            for (int i = 0; i < propertiesFile.length;) {
+            for (int i = 0 ; i < propertiesFile.length ; ) {
                 String systemProperty = propertiesFile[i++];
                 String fileName = propertiesFile[i++];
                 File file;
@@ -192,9 +191,7 @@ public final class DiscoveryService {
                     try {
                         PROPERTIES.load(new FileInputStream(file));
                         break;
-                    } catch (FileNotFoundException e) {
-                    } catch (IOException e) {
-                    }
+                    } catch (IOException e) { }
                 }
             }
         }
@@ -269,7 +266,8 @@ public final class DiscoveryService {
                                 int sharp = clazz.indexOf('#');
                                 if (sharp != -1) {
                                     if (clazz.substring(sharp).indexOf(
-                                            "default") != -1) {
+                                            "default") != -1)
+                                    {
                                         // this is the default
                                         isDefault = true;
                                     }
@@ -394,7 +392,7 @@ public final class DiscoveryService {
                             String serviceId = "META-INF/xservices/" + key;
                             @SuppressWarnings("rawtypes")
                             Iterator it;
-                            for (it = getClasses(serviceId); it.hasNext();) {
+                            for (it = getClasses(serviceId) ; it.hasNext() ; ) {
                                 impl = (String) it.next();
                                 // ignore others
                                 while (it.hasNext()) {
@@ -475,7 +473,8 @@ public final class DiscoveryService {
     @SuppressWarnings("unchecked")
     public static <T> T lookupSingleton(String key)
             throws InstantiationException, IllegalAccessException,
-            ClassNotFoundException {
+            ClassNotFoundException
+    {
         key = key.replace('$', '.');
         Object o = find(key);
         if (o instanceof Class) {
@@ -513,7 +512,8 @@ public final class DiscoveryService {
      */
     public static <T> T lookupSingleton(Class<T> clazz)
             throws InstantiationException, IllegalAccessException,
-            ClassNotFoundException {
+            ClassNotFoundException
+    {
         return lookupSingleton(clazz.getName());
     }
 
@@ -538,7 +538,8 @@ public final class DiscoveryService {
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public static <T> T newInstance(String key) throws ClassNotFoundException,
-            InstantiationException, IllegalAccessException {
+            InstantiationException, IllegalAccessException
+    {
         key = key.replace('$', '.');
         Class clazz = DiscoveryService.lookup(key);
         if (clazz == null) {
@@ -571,7 +572,8 @@ public final class DiscoveryService {
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <T> T newInstance(Class clazz) throws ClassNotFoundException,
-            InstantiationException, IllegalAccessException {
+            InstantiationException, IllegalAccessException
+    {
         // check first if the class is instanciable
         if (clazz.isInterface() || Modifier.isAbstract(clazz.getModifiers())) {
             // lookup for a concrete implementation...

@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 import ml.alternet.facet.Rewindable;
 import ml.alternet.facet.Trackable;
 import ml.alternet.io.IOUtil;
+import ml.alternet.misc.CharRange;
 import ml.alternet.misc.Position;
 import ml.alternet.misc.Thrower;
 import ml.alternet.util.NumberUtil;
@@ -22,7 +23,7 @@ import ml.alternet.util.NumberUtil;
  * is a number or not, for reading characters,
  * strings and numbers, pick a value
  * from a set of possible strings or Enum values,
- * and even pick the next character if if belongs
+ * and even pick the next character if it belongs
  * to a range of characters (possibly built with
  * union and exclusions of other ranges).</p>
  *
@@ -67,7 +68,7 @@ public abstract class Scanner implements Trackable, Rewindable {
      * @param input The input.
      * @return The scanner
      */
-    static public Scanner of(CharSequence input) {
+    public static Scanner of(CharSequence input) {
         try {
             return new StringScanner(input);
         } catch (IOException e) {
@@ -84,7 +85,7 @@ public abstract class Scanner implements Trackable, Rewindable {
      * @throws IOException When an I/O error occur.
      * @throws IllegalArgumentException When the marks aren't supported.
      */
-    static public Scanner of(Reader input) throws IllegalArgumentException, IOException {
+    public static Scanner of(Reader input) throws IllegalArgumentException, IOException {
         return new ReaderScanner(input);
     }
 
@@ -109,7 +110,7 @@ public abstract class Scanner implements Trackable, Rewindable {
 
         int mark;
 
-        public Cursor(int cursor) {
+        Cursor(int cursor) {
             this.mark = cursor;
         }
 
@@ -121,7 +122,7 @@ public abstract class Scanner implements Trackable, Rewindable {
 
     static class State {
 
-        public State(Scanner scanner) {
+        State(Scanner scanner) {
             this.source = scanner;
         }
 
@@ -559,7 +560,6 @@ public abstract class Scanner implements Trackable, Rewindable {
      *
      * @see #nextNumber()
      * @see #nextNumber(NumberConstraint)
-     * @see #nextObject(DataConstraint)
      * @see #nextString(StringConstraint)
      * @see #nextString(StringConstraint, StringBuilder)
      */
@@ -607,13 +607,11 @@ public abstract class Scanner implements Trackable, Rewindable {
      * @throws IOException When an I/O error occur.
      */
     public boolean hasNextChar(String chars, boolean consume) throws IOException {
-        if ( ! this.state.end ) {
-            if (chars.indexOf(this.state.next) >= 0) {
-                if ( consume ) {
-                    this.state.source.read();
-                }
-                return true;
+        if ( ! this.state.end && chars.indexOf(this.state.next) >= 0) {
+            if ( consume ) {
+                this.state.source.read();
             }
+            return true;
         }
         return false;
     }
@@ -632,14 +630,12 @@ public abstract class Scanner implements Trackable, Rewindable {
      * @throws IOException When an I/O error occur.
      */
     public int nextChar(String chars, boolean consume) throws IOException {
-        if ( ! this.state.end ) {
-            if (chars.indexOf(this.state.next) >= 0) {
-                int c = this.state.next;
-                if ( consume ) {
-                    this.state.source.read();
-                }
-                return c;
+        if ( ! this.state.end && chars.indexOf(this.state.next) >= 0) {
+            int c = this.state.next;
+            if ( consume ) {
+                this.state.source.read();
             }
+            return c;
         }
         return IOUtil.EOF;
     }
@@ -703,48 +699,6 @@ public abstract class Scanner implements Trackable, Rewindable {
                 }
             }
         }
-//        if ( string == null ) {
-//            return true;
-//        } else if ( this.state.end ) {
-//            return false;
-//        } else {
-//            int len = string.length();
-//            if ( len == 0 ) {
-//                return true;
-//            } else { // len > 1
-//                boolean[] match = { false };
-//                OfInt chars = string.codePoints().spliterator();
-//                chars.tryAdvance((IntConsumer) (i -> match[0] = i == this.state.next));
-//                if (match[0]) {
-//                    this.state.source.mark();
-//                    while ( match[0] ) {
-//                        this.state.source.read();
-//                        if ( this.state.end) {
-//                            this.state.source.cancel();
-//                            return false;
-//                        }
-//                        match[0] = false;
-//                        if (chars.tryAdvance((IntConsumer) (i -> match[0] = i == this.state.next))) {
-//                            if ( ! match[0]) {
-//                                this.state.source.cancel();
-//                                return false;
-//                            }
-//                        } else {
-//                            break;
-//                        }
-//                    }
-//                    if ( consume ) {
-//                        this.state.source.consume();
-//                        this.state.source.read();
-//                    } else {
-//                        this.state.source.cancel();
-//                    }
-//                    return true;
-//                } else {
-//                    return false;
-//                }
-//            }
-//        }
     }
 
     /**
@@ -768,7 +722,7 @@ public abstract class Scanner implements Trackable, Rewindable {
      *
      * <p>Some convenient methods are available for getting a single
      * character without using a mark :
-     * {@link #lookAhead()}, {@link #nextChar()}, {@link #hasNextChar(char, boolean)}
+     * {@link #lookAhead()}, {@link #nextChar()}, {@link #hasNextChar(int, boolean)}
      * and {@link #hasNextChar(String, boolean)}.</p>
      *
      * @see Reader#mark(int)

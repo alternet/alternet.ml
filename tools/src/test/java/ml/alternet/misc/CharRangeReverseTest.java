@@ -1,5 +1,6 @@
-package ml.alternet.scan;
+package ml.alternet.misc;
 
+import static ml.alternet.misc.CharRange.Chars.reverse;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
@@ -8,9 +9,8 @@ import java.util.stream.IntStream;
 
 import org.testng.annotations.Test;
 
-import ml.alternet.scan.CharRange.BoundRange;
-import ml.alternet.scan.CharRange.Range;
-import static ml.alternet.scan.CharRange.Chars.reverse;
+import ml.alternet.misc.CharRange.BoundRange;
+import ml.alternet.misc.CharRange.Range;
 
 @Test
 public class CharRangeReverseTest {

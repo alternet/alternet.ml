@@ -25,13 +25,18 @@ public class NoCloseReader extends FilterReader {
      * Use {@link #doClose()} instead.
      *
      * @see java.io.Reader#close()
+     *
+     * @throws IOException Never thrown.
      */
-    public void close() throws IOException {}
+    @Override
+    public void close() throws IOException { }
 
     /**
      * Really close the input.
      *
      * @see java.io.Reader#close()
+     *
+     * @throws IOException When an I/O error occurs.
      */
     public void doClose() throws IOException {
         super.close();

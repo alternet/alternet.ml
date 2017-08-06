@@ -9,17 +9,35 @@ public class TodoException extends WtfException {
 
     private static final long serialVersionUID = -1256986161964653713L;
 
-    public TodoException() {
-    }
+    /**
+     * Create the exception.
+     */
+    public TodoException() { }
 
+    /**
+     * Create the exception.
+     *
+     * @param message The message.
+     */
     public TodoException(String message) {
         super(message);
     }
 
+    /**
+     * Create the exception.
+     *
+     * @param cause The cause.
+     */
     public TodoException(Throwable cause) {
         super(cause.getMessage(), cause);
     }
 
+    /**
+     * Create the exception.
+     *
+     * @param message The message.
+     * @param cause The cause.
+     */
     public TodoException(String message, Throwable cause) {
         super(message, cause);
     }

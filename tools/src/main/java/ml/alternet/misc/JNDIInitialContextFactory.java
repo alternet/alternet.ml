@@ -25,7 +25,7 @@ public class JNDIInitialContextFactory implements InitialContextFactory {
     static {
         try {
             CONTEXT = new InitialContext(true) {
-                Map<String, Object> bindings = new HashMap<String, Object>();
+                Map<String, Object> bindings = new HashMap<>();
 
                 @Override
                 public void bind(String name, Object obj) throws NamingException {
@@ -42,10 +42,22 @@ public class JNDIInitialContextFactory implements InitialContextFactory {
         }
     }
 
+    /**
+     * Create an initial context.
+     *
+     * @param environment Unused.
+     */
+    @Override
     public Context getInitialContext(Hashtable<?, ?> environment) throws NamingException {
         return CONTEXT;
     }
 
+    /**
+     * Bind an object to a name.
+     *
+     * @param name The name.
+     * @param obj The object.
+     */
     public static void bind(String name, Object obj) {
         try {
             CONTEXT.bind(name, obj);

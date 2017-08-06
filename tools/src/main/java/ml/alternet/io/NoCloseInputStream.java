@@ -24,13 +24,18 @@ public class NoCloseInputStream extends FilterInputStream {
      * Do not close.
      * Use {@link #doClose()} instead.
      *
+     * @throws IOException Never thrown.
+     *
      * @see #doClose()
      * @see InputStream#close()
      */
-    public void close() throws IOException {}
+    @Override
+    public void close() throws IOException { }
 
     /**
      * Really close the input.
+     *
+     * @throws IOException When an I/O occur.
      *
      * @see InputStream#close()
      */

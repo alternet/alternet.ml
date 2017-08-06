@@ -122,7 +122,7 @@ public final class NumberUtil {
                 return new BigInteger(number);
             } catch (NumberFormatException unexpectedDotOrExp) {
                 // damned, they decide to annoy me
-                for (int i = number.length(); --i >= 0;) {
+                for (int i = number.length() ; --i >= 0 ; ) {
                     char c = number.charAt(i);
                     if (c == 'e' || c == 'E') {
                         return new BigDecimal(number).toBigInteger();

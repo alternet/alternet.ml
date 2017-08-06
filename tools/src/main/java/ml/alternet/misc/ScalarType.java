@@ -7,20 +7,23 @@ package ml.alternet.misc;
  */
 public enum ScalarType {
 
+    /** The Boolean type. */
     Boolean {
         @SuppressWarnings("unchecked")
         @Override
         public Boolean get(java.lang.String value) {
-            return (Boolean) java.lang.Boolean.parseBoolean(value);
+            return java.lang.Boolean.parseBoolean(value);
         }
     },
+    /** The Byte type. */
     Byte {
         @SuppressWarnings("unchecked")
         @Override
         public Byte get(java.lang.String value) {
-            return (Byte) java.lang.Byte.parseByte(value);
+            return java.lang.Byte.parseByte(value);
         }
     },
+    /** The Character type. */
     Character {
         @SuppressWarnings("unchecked")
         @Override
@@ -28,41 +31,47 @@ public enum ScalarType {
             return value;
         }
     },
+    /** The Double type. */
     Double {
         @SuppressWarnings("unchecked")
         @Override
         public Double get(java.lang.String value) {
-            return (Double) java.lang.Double.parseDouble(value);
+            return java.lang.Double.parseDouble(value);
         }
     },
+    /** The Float type. */
     Float {
         @SuppressWarnings("unchecked")
         @Override
         public Float get(java.lang.String value) {
-            return (Float) java.lang.Float.parseFloat(value);
+            return java.lang.Float.parseFloat(value);
         }
     },
+    /** The Integer type. */
     Integer {
         @SuppressWarnings("unchecked")
         @Override
         public Integer get(java.lang.String value) {
-            return (Integer) java.lang.Integer.parseInt(value);
+            return java.lang.Integer.parseInt(value);
         }
     },
+    /** The Long type. */
     Long {
         @SuppressWarnings("unchecked")
         @Override
         public Long get(java.lang.String value) {
-            return (Long) java.lang.Long.parseLong(value);
+            return java.lang.Long.parseLong(value);
         }
     },
+    /** The Short type. */
     Short {
         @SuppressWarnings("unchecked")
         @Override
         public Short get(java.lang.String value) {
-            return (Short) java.lang.Short.parseShort(value);
+            return java.lang.Short.parseShort(value);
         }
     },
+    /** The String type. */
     String {
         @SuppressWarnings("unchecked")
         @Override
@@ -71,8 +80,22 @@ public enum ScalarType {
         }
     };
 
+    /**
+     * "java.lang.".length()
+     */
     public static final int JAVA_LANG_PACKAGE_LENGTH = "java.lang.".length();
 
+    /**
+     * "Cast" as the underlying type.
+     *
+     * @param value The value to transform.
+     *
+     * @return The value in the expected type.
+     *
+     * @param <T> The type of the expected type.
+     *
+     * @throws NumberFormatException For number types, if the string does not contain a parsable byte.
+     */
     public abstract <T> T get(String value);
 
 }

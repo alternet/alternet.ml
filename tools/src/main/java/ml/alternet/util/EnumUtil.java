@@ -42,7 +42,9 @@ public class EnumUtil {
      * @param enumValue The instance to change
      * @param transformer Apply a transformation on the name of the instance
      */
-    public static void replace(Class<? extends Enum<?>> enumClass, Object enumValue, UnaryOperator<String> transformer) {
+    public static void replace(Class<? extends Enum<?>> enumClass, Object enumValue,
+            UnaryOperator<String> transformer)
+    {
         try {
             Field fieldName = enumClass.getSuperclass().getDeclaredField("name");
             AccessController.doPrivileged((PrivilegedAction<Void>) (() -> {
@@ -70,7 +72,9 @@ public class EnumUtil {
      * @param enumValue The instance to change
      * @param transformer Apply a transformation on the ordinal of the instance
      */
-    public static void reorder(Class<? extends Enum<?>> enumClass, Object enumValue, UnaryOperator<Integer> transformer) {
+    public static void reorder(Class<? extends Enum<?>> enumClass, Object enumValue,
+            UnaryOperator<Integer> transformer)
+    {
         try {
             Field fieldName = enumClass.getSuperclass().getDeclaredField("ordinal");
             AccessController.doPrivileged((PrivilegedAction<Void>) (() -> {

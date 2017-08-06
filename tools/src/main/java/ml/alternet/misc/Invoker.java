@@ -13,12 +13,12 @@ import java.util.logging.Logger;
  */
 public class Invoker {
 
-    private final static Logger LOGGER = Logger.getLogger(Invoker.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(Invoker.class.getName());
 
     /**
      * Unused and unusable constructor.
      */
-    private Invoker() {}
+    private Invoker() { }
 
     /**
      * Get a field of a class or one of its parent class.
@@ -75,7 +75,8 @@ public class Invoker {
      *             allow to change its visibility.
      */
     public static void set(Object target, String field, Object value) throws NoSuchFieldException,
-            IllegalArgumentException, IllegalAccessException {
+            IllegalArgumentException, IllegalAccessException
+    {
         Field f = getField(target.getClass(), field);
         try {
             f.setAccessible(true);
@@ -199,7 +200,8 @@ public class Invoker {
      */
     @SuppressWarnings("unchecked")
     public static <T> T call(Object target, String method) throws NoSuchMethodException, IllegalAccessException,
-            InvocationTargetException {
+            InvocationTargetException
+    {
         Method m = getMethod(target.getClass(), method);
         try {
             m.setAccessible(true);
@@ -242,7 +244,8 @@ public class Invoker {
      */
     @SuppressWarnings("unchecked")
     public static <T> T call(Object target, String method, Object[] args, Class<?>[] paramTypes)
-            throws NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+            throws NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException
+    {
         Method m = getMethod(target.getClass(), method, paramTypes);
         try {
             m.setAccessible(true);

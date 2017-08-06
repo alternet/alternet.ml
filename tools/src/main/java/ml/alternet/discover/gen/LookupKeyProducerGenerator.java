@@ -57,8 +57,9 @@ public class LookupKeyProducerGenerator extends AbstractProcessor {
         String variant;
         String lookupKey;
 
-        public Mapping(String producerPkg, String producerClassName, String shortClassName, String className,
-                String variant, String lookupKey) {
+        Mapping(String producerPkg, String producerClassName, String shortClassName, String className,
+                String variant, String lookupKey)
+        {
             this.producerPkg = producerPkg;             // org.acme.foo
             this.producerClassName = producerClassName; // Bar$Baz_Producer_var
             this.shortClassName = shortClassName;       // Bar$Baz
@@ -96,6 +97,12 @@ public class LookupKeyProducerGenerator extends AbstractProcessor {
         return true;
     }
 
+    /**
+     * Process the annotations.
+     *
+     * @param annotations The annotation types requested to be processed
+     * @param roundEnv Environment for information about the current and prior round
+     */
     public void processAnnotations(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         Elements eltUtils = processingEnv.getElementUtils();
 
@@ -119,6 +126,12 @@ public class LookupKeyProducerGenerator extends AbstractProcessor {
         }
     }
 
+    /**
+     * Process a single annotation.
+     *
+     * @param element The element that hold the annotation.
+     * @param producer The annotation.
+     */
     public void processAnnotation(Element element, Injection.Producer producer) {
         String forClass = null;
         try { // getting a Class cause an exception
@@ -151,6 +164,9 @@ public class LookupKeyProducerGenerator extends AbstractProcessor {
         this.mappings.add(new Mapping(producerPkg, producerClassName, shortClassName, className, variant, lookupKey));
     }
 
+    /**
+     * Generate the files.
+     */
     public void generateFiles() {
         Filer filer = processingEnv.getFiler();
         Messager messager = processingEnv.getMessager();

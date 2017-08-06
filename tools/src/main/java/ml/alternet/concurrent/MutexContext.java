@@ -49,7 +49,8 @@ public class MutexContext {
     // based on
     // http://illegalargumentexception.blogspot.com/2008/04/java-synchronizing-on-transient-id.html
 
-    private final Map<LockableMutex<?>, WeakReference<LockableMutex<?>>> mutexMap = new WeakHashMap<LockableMutex<?>, WeakReference<LockableMutex<?>>>();
+    private final Map<LockableMutex<?>, WeakReference<LockableMutex<?>>> mutexMap =
+            new WeakHashMap<>();
     private final StampedLock lock = new StampedLock();
 
     private LockableMutex<?> getLockableMutex(String id) {
@@ -133,6 +134,7 @@ public class MutexContext {
             public Lock apply(final Mutex mutex) {
                 return new ReentrantLock() {
                     private static final long serialVersionUID = 7427115700635757451L;
+                    @Override
                     public String toString() {
                         return mutex.toString();
                     }
@@ -145,6 +147,7 @@ public class MutexContext {
             public ReadWriteLock apply(final Mutex mutex) {
                 return new ReentrantReadWriteLock() {
                     private static final long serialVersionUID = -1093907045866881049L;
+                    @Override
                     public String toString() {
                         return mutex.toString();
                     }
@@ -157,6 +160,7 @@ public class MutexContext {
             public StampedLock apply(final Mutex mutex) {
                 return new StampedLock() {
                     private static final long serialVersionUID = -8226412869978768092L;
+                    @Override
                     public String toString() {
                         return mutex.toString();
                     }
@@ -182,7 +186,7 @@ public class MutexContext {
      * @param id The string ID.
      *
      * @return A unique lock for the given ID in this context.
-     * 
+     *
      * @throws IllegalStateException
      *             If another kind of lock has been already requested for this
      *             ID
@@ -203,7 +207,7 @@ public class MutexContext {
      * @param id The string ID.
      *
      * @return A unique RW lock for the given ID in this context.
-     * 
+     *
      * @throws IllegalStateException
      *             If another kind of lock has been already requested for this ID
      */
@@ -224,7 +228,7 @@ public class MutexContext {
      *            The string ID.
      *
      * @return A unique stamped lock for the given ID in this context.
-     * 
+     *
      * @throws IllegalStateException
      *             If another kind of lock has been already requested for this
      *             ID
@@ -251,7 +255,7 @@ public class MutexContext {
 
     /**
      * Get the number of mutex objects being held
-     * 
+     *
      * @return The number of items in the map
      */
     public int getMutexCount() {

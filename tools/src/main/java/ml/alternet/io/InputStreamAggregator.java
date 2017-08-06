@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  */
 public class InputStreamAggregator extends InputStream {
 
-    private final static Logger LOGGER = Logger.getLogger(InputStreamAggregator.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(InputStreamAggregator.class.getName());
 
     // An iterator on the input streams.
     private Iterator<InputStream> it = null;
@@ -90,8 +90,9 @@ public class InputStreamAggregator extends InputStream {
      */
     @Override
     public int read() throws IOException {
-        if (this.closed)
+        if (this.closed) {
             throw new IOException("InputStream closed");
+        }
         int r = -1;
         if (this.current != null) {
             r = this.current.read();
@@ -146,10 +147,12 @@ public class InputStreamAggregator extends InputStream {
      */
     @Override
     public int read(byte[] bytes, int off, int len) throws IOException {
-        if (off < 0 || len < 0 || off + len > bytes.length)
+        if (off < 0 || len < 0 || off + len > bytes.length) {
             throw new IndexOutOfBoundsException();
-        if (this.closed)
+        }
+        if (this.closed) {
             throw new IOException("InputStream closed");
+        }
         int r = -1;
         if (this.current != null) {
             r = this.current.read(bytes, off, len);
@@ -182,12 +185,15 @@ public class InputStreamAggregator extends InputStream {
      */
     @Override
     public long skip(long n) throws IOException {
-        if (this.closed)
+        if (this.closed) {
             throw new IOException("InputStream closed");
-        if (n < 0)
+        }
+        if (n < 0) {
             throw new IllegalArgumentException("Can't skip " + n + " bytes");
-        if (n == 0 || this.current == null)
+        }
+        if (n == 0 || this.current == null) {
             return 0;
+        }
         long s = this.current.skip(n);
         if (s < n) {
             next();
@@ -213,8 +219,9 @@ public class InputStreamAggregator extends InputStream {
      */
     @Override
     public synchronized int available() throws IOException {
-        if (this.closed)
+        if (this.closed) {
             throw new IOException("InputStream closed");
+        }
         if (this.current == null) {
             return 0;
         }
@@ -232,8 +239,9 @@ public class InputStreamAggregator extends InputStream {
      */
     @Override
     public void close() throws IOException {
-        if (closed)
+        if (closed) {
             return;
+        }
         while (this.current != null) {
             this.current.close();
             next();

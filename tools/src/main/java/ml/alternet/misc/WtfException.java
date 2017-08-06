@@ -3,12 +3,12 @@ package ml.alternet.misc;
 /**
  * <a href="http://en.wiktionary.org/wiki/WTF">As the name suggest</a>, an
  * unexpected exception.
- * 
+ *
  * Use this exception in places where no exception can occur whereas handling an
  * exception is mandatory.
- * 
+ *
  * For example :
- * 
+ *
  * <pre>
  * try {
  *     MessageDigest md = MessageDigest.getInstance(&quot;MD5&quot;);
@@ -18,15 +18,14 @@ package ml.alternet.misc;
  *     WtfException.throwException(e);
  * }
  * </pre>
- * 
+ *
  * @author Philippe Poulard
  */
 public class WtfException extends RuntimeException {
 
     private static final long serialVersionUID = -6645630169970707970L;
 
-    WtfException() {
-    }
+    WtfException() { }
 
     WtfException(String message) {
         super(message);
@@ -36,6 +35,13 @@ public class WtfException extends RuntimeException {
         super(message, cause);
     }
 
+    /**
+     * Propagate or create the exception.
+     *
+     * @param cause The cause.
+     *
+     * @return The exception.
+     */
     public static WtfException throwException(Throwable cause) {
         if (cause instanceof WtfException) {
             return (WtfException) cause;
@@ -44,6 +50,14 @@ public class WtfException extends RuntimeException {
         }
     }
 
+    /**
+     * Propagate or create the exception.
+     *
+     * @param message The message.
+     * @param cause The cause.
+     *
+     * @return The exception.
+     */
     public static WtfException throwException(String message, Throwable cause) {
         if (cause instanceof WtfException) {
             return (WtfException) cause;

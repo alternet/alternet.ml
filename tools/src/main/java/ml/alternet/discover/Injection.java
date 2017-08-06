@@ -7,7 +7,6 @@ import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.ElementType.PACKAGE;
 
 import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
 import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -118,7 +117,7 @@ public interface Injection {
     @javax.inject.Qualifier
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ METHOD, FIELD, PARAMETER /* , TYPE, CONSTRUCTOR */})
-    public @interface LookupKey {
+    @interface LookupKey {
 
         /**
          * The variant to inject, may match a producer.
@@ -141,7 +140,7 @@ public interface Injection {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ TYPE, PACKAGE })
     @Repeatable(Producers.class)
-    public @interface Producer {
+    @interface Producer {
 
         /**
          * The class to produce ; by default it is the class on which this
@@ -182,9 +181,14 @@ public interface Injection {
      */
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
-    @Target({ ElementType.TYPE })
-    public @interface Producers {
+    @Target({ TYPE })
+    @interface Producers {
 
+        /**
+         * Return the producers.
+         *
+         * @return The producers.
+         */
         Producer[] value();
 
     }

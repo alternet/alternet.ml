@@ -17,7 +17,7 @@ import java.util.logging.Logger;
  */
 public class ReaderAggregator extends Reader {
 
-    private final static Logger LOGGER = Logger.getLogger(ReaderAggregator.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ReaderAggregator.class.getName());
 
     /** An iterator on the readers. */
     private Iterator<Reader> it = null;
@@ -96,8 +96,9 @@ public class ReaderAggregator extends Reader {
      */
     @Override
     public int read() throws IOException {
-        if (closed)
+        if (closed) {
             throw new IOException("Reader closed");
+        }
         int r = -1;
         if (this.current != null) {
             r = this.current.read();
@@ -152,10 +153,12 @@ public class ReaderAggregator extends Reader {
      */
     @Override
     public int read(char[] cbuf, int off, int len) throws IOException {
-        if (off < 0 || len < 0 || off + len > cbuf.length)
+        if (off < 0 || len < 0 || off + len > cbuf.length) {
             throw new IndexOutOfBoundsException();
-        if (closed)
+        }
+        if (closed) {
             throw new IOException("Reader closed");
+        }
         int r = -1;
         if (this.current != null) {
             r = this.current.read(cbuf, off, len);
@@ -188,12 +191,15 @@ public class ReaderAggregator extends Reader {
      */
     @Override
     public long skip(long n) throws IOException {
-        if (closed)
+        if (closed) {
             throw new IOException("Reader closed");
-        if (n < 0)
+        }
+        if (n < 0) {
             throw new IllegalArgumentException("Can't skip " + n + " characters");
-        if (n == 0 || this.current == null)
+        }
+        if (n == 0 || this.current == null) {
             return 0;
+        }
         long s = this.current.skip(n);
         if (s < n) {
             next();
@@ -214,8 +220,9 @@ public class ReaderAggregator extends Reader {
      */
     @Override
     public boolean ready() throws IOException {
-        if (closed)
+        if (closed) {
             throw new IOException("Reader closed");
+        }
         if (this.current == null) {
             return false;
         } else {
@@ -234,8 +241,9 @@ public class ReaderAggregator extends Reader {
      */
     @Override
     public void close() throws IOException {
-        if (closed)
+        if (closed) {
             return;
+        }
         while (this.current != null) {
             this.current.close();
             next();

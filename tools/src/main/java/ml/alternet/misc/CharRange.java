@@ -1,4 +1,4 @@
-package ml.alternet.scan;
+package ml.alternet.misc;
 
 import static java.util.Spliterator.DISTINCT;
 import static java.util.Spliterator.IMMUTABLE;
@@ -116,15 +116,18 @@ public interface CharRange extends Presentable {
     /**
      * The empty range.
      */
-    public static final BoundRange EMPTY = new Range(0, -1) {
+    BoundRange EMPTY = new Range(0, -1) {
+
         @Override
         public boolean contains(int codepoint) {
             return false; // shortcut
         }
+
         @Override
         public CharRange except(CharRange range) {
             return this;
         }
+
         @Override
         public CharRange union(CharRange range) {
             return range;
@@ -134,14 +137,58 @@ public interface CharRange extends Presentable {
     /**
      * The range for any character.
      */
-    public static final BoundRange ANY = new Range(Character.MIN_CODE_POINT, Character.MAX_CODE_POINT) {
+     BoundRange ANY = new Range(Character.MIN_CODE_POINT, Character.MAX_CODE_POINT) {
+
         @Override
         public boolean contains(int codepoint) {
             return true; // shortcut
         }
+
         @Override
         public CharRange union(CharRange range) {
             return this;
+        }
+
+        @Override
+        public CharRange except(CharRange range) {
+            if (range instanceof Reversible) {
+                return ((Reversible) range).revert();
+            } else {
+                return super.except(range);
+            }
+        }
+
+        @Override
+        public CharRange except(CharRange... ranges) {
+            if (ranges.length == 0) {
+                return this;
+            }
+            CharRange first = ranges[0];
+            StringBuffer sb = new StringBuffer();
+            if (Arrays.stream(ranges).allMatch(c -> {
+                if (    (c instanceof Char || c instanceof Chars)
+                     && ((Reversible) c).includes() == ((Reversible) first).includes())
+                {
+                    if (c instanceof Char) {
+                        sb.append(Character.toChars(((Char) c).car));
+                    } else {
+                        sb.append(((Chars) c).chars);
+                    }
+                    return true;
+                } else {
+                    return false;
+                }
+            }))
+            {
+                // all are individual chars
+                if (sb.length() == 1 || sb.length() == 2 && Character.isHighSurrogate(sb.charAt(0))) {
+                    return new Char(! ((Reversible) first).includes(), sb.codePointAt(0));
+                } else {
+                    return new Chars(! ((Reversible) first).includes(), sb.toString());
+                }
+            } else {
+                return super.except(ranges);
+            }
         }
     };
 
@@ -244,6 +291,13 @@ public interface CharRange extends Presentable {
             return true;
         }
 
+        /**
+         * Create a char range that is the complement of this char range.
+         *
+         * @return The revert char range.
+         */
+        CharRange revert();
+
     }
 
     /**
@@ -300,6 +354,15 @@ public interface CharRange extends Presentable {
         public abstract int end();
 
         /**
+         * Return all the characters of this bound range.
+         *
+         * @return A stream of characters included in this range of characters.
+         */
+        public IntStream characters() {
+            return IntStream.rangeClosed(start(), end());
+        }
+
+        /**
          * Indicates whether this range is empty or not.
          *
          * @return <code>true</code> if the start codepoint
@@ -334,7 +397,7 @@ public interface CharRange extends Presentable {
         public StringBuilder toPrettyString(StringBuilder buf) {
             if (end() == start()) {
                 return Char.append(buf.append('\''), start()).append('\'');
-            } else if (isEmpty()){
+            } else if (isEmpty()) {
                 return buf.append("''");
             } else {
                 return Char.append(Char.append(buf.append("['"), start())
@@ -471,7 +534,7 @@ public interface CharRange extends Presentable {
 
         public static StringBuilder append(StringBuilder buf, int c) {
             if (Character.isISOControl(c)) {
-                switch(c) {
+                switch (c) {
                 case '\b' : buf.append("\\b"); break;
                 case '\n' : buf.append("\\n"); break;
                 case '\t' : buf.append("\\t"); break;
@@ -492,6 +555,11 @@ public interface CharRange extends Presentable {
                 buf.appendCodePoint(c);
             }
             return buf;
+        }
+
+        @Override
+        public CharRange revert() {
+            return new Char(! this.equal, this.car);
         }
 
     }
@@ -692,6 +760,11 @@ public interface CharRange extends Presentable {
                     // when consecutive chars with MIN_CP or MAX_CP are found
         }
 
+        @Override
+        public CharRange revert() {
+            return new Chars(! this.equal, this.chars);
+        }
+
     }
 
     /**
@@ -767,6 +840,32 @@ public interface CharRange extends Presentable {
             }
         }
 
+        @Override
+        public CharRange revert() {
+            if (isEmpty()) {
+                return ANY;
+            } else if (this.start == Character.MIN_CODE_POINT) {
+                if (this.end == Character.MAX_CODE_POINT) {
+                    return EMPTY;
+                } else if (this.end + 1 == Character.MAX_CODE_POINT) {
+                    return new Char(true, Character.MAX_CODE_POINT);
+                } else {
+                    return new Range(this.end + 1, Character.MAX_CODE_POINT);
+                }
+            } else {
+                if (this.end == Character.MAX_CODE_POINT) {
+                    if (this.start == Character.MIN_CODE_POINT + 1) {
+                        return new Char(true, Character.MIN_CODE_POINT);
+                    } else {
+                        return new Range(Character.MIN_CODE_POINT, this.start - 1);
+                    }
+                } else {
+                    return new Range(Character.MIN_CODE_POINT, this.start - 1)
+                    .union(new Range(this.end + 1, Character.MAX_CODE_POINT));
+                }
+            }
+        }
+
     }
 
     /**
@@ -839,8 +938,9 @@ public interface CharRange extends Presentable {
             if (range.asIntervals().allMatch(r -> {
                     // 'r' is in the boundaries of an existing range ?
                     BoundRange exist = this.ranges.floor(r);
-                    return (exist != null && r.end() <= exist.end());
-            })) { // unchanged
+                    return exist != null && r.end() <= exist.end();
+            }))
+            { // unchanged
                 return this;
             } else {
                 return new Ranges(this, range);
@@ -873,9 +973,10 @@ public interface CharRange extends Presentable {
                     } else { // check the next
                         include = this.ranges.higher(include);
                         // that include element is after exclude element
-                        return (include != null && include.start() <= exclude.end());
+                        return include != null && include.start() <= exclude.end();
                     }
-            })) { // at least one exclusion has an impact on the ranges
+            }))
+            { // at least one exclusion has an impact on the ranges
                 // => create an iterator that merges 2 sorted cursors
                 Spliterator<BoundRange> iter = new AbstractSpliterator<BoundRange>(
                         Long.MAX_VALUE, DISTINCT | IMMUTABLE | NONNULL | ORDERED | SORTED )

@@ -71,7 +71,7 @@ public class StringScanner extends Scanner {
      *
      * <p>Some convenient methods are available for getting a single
      * character without using a mark :
-     * {@link #lookAhead()}, {@link #nextChar()}, {@link #hasNextChar(char, boolean)}
+     * {@link #lookAhead()}, {@link #nextChar()}, {@link #hasNextChar(int, boolean)}
      * and {@link #hasNextChar(String, boolean)}.</p>
      *
      * @see Reader#mark(int)
@@ -81,7 +81,7 @@ public class StringScanner extends Scanner {
     @Override
     public void mark() {
         // the current cursor has read a char in advance, except on EOF
-        this.state.source.push( this.state.cursor - (this.state.end?0:1) );
+        this.state.source.push( this.state.cursor - (this.state.end ? 0 : 1) );
     }
 
     /**

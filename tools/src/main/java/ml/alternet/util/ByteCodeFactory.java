@@ -25,7 +25,7 @@ public abstract class ByteCodeFactory {
      * except that you are not compelled to supply all the
      * implementations of the interface.
      *
-     * @param interface_ The interface to which we want an instance.
+     * @param interFace The interface to which we want an instance.
      *      If it is not an interface, it should fail.
      * @param <T> The return type, same as the interface.
      * @return An instance of this interface,
@@ -38,8 +38,10 @@ public abstract class ByteCodeFactory {
      * @throws ClassNotFoundException When the bytecode failed.
      */
     @SuppressWarnings("unchecked")
-    public <T> T newInstance(Class<T> interface_) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-        return (T) getClass(interface_).newInstance();
+    public <T> T newInstance(Class<T> interFace) throws InstantiationException, IllegalAccessException,
+            ClassNotFoundException
+    {
+        return (T) getClass(interFace).newInstance();
     }
 
     /**
@@ -57,7 +59,7 @@ public abstract class ByteCodeFactory {
      * except that you are not compelled to supply all the
      * implementations of the interface.
      *
-     * @param interface_ The interface to which we want an instance.
+     * @param interFace The interface to which we want an instance.
      *      If it is not an interface, it should fail ;
      *      that interface MUST NOT DEFINED the field
      *      "SINGLETON".
@@ -75,8 +77,10 @@ public abstract class ByteCodeFactory {
      * @throws SecurityException When the bytecode failed.
      */
     @SuppressWarnings("unchecked")
-    public <T> T getInstance(Class<T> interface_) throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, NoSuchFieldException, SecurityException {
-        return (T) getClass(interface_).getField(singletonName(interface_.getName())).get(null);
+    public <T> T getInstance(Class<T> interFace) throws InstantiationException, IllegalAccessException,
+            ClassNotFoundException, IllegalArgumentException, NoSuchFieldException, SecurityException
+    {
+        return (T) getClass(interFace).getField(singletonName(interFace.getName())).get(null);
     }
 
     /**
@@ -87,7 +91,7 @@ public abstract class ByteCodeFactory {
      * You are not compelled to supply all the
      * implementations of the interface.
      *
-     * @param interface_ The interface to which we want
+     * @param interFace The interface to which we want
      *      to generate a concrete implementation.
      *      If it is not an interface, it should fail.
      * @return A concrete class of this interface,
@@ -98,8 +102,8 @@ public abstract class ByteCodeFactory {
      * @throws IllegalAccessException When the bytecode failed.
      * @throws ClassNotFoundException When the bytecode failed.
      */
-    public Class<?> getClass(Class<?> interface_) throws IllegalAccessException, ClassNotFoundException {
-        String interfaceName = interface_.getName();
+    public Class<?> getClass(Class<?> interFace) throws IllegalAccessException, ClassNotFoundException {
+        String interfaceName = interFace.getName();
         String implName = interfaceName + "$";
         return Class.forName(implName, true, classLoader);
     }
@@ -157,7 +161,7 @@ public abstract class ByteCodeFactory {
                 String interfaceName = implName.substring(0, implName.length() - 1);
                 String interfaceType = 'L' + interfaceName + ';';
                 byte[] b = getByteCode(implName, interfaceName, interfaceType);
-                Class<?> c = defineClass(name,b,0,b.length);
+                Class<?> c = defineClass(name, b, 0, b.length);
                 return c;
             } else {
                 return ByteCodeFactory.class.getClassLoader().loadClass(name);
@@ -184,6 +188,13 @@ public abstract class ByteCodeFactory {
         return new byte[0];
     }
 
+    /**
+     * Get the byte code factory instance.
+     *
+     * @param className The concrete class name of the byte code factory.
+     *
+     * @return A new instance.
+     */
     public static ByteCodeFactory getInstance(String className) {
         try {
             return (ByteCodeFactory) Class.forName(className).newInstance();
@@ -193,7 +204,8 @@ public abstract class ByteCodeFactory {
     }
 
     //             MyClassImpl   MyParentClass     MyClass        LMyClass;      MY_CLASS
-        //        String className, String parentClassName, String interfaceName, String interfaceType, String singletonName);
+        //        String className, String parentClassName, String interfaceName,
+        //                                  String interfaceType, String singletonName);
 
         //    {
 //        // I don't want to use a big library for so few code generation

@@ -41,15 +41,12 @@ public final class XMLUtil {
      */
     public static boolean isXMLMimeType(String mimeType) {
         int index = mimeType.indexOf("xml");
-        if (index != -1 && (index + 3 < mimeType.length()) ? mimeType.charAt(index + 3) != '-' : true) {
-            // "application/xml", "text/xml", "image/svg+xml",
-            // "application/xhtml+xml", etc
-            // but not "application/xml-dtd",
-            // "application/xml-external-parsed-entity" etc
-            return true;
-        } else {
-            return false;
-        }
+        return index != -1 && (index + 3 < mimeType.length()) ? mimeType.charAt(index + 3) != '-' : true;
+        // TRUE for :
+        //          "application/xml", "text/xml", "image/svg+xml",
+        //          "application/xhtml+xml", etc
+        // but not  "application/xml-dtd",
+        //          "application/xml-external-parsed-entity" etc
     }
 
     /**
@@ -63,7 +60,8 @@ public final class XMLUtil {
      */
     public static String getQualifiedName(QName qName) {
         if (!XMLConstants.NULL_NS_URI.equals(qName.getNamespaceURI())
-                && !XMLConstants.DEFAULT_NS_PREFIX.equals(qName.getPrefix())) {
+                && !XMLConstants.DEFAULT_NS_PREFIX.equals(qName.getPrefix()))
+        {
             return qName.getPrefix() + ":" + qName.getLocalPart();
         } else {
             return qName.getLocalPart();

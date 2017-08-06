@@ -38,7 +38,9 @@ public class StringBuilderUtil {
                 if (first) {
                     first = false;
                     return "";
-                } else return delimiter.toString();
+                } else {
+                    return delimiter.toString();
+                }
             }
         };
         return Collector.of(

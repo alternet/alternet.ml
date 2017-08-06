@@ -31,7 +31,7 @@ import ml.alternet.util.Util;
 public class IOUtil {
 
     /** EOF = -1 */
-    public final static int EOF = -1;
+    public static final int EOF = -1;
 
     /** The void input stream. */
     public static final InputStream VOID_INPUT_STREAM = new InputStream() {

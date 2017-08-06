@@ -8,7 +8,7 @@ package ml.alternet.util;
 @Util
 public final class BytesUtil {
 
-    private BytesUtil() {}
+    private BytesUtil() { }
 
     /**
      * Byte-to-byte copy of an array of chars to an array of bytes without

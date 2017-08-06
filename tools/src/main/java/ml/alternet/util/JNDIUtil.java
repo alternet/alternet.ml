@@ -65,7 +65,8 @@ public class JNDIUtil {
      *             When a JNDI exception occurs
      */
     public static void bind(String jndiName, String factoryClassName, String className, String[][] data)
-            throws NamingException {
+            throws NamingException
+    {
         Context context = lookup();
         bind(context, jndiName, factoryClassName, className, data);
     }
@@ -89,8 +90,10 @@ public class JNDIUtil {
      * @throws NamingException
      *             When a JNDI exception occurs
      */
-    public static void bind(Context context, String jndiName, String factoryClassName, String className, String[][] data)
-            throws NamingException {
+    public static void bind(Context context, String jndiName, String factoryClassName,
+            String className, String[][] data)
+            throws NamingException
+    {
         Reference ref = createReference(factoryClassName, className, data);
         bind(context, jndiName, ref);
     }

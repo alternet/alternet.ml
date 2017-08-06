@@ -105,7 +105,7 @@ public class ReaderScanner extends Scanner {
      *
      * <p>Some convenient methods are available for getting a single
      * character without using a mark :
-     * {@link #lookAhead()}, {@link #nextChar()}, {@link #hasNextChar(char, boolean)}
+     * {@link #lookAhead()}, {@link #nextChar()}, {@link #hasNextChar(int, boolean)}
      * and {@link #hasNextChar(String, boolean)}.</p>
      *
      * @see Reader#mark(int)
@@ -166,7 +166,7 @@ public class ReaderScanner extends Scanner {
                         }
                     } // the char that was saved has been restore
                 }
-                this.state.end = (this.state.next == IOUtil.EOF);
+                this.state.end = this.state.next == IOUtil.EOF;
             } catch (IOException e) {
                 Thrower.doThrow(e);
             }
@@ -226,8 +226,9 @@ public class ReaderScanner extends Scanner {
             return Optional.of(new ReaderAggregator(
                 // prepend the current char
                 new StringReader( new String(Character.toChars(c) ) ),
-                this.state.cursors.isEmpty() ? this.reader :
-                    new NoCloseReader( this.reader ) // allow to reset mark
+                this.state.cursors.isEmpty()
+                    ? this.reader
+                    : new NoCloseReader( this.reader ) // allow to reset mark
             ));
         }
     }
@@ -262,7 +263,7 @@ public class ReaderScanner extends Scanner {
     public static String readAll( Reader input ) throws IOException {
         StringBuilder out = new StringBuilder(IOUtil.BUFFER_SIZE);
         char[] c = new char[IOUtil.BUFFER_SIZE];
-        for (int n; (n = input.read(c)) != -1; ) {
+        for (int n ; (n = input.read(c)) != -1 ; ) {
             out.append( c, 0, n);
         }
         input.close();

@@ -61,7 +61,7 @@ public class EnumValues<T> implements Readable<T>, Presentable { // is a set of 
                 .collect(Collectors.toSet());
         // dispatch by chars, start at index 0
         @SuppressWarnings("unchecked")
-        EnumValues<? extends Enum> result = new EnumValues<>((Set<EnumValues<?>>)(Object)
+        EnumValues<? extends Enum> result = new EnumValues<>((Set<EnumValues<?>>) (Object)
                                               enumValues); // odd cast to ensure to call the right constructor
         return result.dispatch(0);
     }
@@ -90,7 +90,7 @@ public class EnumValues<T> implements Readable<T>, Presentable { // is a set of 
                 .collect(Collectors.toSet());
         // dispatch by chars, start at index 0
         @SuppressWarnings("unchecked")
-        EnumValues<String> result = new EnumValues<>((Set<EnumValues<?>>)(Object)
+        EnumValues<String> result = new EnumValues<>((Set<EnumValues<?>>) (Object)
                                               enumValues); // odd cast to ensure to call the right constructor
         return result.dispatch(0);
     }
@@ -137,10 +137,10 @@ public class EnumValues<T> implements Readable<T>, Presentable { // is a set of 
 
     @Override
     public String toString() {
-        return (this.start==0?"":("(" + this.start + ") "))
-             + (this.chars==null?"":("\"" + this.chars + "\"="))
-             + "\'" + (this.val==null?"":this.val) + "\'"
-             + ("" + (this.values== null?"[]":(this.values + "")));
+        return this.start == 0 ? "" : ("(" + this.start + ") ")
+             + this.chars == null ? "" : ("\"" + this.chars + "\"=")
+             + "\'" + (this.val == null ? "" : this.val) + "\'"
+             + ("" + this.values == null ? "[]" : (this.values + ""));
     }
 
     // do we have the next chars from the input here ?
@@ -180,14 +180,14 @@ public class EnumValues<T> implements Readable<T>, Presentable { // is a set of 
      * @throws IOException When an I/O error occurs.
      */
     @Override
-    public java.util.Optional<T> nextValue(Scanner scanner) throws IOException {
+    public Optional<T> nextValue(Scanner scanner) throws IOException {
         return nextValuePart(scanner, 0); // part is complete from 0
     }
 
     // look for the next enum value part in this (sub)tree at the given char pos
-    java.util.Optional<T> nextValuePart(Scanner scanner, int charPos) throws IOException {
-        java.util.Optional<T> result = java.util.Optional.empty();
-        java.util.Optional<EnumValues<T>> value = this.values.stream()
+    Optional<T> nextValuePart(Scanner scanner, int charPos) throws IOException {
+        Optional<T> result = Optional.empty();
+        Optional<EnumValues<T>> value = this.values.stream()
             .filter(e -> e.hasNextChars(scanner))
             .findFirst(); // because we may find 1 or 0
         if (value.isPresent()) {
@@ -195,7 +195,7 @@ public class EnumValues<T> implements Readable<T>, Presentable { // is a set of 
             // try to find the longest match
             if (enumValue.values == null) {
                 // we have it
-                result = java.util.Optional.of(enumValue.val);
+                result = Optional.of(enumValue.val);
             } else {
                 scanner.mark();
                 // read as many chars as in the common chars (matched so far)...
@@ -212,8 +212,9 @@ public class EnumValues<T> implements Readable<T>, Presentable { // is a set of 
             if (! result.isPresent() && enumValue.val != null) {
                 String strValue = enumValue.val.toString();
                 if (strValue.length() == charPos // terminal value, all characters were consumed
-                || scanner.hasNextString(strValue.substring(charPos), true)) {
-                    result = java.util.Optional.of(enumValue.val);
+                        || scanner.hasNextString(strValue.substring(charPos), true))
+                {
+                    result = Optional.of(enumValue.val);
                 }
             }
         }
@@ -256,7 +257,7 @@ public class EnumValues<T> implements Readable<T>, Presentable { // is a set of 
                 sameString = enumByChar.size() == 1 && dispatchable.get(false).isEmpty();
                 if (sameString) {
                     // forEach = forSingle
-                    enumByChar.forEach((c,e) -> this.push(c));
+                    enumByChar.forEach((c, e) -> this.push(c));
                     index++;
                 }
             } while (sameString); // exit => we have a clean separation by char / or not dispatchable
@@ -292,9 +293,9 @@ public class EnumValues<T> implements Readable<T>, Presentable { // is a set of 
     }
 
     private static int FLAGS =
-            Spliterator.CONCURRENT | Spliterator.DISTINCT |
-            Spliterator.IMMUTABLE | Spliterator.NONNULL |
-            Spliterator.ORDERED;
+              Spliterator.CONCURRENT | Spliterator.DISTINCT
+            | Spliterator.IMMUTABLE | Spliterator.NONNULL
+            | Spliterator.ORDERED;
 
     /**
      * Return all the values inside.

@@ -1,4 +1,4 @@
-package ml.alternet.scan;
+package ml.alternet.misc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -7,9 +7,9 @@ import java.util.stream.Collectors;
 
 import org.testng.annotations.Test;
 
-import ml.alternet.scan.CharRange.BoundRange;
-import ml.alternet.scan.CharRange.Char;
-import ml.alternet.scan.CharRange.Range;
+import ml.alternet.misc.CharRange.BoundRange;
+import ml.alternet.misc.CharRange.Char;
+import ml.alternet.misc.CharRange.Range;
 
 @Test
 public class CharRangeTest {
