@@ -1,0 +1,6 @@
+.settings
+.classpath
+.project
+download/
+target/
+**/.DS_Store

@@ -11,12 +11,9 @@
         <relativePath>../alternet-libs</relativePath>
     </parent>
 
-    <url>http://soat.developpez.com/tutoriels/java/jvm/decouverte-machine-virtuelle-java/?page=bytecode-avec-plume-java-bytecode-assembler-pjba</url>
-
     <name>Alternet Tools - Generator</name>
-    <description>PJBA downloader compiler and packager and ByteCodeUtil code generator.
-        The purpose of this module is to generate some byte code with the help of PJBA.
-        PJBA is a light bytecode manipulation tool, but not available in Maven.
+    <description>ByteCodeUtil code generator.
+        The purpose of this module is to generate some byte code.
         This module is not intended for a public use, it is just used to
         generate the ByteCodeUtilImpl java source of alternet-tools.
         ByteCodeUtilImpl itself generate byte code.</description>
@@ -34,8 +31,16 @@
         </site>
     </distributionManagement>
 
+    <dependencies>
+        <dependency>
+            <groupId>ml.alternet</groupId>
+            <artifactId>ext-libs-pjba</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+
     <build>
-        <!--sourceDirectory>${project.basedir}/download/pjba/jvm_hardcore-p22/03_projects/pjba/01_src/main/java</sourceDirectory-->
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -48,97 +53,6 @@
                         </goals>
                         <configuration>
                             <proc>none</proc>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.7</version>
-                <executions>
-                  <execution>
-                    <id>add-source</id>
-                    <phase>generate-sources</phase>
-                    <goals>
-                      <goal>add-source</goal>
-                    </goals>
-                    <configuration>
-                      <sources>
-                        <source>${project.basedir}/download/pjba/jvm_hardcore-p22/03_projects/pjba/01_src/main/java</source>
-                      </sources>
-                    </configuration>
-                  </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>wagon-maven-plugin</artifactId>
-                <version>1.0-beta-3</version>
-                <executions>
-                    <execution>
-                        <id>download-pjba</id>
-                        <phase>initialize</phase>
-                        <goals>
-                            <goal>download-single</goal>
-                        </goals>
-                        <configuration>
-                            <url>https://github.com/</url>
-                            <fromFile>yohanbeschi/jvm_hardcore/archive/p22.zip</fromFile>
-                            <toDir>${project.build.directory}/download/pjba</toDir>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>truezip-maven-plugin</artifactId>
-                <version>1.2</version>
-                <executions>
-                    <execution>
-                        <id>unzip-jpba</id>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <phase>initialize</phase>
-                        <configuration>
-                            <verbose>true</verbose>
-                            <fileset>
-                                <directory>${project.build.directory}/download/pjba/p22.zip</directory>
-                                <outputDirectory>${project.basedir}/download/pjba</outputDirectory>
-                            </fileset>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>${version.maven-javadoc-plugin}</version>
-                <configuration>
-                    <skip>true</skip>
-                    <!-- excludePackageNames>ml.alternet.util.gen.*:org.isk.jvmhardcore.pjba:org.isk.jvmhardcore.pjba.*</excludePackageNames>
-                    <sourceFileExcludes>
-                        <exclude>${project.basedir}/download/pjba/jvm_hardcore-p22/03_projects/pjba/01_src/main/**/*.*</exclude>
-                    </sourceFileExcludes>
-                    <sourcepath>${project.basedir}/src/main/java/</sourcepath-->
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>${version.maven-jar-plugin}</version>
-                <executions>
-                    <execution>
-                        <id>default-jar</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <excludes>
-                                <exclude>${project.basedir}/download/pjba/jvm_hardcore-p22/03_projects/pjba/01_src/main/java</exclude>
-                            </excludes>
                         </configuration>
                     </execution>
                 </executions>
