@@ -1,0 +1,105 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  
+    <artifactId>alternet-parsing</artifactId>
+    <packaging>jar</packaging>
+
+    <parent>
+        <groupId>ml.alternet</groupId>
+        <artifactId>alternet-libs</artifactId>
+        <version>1.0</version>
+        <relativePath>../alternet-libs</relativePath>
+    </parent>
+
+    <name>Alternet Parsing</name>
+    <description>Alternet Parsing allow to design Parsing Expression Grammars.</description>
+    <url>http://alternet.ml/alternet-libs/parsing/parsing.html</url>
+
+    <properties>
+        <shortName>parsing</shortName>
+        <site.deploy.dir>${project.build.directory}/../../alternet-libs/target/staging/${shortName}</site.deploy.dir>
+    </properties>
+
+    <distributionManagement>
+        <site>
+            <id>${project.artifactId}-site</id>
+            <url>http://alternet.ml/alternet-libs/${shortName}</url>
+        </site>
+    </distributionManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>ml.alternet</groupId>
+            <artifactId>alternet-scanner</artifactId>
+            <version>1.0</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <executions>
+                    <execution>
+                      <id>compile-generated</id>
+                      <phase>compile</phase>
+                      <goals>
+                        <goal>compile</goal>
+                        <goal>testCompile</goal>
+                      </goals>
+                      <configuration>
+                        <compilerArgument>-proc:none</compilerArgument>
+                      </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                      <id>add-source</id>
+                      <phase>generate-sources</phase>
+                      <goals>
+                        <goal>add-source</goal>
+                      </goals>
+                      <configuration>
+                        <sources>
+                            <source>${project.build.directory}/generated-sources/annotations</source>
+                        </sources>
+                      </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+        <pluginManagement>
+            <plugins>
+                <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.codehaus.mojo</groupId>
+                                        <artifactId>build-helper-maven-plugin</artifactId>
+                                        <versionRange>[1.9,)</versionRange>
+                                        <goals>
+                                            <goal>compile</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore></ignore>
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>
