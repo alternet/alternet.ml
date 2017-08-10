@@ -12,6 +12,7 @@ Alternet Libs guides :
 * [Alternet Scanner](scanner/scanner.html)
 * [Alternet Security](security/security.html)
 * [Alternet Tools](tools/tools.html)
+* [Alternet Parsing](parsing/parsing.html)
 
 [JavaDoc API documentation](apidocs/index.html)
 

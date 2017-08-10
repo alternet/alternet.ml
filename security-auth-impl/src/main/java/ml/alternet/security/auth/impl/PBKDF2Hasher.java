@@ -1,11 +1,18 @@
 package ml.alternet.security.auth.impl;
 
 import java.io.PrintStream;
+import java.nio.CharBuffer;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.SecureRandom;
 
 import javax.crypto.spec.PBEKeySpec;
+import javax.security.auth.DestroyFailedException;
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
+import javax.crypto.ShortBufferException;
 import javax.xml.bind.DatatypeConverter;
 
 import org.bouncycastle.crypto.generators.PKCS5S2ParametersGenerator;
@@ -14,12 +21,14 @@ import org.bouncycastle.crypto.params.KeyParameter;
 import ml.alternet.discover.LookupKey;
 import ml.alternet.security.Password;
 import ml.alternet.security.auth.Credentials;
+import ml.alternet.security.auth.HashUtil;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.util.BytesUtil;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -38,7 +47,7 @@ import java.util.stream.Collectors;
  */
 @LookupKey(forClass = Hasher.class, variant = "ColonCryptFormat/PBKDF2")
 @LookupKey(forClass = Hasher.class, variant = "PBKDF2")
-public class PBKDF2Hasher implements Hasher {
+public class PBKDF2Hasher implements Hasher{
 
     static final Logger LOGGER = Logger.getLogger(PBKDF2Hasher.class.getName());
 
@@ -245,14 +254,14 @@ public class PBKDF2Hasher implements Hasher {
     }
 
     @Override
-    public Properties getConfiguration() {
+    public Optional<Properties> getConfiguration() {
         Properties prop = new Properties();
         prop.put(SALT_BYTE_SIZE_PROPERTY_NAME, getSaltByteSize());
         prop.put(HASH_BYTE_SIZE_PROPERTY_NAME, getHashByteSize());
         prop.put(ITERATIONS_PROPERTY_NAME, getIterations());
         prop.put(ENCODING_PROPERTY_NAME, getEncodeInHexa() == null || ! getEncodeInHexa().booleanValue()
                 ? "base64" : "hexa");
-        return prop;
+        return Optional.of(prop);
     }
 
     @Override
@@ -354,24 +363,32 @@ public class PBKDF2Hasher implements Hasher {
     // JCE algorithm that computes a hash
     // unfortunately, the byte array built from the password
     // is not accessible and can't be unset explicitely
-    protected byte[] _hash(Password password, byte[] salt, int i, int bytes) throws InvalidAlgorithmParameterException {
+    protected byte[] hash__(Password password, byte[] salt, int i, int bytes) throws InvalidAlgorithmParameterException {
         PBEKeySpec spec = null;
+        SecretKey key = null;
         try (Password.Clear pwd = password.getClearCopy()) {
             SecretKeyFactory skf = SecretKeyFactory.getInstance(getAlgorithm());
             char[] passwordChars = pwd.get();
             spec = new PBEKeySpec(passwordChars, salt, i, bytes * 8);
-            return skf.generateSecret(spec).getEncoded();
+            key = skf.generateSecret(spec);
+            byte[] b = key.getEncoded();
+            return b;
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new InvalidAlgorithmParameterException(e);
         } finally {
             if (spec != null) {
                 spec.clearPassword();
             }
+            if (key != null) {
+                try {
+                    key.destroy();
+                } catch (DestroyFailedException e) {}
+            }
         }
     }
 
     /**
-     * Hash a password.
+     * Hash a password and ensure that intermediate data are erased.
      *
      * @param password The password.
      * @param salt The salt.
@@ -382,18 +399,109 @@ public class PBKDF2Hasher implements Hasher {
      *
      * @throws InvalidAlgorithmParameterException When the hash algorithm fails.
      */
-    protected byte[] hash(Password password, byte[] salt, int i, int bytes) throws InvalidAlgorithmParameterException {
+    protected byte[] hash(Password password, byte[] salt, int iterCount, int keyLength) throws InvalidAlgorithmParameterException {
+        // JCE algorithm that computes a hash
+        // intermediate data are erased
+        String macAlgorith = getAlgorithm().substring(getAlgorithm().indexOf("With") + 4);
+        byte[] pBytes = null;
+        try (Password.Clear pwd = password.getClearCopy()) {
+            pBytes = HashUtil.encode(CharBuffer.wrap(pwd.get()), StandardCharsets.UTF_8).array();
+            final byte[] passwordBytes = pBytes;
+            // HmacSHA1, HmacSHA224, HmacSHA256, HmacSHA384, HmacSHA512
+            final Mac mac = Mac.getInstance(macAlgorith);
+
+            // code adapted from
+            // com.sun.crypto.provider.PBKDF2KeyImpl
+            byte[] key = new byte[keyLength];
+            int hlen = mac.getMacLength();
+            int intL = (keyLength + hlen - 1)/hlen; // ceiling
+            int intR = keyLength - (intL - 1)*hlen; // residue
+            byte[] ui = new byte[hlen];
+            byte[] ti = new byte[hlen];
+            // SecretKeySpec cannot be used, since password can be empty here.
+            SecretKey macKey = new SecretKey() {
+                private static final long serialVersionUID = 7293295131471223961L;
+                @Override
+                public String getAlgorithm() {
+                    return mac.getAlgorithm();
+                }
+                @Override
+                public String getFormat() {
+                    return "RAW";
+                }
+                @Override
+                public byte[] getEncoded() {
+                    // the good new is after the MAC init phase,
+                    // all the bytes will be erased
+                    return passwordBytes;
+                }
+                @Override
+                public int hashCode() {
+                    return Arrays.hashCode(passwordBytes) * 41 +
+                            mac.getAlgorithm().toLowerCase().hashCode();
+                }
+                @Override
+                public boolean equals(Object obj) {
+                    if (this == obj) return true;
+                    if (this.getClass() != obj.getClass()) return false;
+                    SecretKey sk = (SecretKey)obj;
+                    return mac.getAlgorithm().equalsIgnoreCase(
+                        sk.getAlgorithm()) &&
+                        Arrays.equals(passwordBytes, sk.getEncoded());
+                }
+            };
+            mac.init(macKey);
+            // passwordBytes are cleared
+
+            byte[] ibytes = new byte[4];
+            for (int i = 1; i <= intL; i++) {
+                mac.update(salt);
+                ibytes[3] = (byte) i;
+                ibytes[2] = (byte) ((i >> 8) & 0xff);
+                ibytes[1] = (byte) ((i >> 16) & 0xff);
+                ibytes[0] = (byte) ((i >> 24) & 0xff);
+                mac.update(ibytes);
+                mac.doFinal(ui, 0);
+                System.arraycopy(ui, 0, ti, 0, ui.length);
+
+                for (int j = 2; j <= iterCount; j++) {
+                    mac.update(ui);
+                    mac.doFinal(ui, 0);
+                    // XOR the intermediate Ui's together.
+                    for (int k = 0; k < ui.length; k++) {
+                        ti[k] ^= ui[k];
+                    }
+                }
+                if (i == intL) {
+                    System.arraycopy(ti, 0, key, (i-1)*hlen, intR);
+                } else {
+                    System.arraycopy(ti, 0, key, (i-1)*hlen, hlen);
+                }
+            }
+            return key;
+        } catch (NoSuchAlgorithmException | ShortBufferException | IllegalStateException | InvalidKeyException e) {
+            throw new InvalidAlgorithmParameterException(e);
+        } finally {
+            BytesUtil.unset(pBytes);
+        }
+    }
+
+    protected byte[] hash_(Password password, byte[] salt, int i, int bytes) throws InvalidAlgorithmParameterException {
         PKCS5S2ParametersGenerator kdf = null;
+        byte[] passwordBytes = null;
         try (Password.Clear pwd = password.getClearCopy()) {
             char[] passwordChars = pwd.get();
             kdf = new PKCS5S2ParametersGenerator();
-            kdf.init(PKCS5S2ParametersGenerator.PKCS5PasswordToUTF8Bytes(passwordChars), salt, i);
+            passwordBytes = PKCS5S2ParametersGenerator.PKCS5PasswordToUTF8Bytes(passwordChars);
+            // will copy the byte array
+            kdf.init(passwordBytes, salt, i);
             byte[] hash = ((KeyParameter) kdf.generateDerivedMacParameters(bytes * 8)).getKey();
             return hash;
         } finally {
             if (kdf != null && kdf.getPassword() != null) {
                 BytesUtil.unset(kdf.getPassword());
             }
+            BytesUtil.unset(passwordBytes);
         }
     }
 
@@ -483,7 +591,13 @@ public class PBKDF2Hasher implements Hasher {
             } else {
                 h.configure(prop);
                 System.out.println("Password crypt computed :");
-                System.out.println(h.encrypt(pwd));
+                Credentials cred = Credentials.fromPassword(pwd);
+                crypt = h.encrypt(cred);
+                System.out.println(crypt);
+                if (! h.check(cred, crypt)) { // sanity check
+                    System.out.println("Invalid password");
+                    status = 1;
+                }
             }
         } catch (Exception e) {
             e.printStackTrace(System.err);

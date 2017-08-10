@@ -1,12 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
-    <parent>
-        <groupId>org.sonatype.oss</groupId>
-        <artifactId>oss-parent</artifactId>
-        <version>7</version>
-    </parent>
+    <prerequisites>
+        <maven>3.0.5</maven>
+    </prerequisites>
 
     <groupId>ml.alternet</groupId>
     <artifactId>alternet-libs</artifactId>
@@ -16,33 +13,33 @@
     <description>Alternet Libs : a bunch of Java libraries</description>
     <url>http://alternet.ml/alternet-libs/</url>
 
-    <modules>
-<!--         <module>../crypto</module> -->
-        <module>../scanner</module>
-        <module>../security</module>
-        <module>../tools</module>
-    </modules>
-
     <properties>
         <site.deploy.dir>${project.build.directory}/staging/</site.deploy.dir>
+        <github.global.server>alternet.github.io</github.global.server><!-- ref to settings.xml -->
+        <github.local.dir>${basedir}/../../alternet/alternet.github.io</github.local.dir>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
 
-        <version.maven-compiler-plugin>3.1</version.maven-compiler-plugin>
-        <version.maven-dependency-plugin>2.8</version.maven-dependency-plugin>
-        <version.maven-project-info-reports-plugin>2.7</version.maven-project-info-reports-plugin>
-        <version.maven-javadoc-plugin>2.9.1</version.maven-javadoc-plugin>
-        <version.maven-site-plugin>3.3</version.maven-site-plugin>
-        <version.maven-jxr-plugin>2.4</version.maven-jxr-plugin>
-        <version.maven-surefire-report-plugin>2.17</version.maven-surefire-report-plugin>
-        <version.maven-resources-plugin>2.6</version.maven-resources-plugin>
-        <version.maven-checkstyle-plugin>2.11</version.maven-checkstyle-plugin>
-        <version.maven-pmd-plugin>3.2</version.maven-pmd-plugin>
-        <version.maven-invoker-plugin>1.8</version.maven-invoker-plugin>
-
-        <version.testng>6.8</version.testng>
-        <version.assertj-core>1.6.1</version.assertj-core>
+        <version.assertj-core>3.6.2</version.assertj-core>
+        <version.checkstyle>8.0</version.checkstyle>
+        <version.github.site-maven-plugin>0.12</version.github.site-maven-plugin>
+        <!-- https://github.com/github/maven-plugins/issues/69 -->
+        <version.maven-checkstyle-plugin>2.17</version.maven-checkstyle-plugin>
+        <version.maven-compiler-plugin>3.5</version.maven-compiler-plugin><!-- FAIL with 3.5.1 or higher -->
+        <version.maven-invoker-plugin>3.0.0</version.maven-invoker-plugin>
+        <version.maven-jar-plugin>3.0.2</version.maven-jar-plugin>
+        <version.maven-javadoc-plugin>2.10.4</version.maven-javadoc-plugin>
+        <version.maven-jxr-plugin>2.5</version.maven-jxr-plugin>
+        <version.maven-pmd-plugin>3.8</version.maven-pmd-plugin>
+        <version.maven-project-info-reports-plugin>2.9</version.maven-project-info-reports-plugin>
+        <version.maven-resources-plugin>3.0.2</version.maven-resources-plugin>
+        <version.maven-source-plugin>3.0.1</version.maven-source-plugin>
+        <version.maven-shade-plugin>3.0.0</version.maven-shade-plugin>
+        <version.maven-site-plugin>3.6</version.maven-site-plugin>
+        <version.maven-surefire-report-plugin>2.20</version.maven-surefire-report-plugin>
+        <version.maven-failsafe-plugin>2.20</version.maven-failsafe-plugin>
+        <version.testng>6.10</version.testng>
     </properties>
 
     <distributionManagement>
@@ -53,9 +50,9 @@
     </distributionManagement>
 
     <scm>
-        <url>https://github.com/alternet/alternet.ml</url>
-        <connection>scm:git:git://github.com/alternet/alternet.ml.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/alternet/alternet.ml.git</developerConnection>
+        <url>https://github.com/alternet/alternet.github.io</url>
+        <connection>scm:git:https://github.com/alternet/alternet.github.io.git</connection>
+        <developerConnection>scm:git:https://git@github.com/alternet/alternet.github.io.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
@@ -85,6 +82,7 @@
                 <role>admin</role>
                 <role>developer</role>
             </roles>
+            <timezone>0</timezone>
         </developer>
     </developers>
 
@@ -103,40 +101,24 @@
         </dependency>
     </dependencies>
 
+    <modules>
+        <module>../parsing</module>
+        <module>../scanner</module>
+        <module>../security</module>
+        <module>../security-auth</module>
+        <!-- >module>../security-auth-impl</module-->
+        <module>../security-jetty-9.1</module>
+        <module>../security-tomcat</module>
+        <module>../tools</module>
+        <module>../tools-generator</module>
+    </modules>
+
     <build>
         <plugins>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${version.maven-compiler-plugin}</version>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                    <compilerArgument>-Xlint:all</compilerArgument>
-                    <showWarnings>true</showWarnings>
-                    <showDeprecation>true</showDeprecation>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>${version.maven-dependency-plugin}</version>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
                 <version>${version.maven-site-plugin}</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>lt.velykis.maven.skins</groupId>
-                        <artifactId>reflow-velocity-tools</artifactId>
-                        <version>1.1.1</version>
-                    </dependency>
-                    <!-- Reflow skin requires Velocity >= 1.7 -->
-                    <dependency>
-                        <groupId>org.apache.velocity</groupId>
-                        <artifactId>velocity</artifactId>
-                        <version>1.7</version>
-                    </dependency>
-                </dependencies>
                 <configuration>
                     <generateReports>true</generateReports>
                     <inputEncoding>UTF-8</inputEncoding>
@@ -144,22 +126,71 @@
                     <skipDeploy>true</skipDeploy>
                     <outputDirectory>${site.deploy.dir}</outputDirectory>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>stage-site</id>
+                        <phase>post-site</phase>
+                        <goals>
+                            <goal>stage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>${version.maven-checkstyle-plugin}</version>
-                <configuration>
-                    <consoleOutput>true</consoleOutput>
-                    <failOnViolation>false</failOnViolation>
-                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>${version.checkstyle}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
+
         <pluginManagement>
             <plugins>
                 <plugin>
                     <artifactId>maven-invoker-plugin</artifactId>
                     <version>${version.maven-invoker-plugin}</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${version.maven-compiler-plugin}</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <compilerArgument>-Xlint:all</compilerArgument>
+                        <showWarnings>true</showWarnings>
+                        <showDeprecation>true</showDeprecation>
+                    </configuration>
+                </plugin>
+                <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.codehaus.mojo</groupId>
+                                        <artifactId>build-helper-maven-plugin</artifactId>
+                                        <versionRange>[1.9,)</versionRange>
+                                        <goals>
+                                            <goal>compile</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore></ignore>
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -173,6 +204,9 @@
                 <version>${version.maven-project-info-reports-plugin}</version>
                 <configuration>
                     <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+                    <webAccessUrl>https://github.com/alternet/alternet.ml</webAccessUrl>
+                    <anonymousConnection>scm:git:https://github.com/alternet/alternet.ml.git</anonymousConnection>
+                    <developerConnection>scm:git:https://git@github.com/alternet/alternet.ml.git</developerConnection>
                 </configuration>
                 <reportSets>
                     <reportSet>
@@ -197,7 +231,7 @@
                 <reportSets>
                     <reportSet>
                         <id>aggregate</id>
-                        <inherited>false</inherited>
+                        <inherited>true</inherited>
                         <reports>
                             <report>aggregate</report>
                         </reports>
@@ -205,10 +239,16 @@
                 </reportSets>
                 <configuration>
                     <failOnError>false</failOnError>
+                    <additionalparam>-Xdoclint:none</additionalparam>
                     <links>
                         <link>http://docs.oracle.com/javase/8/docs/api/</link>
+                        <link>http://docs.oracle.com/javaee/7/api/</link>
                         <link>http://alternet.ml/alternet-libs/apidocs/</link>
                     </links>
+                    <excludePackageNames>ml.alternet.util.gen.*:org.isk.jvmhardcore.pjba:org.isk.jvmhardcore.pjba.*</excludePackageNames>
+                    <sourceFileExcludes>
+                        <exclude>${project.basedir}/../tools-generator/download/pjba/jvm_hardcore-p22/03_projects/pjba/01_src/main/**/*.*</exclude>
+                    </sourceFileExcludes>
                 </configuration>
             </plugin>
             <plugin>
@@ -231,6 +271,7 @@
                 <version>${version.maven-surefire-report-plugin}</version>
                 <configuration>
                     <showSuccess>true</showSuccess>
+                    <outputDirectory>${basedir}/target/test-output</outputDirectory>
                 </configuration>
             </plugin>
             <plugin>
@@ -241,10 +282,86 @@
                     <targetJdk>${java.version}</targetJdk>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${version.maven-checkstyle-plugin}</version>
+                <configuration>
+                    <configLocation>src/conf/checkstyle.xml</configLocation>
+                    <failOnViolation>false</failOnViolation>
+                </configuration>
+            </plugin>
         </plugins>
     </reporting>
 
     <profiles>
+        <profile>
+            <id>site-deploy</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-site-plugin</artifactId>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <version>${version.maven-resources-plugin}</version>
+                        <inherited>false</inherited>
+                        <executions>
+                            <execution>
+                                <id>copy-site</id>
+                                <phase>site-deploy</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${github.local.dir}/alternet-libs</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${site.deploy.dir}</directory>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.github.github</groupId>
+                        <artifactId>site-maven-plugin</artifactId>
+                        <version>${version.github.site-maven-plugin}</version>
+                        <inherited>false</inherited>
+                        <executions>
+                            <execution>
+                                <id>site.project-website</id>
+                                <goals>
+                                    <goal>site</goal>
+                                </goals>
+                                <phase>site-deploy</phase>
+                                <configuration>
+                                    <outputDirectory>${github.local.dir}</outputDirectory>
+                                    <message>Creating site for ${project.version}</message>
+                                     <branch>refs/heads/master</branch>
+                                    <dryRun>false</dryRun>
+                                    <excludes>
+                                        <exclude>**/.git/**</exclude>
+                                        <exclude>**/.DS_Store</exclude>
+                                        <exclude>.gitignore</exclude>
+                                    </excludes>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <profile>
             <id>default-profile</id>
             <activation>

@@ -13,7 +13,7 @@ import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.HashUtil;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.formats.ColonCryptFormat;
-import ml.alternet.security.auth.impl.PBKDF2Hasher;
+import ml.alternet.security.auth.hashers.impl.PBKDF2Hasher;
 
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.Condition;
@@ -67,7 +67,7 @@ public class HasherTest {
     @Test
     public void PBKDF2Hasher_Should_AcceptKnownProperties() throws InvalidAlgorithmParameterException {
         Hasher h = configureHasher(16, 32, 99, "hexa");
-        Properties hp = h.getConfiguration();
+        Properties hp = h.getConfiguration().get();
         Assertions.assertThat(hp.get(PBKDF2Hasher.SALT_BYTE_SIZE_PROPERTY_NAME)).isEqualTo(16);
         Assertions.assertThat(hp.get(PBKDF2Hasher.HASH_BYTE_SIZE_PROPERTY_NAME)).isEqualTo(32);
         Assertions.assertThat(hp.get(PBKDF2Hasher.ITERATIONS_PROPERTY_NAME)).isEqualTo(99);
@@ -93,7 +93,7 @@ public class HasherTest {
         String[] parts = ch.split(":");
         Assertions.assertThat(parts.length).isEqualTo(4);
         Assertions.assertThat(parts[0]).isEqualTo(h.getScheme());
-        Integer iter = (Integer) h.getConfiguration().get(PBKDF2Hasher.ITERATIONS_PROPERTY_NAME);
+        Integer iter = (Integer) h.getConfiguration().get().get(PBKDF2Hasher.ITERATIONS_PROPERTY_NAME);
         Assertions.assertThat(Integer.parseInt(parts[1])).isEqualTo(iter);
         Assertions.assertThat(parts[2].length())
         .as("Salt should have the required size").isEqualTo(sbs * 2);
@@ -104,7 +104,7 @@ public class HasherTest {
     @Test
     public void PBKDF2Hasher_Should_HaveDefaultConfiguration() throws InvalidAlgorithmParameterException {
         Hasher h = Hasher.getDefault();
-        Properties hp = h.getConfiguration();
+        Properties hp = h.getConfiguration().get();
         Assertions.assertThat(hp.size()).isEqualTo(4);
         Assertions.assertThat(hp.get(PBKDF2Hasher.SALT_BYTE_SIZE_PROPERTY_NAME)).isNotNull();
         Assertions.assertThat(hp.get(PBKDF2Hasher.HASH_BYTE_SIZE_PROPERTY_NAME)).isNotNull();
@@ -120,7 +120,7 @@ public class HasherTest {
         String[] parts = ch.split(":");
         Assertions.assertThat(parts.length).isEqualTo(4);
         Assertions.assertThat(parts[0]).isEqualTo(h.getScheme());
-        Integer iter = (Integer) h.getConfiguration().get(PBKDF2Hasher.ITERATIONS_PROPERTY_NAME);
+        Integer iter = (Integer) h.getConfiguration().get().get(PBKDF2Hasher.ITERATIONS_PROPERTY_NAME);
         Assertions.assertThat(Integer.parseInt(parts[1])).isEqualTo(iter);
         Assertions.assertThat(parts[3].toCharArray()).isNotEqualTo(UNSAFE_PASSWORD.toCharArray());
     }

@@ -15,6 +15,16 @@ include it in the classpath.
 If you want to compile an application with Alternet Libs, declare
 a dependency on the relevant alternet module in maven project.
 
+### Alternet Parsing
+
+```xml
+<dependency>
+    <groupId>ml.alternet</groupId>
+    <artifactId>alternet-parsing</artifactId>
+    <version>1.0</version>
+</dependency>
+```
+
 ### Alternet Scanner
 
 ```xml
