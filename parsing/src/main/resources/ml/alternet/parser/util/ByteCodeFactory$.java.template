@@ -1,0 +1,48 @@
+package {factoryPkg};
+
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
+import ml.alternet.misc.Thrower;
+import ml.alternet.util.ByteCodeFactory;
+
+/**
+ * Do not edit : this source code has been generated.
+ *
+ * @author Philippe Poulard
+ */
+@javax.annotation.Generated(value="ml.alternet.util.gen.ByteCodeFactoryGenerator")
+public class {factoryClassName} extends ByteCodeFactory {
+
+    @Override
+    public byte[] getByteCode(String className, String interfaceName, String interfaceType) {
+        // I don't want to use a big library for so few code generation
+        // but I used one to generate the following byte code creation
+        String parentClassName = getParentClassName();
+        String singletonName = singletonName(interfaceName);
+        
+        System.out.println("className: " + className + "\ninterfaceName: "+ interfaceName + "\ninterfaceType: " + interfaceType + "\nparentClassName: "+ parentClassName + "\nsingletonName: "+ singletonName);
+        
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
+            DataOutput bytecode = new DataOutputStream(baos);
+            {code}
+            return baos.toByteArray();
+        } catch (IOException e) {
+            return Thrower.doThrow(e);
+        }
+    }
+
+    @Override
+    public String getParentClassName() {
+        return "{parentClassName}";
+    }
+
+    @Override
+    public String singletonName(String interfaceName) {
+        return "{singletonName}";
+    }
+
+}
