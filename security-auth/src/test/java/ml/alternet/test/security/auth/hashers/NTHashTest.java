@@ -5,7 +5,6 @@ import java.util.function.Predicate;
 import org.testng.annotations.Test;
 
 import ml.alternet.security.auth.formats.CryptParts;
-import ml.alternet.security.auth.formats.SaltedParts;
 import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
 import ml.alternet.security.auth.hashers.impl.MessageHasher;
 

@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 import ml.alternet.misc.TodoException;
 import ml.alternet.security.algorithms.BCrypt;
 import ml.alternet.security.auth.Hasher;
-import ml.alternet.security.auth.formats.SaltedModularCryptFormatter;
+import ml.alternet.security.auth.formats.SaltlessModularCryptFormatter;
 import ml.alternet.security.auth.hashers.impl.BCryptHasher;
 import ml.alternet.security.auth.hashers.impl.MD5BasedHasher;
 import ml.alternet.security.auth.hashers.impl.MessageHasher;
@@ -119,7 +119,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher.Builder> {
                 .setVariant("3")
                 .setEncoding(BytesEncoder.hexaLower)
                 .setCharset(StandardCharsets.UTF_16LE)
-                .setFormatter(SaltedModularCryptFormatter.INSTANCE);
+                .setFormatter(SaltlessModularCryptFormatter.INSTANCE);
         }
     },
 
