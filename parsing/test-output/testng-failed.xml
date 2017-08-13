@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite guice-stage="DEVELOPMENT" name="Failed suite [Default suite]">
+  <test name="Default test(failed)">
+    <classes>
+      <class name="ml.alternet.parser.step4.CalcTest">
+        <methods>
+          <include name="calcExpression_Can_compute" invocation-numbers="1 2 3 4 5 6 7"/>
+          <include name="calcExpression_CanBe_evaluated"/>
+        </methods>
+      </class> <!-- ml.alternet.parser.step4.CalcTest -->
+    </classes>
+  </test> <!-- Default test(failed) -->
+</suite> <!-- Failed suite [Default suite] -->
