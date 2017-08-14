@@ -35,7 +35,7 @@ public class BCryptHasher extends HasherBase<WorkFactorSaltedParts> {
 
     static char getVersion(Hasher hr) {
         String variant = hr.getConfiguration().getVariant();
-        if (variant != null && variant.length() > 0) {
+        if (variant != null && variant.length() > 1) {
             return variant.charAt(1);
         } else {
             return (char) 0;
