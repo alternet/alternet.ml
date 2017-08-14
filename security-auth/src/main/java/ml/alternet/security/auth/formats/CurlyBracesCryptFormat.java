@@ -99,7 +99,7 @@ public class CurlyBracesCryptFormat implements CryptFormat {
 
         public String scheme = null;
         public String encoding = null;
-        public int rcb; // right curly brace index
+        public int rcb = -1; // right curly brace index
 
         public SchemePart(String crypt) {
             if (crypt.startsWith("{")) {
