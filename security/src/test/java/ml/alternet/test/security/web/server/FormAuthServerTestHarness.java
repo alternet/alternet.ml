@@ -178,7 +178,8 @@ public abstract class FormAuthServerTestHarness<T> extends ServerTestHarness<T> 
             .isEqualTo(303);
 
         headers = response.getHeaders();
-        Assertions.assertThat(headers.getFirst("Location").toString()).isEqualTo(uri);
+        // change in Tomcat 8.0.30 : As per RFC7231 (HTTP/1.1), allow HTTP/1.1 and later redirects to use relative URIs
+        Assertions.assertThat(uri).endsWith(headers.getFirst("Location").toString());
 
         newCookies = response.getCookies();
         if (newCookies.get("JSESSIONID") != null) {
