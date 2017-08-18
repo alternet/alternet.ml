@@ -75,7 +75,7 @@ public abstract class FormAuthServerTestHarness<T> extends ServerTestHarness<T> 
             that.serverTests.put(name.ref(),
                 () -> Assertions.assertThat(userName)
                 .as("REST server : user should be authentified")
-                .isEqualTo("who")
+                .isEqualTo(that.userName)
             );
 
             boolean uira = req.isUserInRole("admin");

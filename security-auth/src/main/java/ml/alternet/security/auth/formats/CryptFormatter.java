@@ -1,5 +1,6 @@
 package ml.alternet.security.auth.formats;
 
+import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
 
 /**
@@ -33,5 +34,7 @@ public interface CryptFormatter<T extends CryptParts> {
      * @return The formatted crypt.
      */
     String format(T parts);
+
+    CryptFormat getCryptFormat();
 
 }

@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -205,6 +206,18 @@ public interface Hasher {
      * @throws InvalidAlgorithmParameterException When the hash algorithm fails.
      */
     boolean check(Credentials credentials, String crypt) throws InvalidAlgorithmParameterException;
+
+    static Optional<Hasher> resolve(String crypt, CryptFormat... formats) {
+    		return resolve(crypt, Arrays.asList(formats));
+    }
+
+    static Optional<Hasher> resolve(String crypt, List<CryptFormat> formats) {
+    		return formats.stream()
+    			.map(f -> f.resolve(crypt))
+    			.filter(o -> o.isPresent())
+    			.findFirst()
+    			.map(o -> o.get().build());
+    }
 
     /**
      * Compare bytes array in length constant time in order to prevent "timing attack".

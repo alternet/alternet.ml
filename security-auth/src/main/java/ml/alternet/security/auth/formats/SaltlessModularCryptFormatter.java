@@ -1,5 +1,6 @@
 package ml.alternet.security.auth.formats;
 
+import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.binary.BytesEncoding;
 import ml.alternet.util.StringUtil;
@@ -42,5 +43,10 @@ public class SaltlessModularCryptFormatter implements CryptFormatter<CryptParts>
         }
         return buf.toString();
     }
+
+	@Override
+	public CryptFormat getCryptFormat() {
+		return new ModularCryptFormat();
+	}
 
 }

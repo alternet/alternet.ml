@@ -1,5 +1,6 @@
 package ml.alternet.security.auth.formats;
 
+import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.binary.BytesEncoding;
 
@@ -38,6 +39,11 @@ public class IterativeSaltedModularCryptFormatter implements CryptFormatter<Work
         buf.append('$');
         buf.append(parts.hr.getConfiguration().getEncoding().encode(parts.hash));
         return buf.toString();
+    }
+    
+    @Override
+    public CryptFormat getCryptFormat() {
+    		return new ModularCryptFormat();
     }
 
 }

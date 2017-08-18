@@ -6,8 +6,10 @@ import java.nio.CharBuffer;
 import ml.alternet.security.Password;
 import ml.alternet.security.algorithms.BCrypt;
 import ml.alternet.security.auth.Credentials;
+import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.formats.CryptFormatter;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.security.auth.formats.WorkFactorSaltedParts;
 import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
 import ml.alternet.security.binary.SafeBuffer;
@@ -146,6 +148,11 @@ public class BCryptHasher extends HasherBase<WorkFactorSaltedParts> {
             }
             return crypt.toString();
         }
+
+		@Override
+		public CryptFormat getCryptFormat() {
+			return new ModularCryptFormat();
+		}
     };
 
     @Override

@@ -20,11 +20,6 @@ import ml.alternet.security.auth.hashers.CurlyBracesCryptFormatHashers;
  * 3AE344F7AB5AA17308A49FDAD997105340DD6E348FDF5623</pre></li>
  * </ul>
  *
- * Alternet Security supply an implementation in a separate module
- * (see <a href="http://alternet.ml/alternet-libs/security/security.html">the documentation</a>).
- *
- * @see ml.alternet.security.auth.hashers.impl.PBKDF2Hasher
- *
  * @author Philippe Poulard
  */
 @Singleton
@@ -73,6 +68,7 @@ public class ColonCryptFormat implements CryptFormat {
         return "[scheme]:[shemeSpecificPart]";
     }
 
+    /*
     public static class CryptFormatter implements ml.alternet.security.auth.formats.CryptFormatter<CryptParts> {
 
         @Override
@@ -112,5 +108,5 @@ public class ColonCryptFormat implements CryptFormat {
         }
 
     }
-
+*/
 }

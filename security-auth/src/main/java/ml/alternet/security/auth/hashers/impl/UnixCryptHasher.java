@@ -7,9 +7,11 @@ import java.security.SecureRandom;
 import ml.alternet.security.Password;
 import ml.alternet.security.algorithms.UnixCrypt;
 import ml.alternet.security.auth.Credentials;
+import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.formats.CryptFormatter;
 import ml.alternet.security.auth.formats.SaltedParts;
+import ml.alternet.security.auth.formats.UnixCryptFormat;
 import ml.alternet.security.binary.BytesEncoder;
 import ml.alternet.security.binary.BytesEncoding;
 import ml.alternet.security.binary.SafeBuffer;
@@ -65,6 +67,11 @@ public class UnixCryptHasher extends HasherBase<SaltedParts> {
             System.arraycopy(parts.hash, 0, b, 2, 11);
             return new String(b, 0, 13, StandardCharsets.US_ASCII);
         }
+
+		@Override
+		public CryptFormat getCryptFormat() {
+			return new UnixCryptFormat();
+		}
     };
 
     @Override

@@ -5,8 +5,10 @@ import java.security.SecureRandom;
 
 import ml.alternet.security.algorithms.SHA2Crypt;
 import ml.alternet.security.auth.Credentials;
+import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.formats.CryptFormatter;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.security.auth.formats.WorkFactorSaltedParts;
 import ml.alternet.security.binary.BytesEncoder;
 import ml.alternet.security.binary.BytesEncoding;
@@ -313,6 +315,11 @@ public class SHA2Hasher extends HasherBase<WorkFactorSaltedParts> {
             buf.append(string);
             return buf.toString();
         }
+
+		@Override
+		public CryptFormat getCryptFormat() {
+			return new ModularCryptFormat();
+		}
     };
 
 }

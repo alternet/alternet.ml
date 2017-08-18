@@ -170,6 +170,11 @@ public class CurlyBracesCryptFormat implements CryptFormat {
             }
             return buf.toString();
         }
+
+		@Override
+		public CryptFormat getCryptFormat() {
+			return new CurlyBracesCryptFormat();
+		}
     }
 
     /**
@@ -239,6 +244,11 @@ public class CurlyBracesCryptFormat implements CryptFormat {
             }
             return buf.toString();
         }
+
+		@Override
+		public CryptFormat getCryptFormat() {
+			return new CurlyBracesCryptFormat();
+		}
     }
 
     public static class IterativeSaltedFormatter implements ml.alternet.security.auth.formats.CryptFormatter<WorkFactorSaltedParts> {
@@ -276,6 +286,11 @@ public class CurlyBracesCryptFormat implements CryptFormat {
             return buf.toString();
         }
 
+		@Override
+		public CryptFormat getCryptFormat() {
+			return new CurlyBracesCryptFormat();
+		}
+
     }
 
     /**
@@ -305,6 +320,11 @@ public class CurlyBracesCryptFormat implements CryptFormat {
         public String format(T parts) {
             return "{CRYPT}" + cf.format(parts);
         }
+
+		@Override
+		public CryptFormat getCryptFormat() {
+			return new CurlyBracesCryptFormat();
+		}
 
     }
 

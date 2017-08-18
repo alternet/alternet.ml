@@ -105,6 +105,10 @@ public class PlainTextCryptFormat implements CryptFormat {
                 return encoding.encode(parts.hash);
             }
         }
+		@Override
+		public CryptFormat getCryptFormat() {
+			return new PlainTextCryptFormat();
+		}
     };
 
     /**

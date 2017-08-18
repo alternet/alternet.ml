@@ -1,6 +1,11 @@
 package ml.alternet.security.auth.formats;
 
+import java.util.Optional;
+
+import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
+import ml.alternet.security.auth.Hasher.Builder;
+import ml.alternet.security.auth.hashers.UnixHashers;
 import ml.alternet.security.binary.BytesEncoding;
 
 /**
@@ -49,6 +54,24 @@ public class CryptParts {
         public String format(CryptParts parts) {
             return parts.hr.getConfiguration().getEncoding().encode(parts.hash);
         }
+		@Override
+		public CryptFormat getCryptFormat() {
+			return new CryptFormat() {
+				@Override
+				public Optional<Builder> resolve(String crypt) {
+					return Optional.of(UnixHashers.MD5.get());
+				}
+				@Override
+				public String infoTemplate() {
+					return "";
+				}
+				
+				@Override
+				public String family() {
+					return "MD5 32 hexa character hash";
+				}
+			};
+		}
     };
 
 }

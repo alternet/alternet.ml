@@ -5,8 +5,10 @@ import java.security.SecureRandom;
 
 import ml.alternet.security.algorithms.MD5Crypt;
 import ml.alternet.security.auth.Credentials;
+import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.formats.CryptFormatter;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.security.auth.formats.SaltedParts;
 import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
 import ml.alternet.security.binary.BytesEncoder;
@@ -145,6 +147,12 @@ public class MD5BasedHasher extends HasherBase<SaltedParts> {
             buf.append(parts.hr.getConfiguration().getEncoding().encode(parts.hash));
             return buf.toString();
         }
+
+		@Override
+		public CryptFormat getCryptFormat() {
+			return new ModularCryptFormat();
+		}
+
     };
 
 }
