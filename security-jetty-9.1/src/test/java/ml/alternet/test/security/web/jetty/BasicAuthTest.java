@@ -1,13 +1,5 @@
 package ml.alternet.test.security.web.jetty;
 
-import jodd.methref.Methref;
-import ml.alternet.security.PasswordManagerFactory;
-import ml.alternet.security.auth.Credentials;
-import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
-import ml.alternet.security.web.Config;
-import ml.alternet.security.web.jetty.EnhancedHttpConnectionFactory;
-import ml.alternet.test.security.web.server.BasicAuthServerTestHarness;
-
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.server.Connector;
@@ -20,6 +12,15 @@ import org.eclipse.jetty.webapp.WebAppContext;
 import org.glassfish.jersey.server.ServerProperties;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.testng.annotations.Test;
+
+import jodd.methref.Methref;
+import ml.alternet.security.auth.formats.CurlyBracesCryptFormat;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
+import ml.alternet.security.auth.formats.PlainTextCryptFormat;
+import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
+import ml.alternet.security.web.Config;
+import ml.alternet.security.web.jetty.EnhancedHttpConnectionFactory;
+import ml.alternet.test.security.web.server.BasicAuthServerTestHarness;
 
 /**
  * The tests that show on BASIC authentication that the password is captured by
@@ -73,16 +74,24 @@ public class BasicAuthTest extends BasicAuthServerTestHarness<Server> {
         constraint.setName(Constraint.__BASIC_AUTH);
         constraint.setRoles(new String[]{"customer","admin"});
         constraint.setAuthenticate(true);
+
+        MappedLoginServiceImpl loginService = new MappedLoginServiceImpl();
+        loginService.setName("realm");
+        loginService.setCryptFormats(
+                ModularCryptFormat.class.getName(),
+                CurlyBracesCryptFormat.class.getName(),
+                PlainTextCryptFormat.class.getName()
+        );
+        String crypt = ModularCryptFormatHashers.$2$.get().build()
+            .encrypt(unsafePwd.toCharArray());
+        loginService.putUser(userName, crypt, new String[] {"admin"});
+
+        ConstraintSecurityHandler security = new ConstraintSecurityHandler();
+        security.setAuthMethod(Constraint.__BASIC_AUTH);
+        security.setLoginService(loginService);
         ConstraintMapping cm = new ConstraintMapping();
         cm.setConstraint(constraint);
         cm.setPathSpec("/*");
-        ConstraintSecurityHandler security = new ConstraintSecurityHandler();
-        MappedLoginServiceImpl loginService = new MappedLoginServiceImpl();
-        loginService.setHasher(ModularCryptFormatHashers.$2$.get().build());
-        loginService.setName("realm");
-        loginService.putUser(userName, Credentials.fromPassword(unsafePwd.toCharArray()), new String[] {"admin"});
-        security.setAuthMethod(Constraint.__BASIC_AUTH);
-        security.setLoginService(loginService);
         security.setConstraintMappings(new ConstraintMapping[]{cm});
 
         wac.setSecurityHandler(security);

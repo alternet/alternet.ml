@@ -22,7 +22,9 @@ import org.testng.annotations.Test;
 
 import jodd.methref.Methref;
 import ml.alternet.misc.Thrower;
-import ml.alternet.security.auth.Credentials;
+import ml.alternet.security.auth.formats.CurlyBracesCryptFormat;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
+import ml.alternet.security.auth.formats.PlainTextCryptFormat;
 import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
 import ml.alternet.security.web.Config;
 import ml.alternet.security.web.jetty.EnhancedHttpConnectionFactory;
@@ -108,11 +110,19 @@ public class FormAuthTest extends FormAuthServerTestHarness<Server> {
         ConstraintMapping cm = new ConstraintMapping();
         cm.setConstraint(constraint);
         cm.setPathSpec("/protected/*");
-        ConstraintSecurityHandler security = new ConstraintSecurityHandler();
+
         MappedLoginServiceImpl loginService = new MappedLoginServiceImpl();
-        loginService.setHasher(ModularCryptFormatHashers.$2$.get().build());
         loginService.setName("realm");
-        loginService.putUser(userName, Credentials.fromPassword(unsafePwd.toCharArray()), new String[] {"admin"});
+        loginService.setCryptFormats(
+                ModularCryptFormat.class.getName(),
+                CurlyBracesCryptFormat.class.getName(),
+                PlainTextCryptFormat.class.getName()
+        );
+        String crypt = ModularCryptFormatHashers.$2$.get().build()
+            .encrypt(unsafePwd.toCharArray());
+        loginService.putUser(userName, crypt, new String[] {"admin"});
+
+        ConstraintSecurityHandler security = new ConstraintSecurityHandler();
         security.setLoginService(loginService);
         security.setAuthMethod(Constraint.__FORM_AUTH);
         security.setConstraintMappings(new ConstraintMapping[]{cm});

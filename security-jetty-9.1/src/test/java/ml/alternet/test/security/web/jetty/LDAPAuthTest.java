@@ -10,6 +10,7 @@ import javax.security.auth.login.Configuration;
 import javax.servlet.http.HttpServletRequest;
 
 import org.assertj.core.api.Assertions;
+import org.eclipse.jetty.jaas.JAASLoginService;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.authentication.FormAuthenticator;
@@ -33,13 +34,12 @@ import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.security.auth.formats.PlainTextCryptFormat;
 import ml.alternet.security.web.Config;
 import ml.alternet.security.web.jetty.EnhancedHttpConnectionFactory;
-import ml.alternet.security.web.jetty.auth.EnhancedJaasLoginService;
 import ml.alternet.security.web.jetty.auth.EnhancedLdapLoginModule;
 import ml.alternet.test.security.web.jetty.ldap.LdapServer;
 import ml.alternet.test.security.web.server.FormAuthServerTestHarness;
 
 /**
- * The tests that show on Form authentication that the password is captured by
+ * LDAP tests that show on Form authentication that the password is captured by
  * Jetty (and encrypted), and that the raw value of the password in the
  * incoming buffer is replaced with '*'.
  *
@@ -135,11 +135,8 @@ public class LDAPAuthTest extends FormAuthServerTestHarness<Server> {
         constraint.setName(Constraint.__FORM_AUTH);
         constraint.setRoles(new String[]{"customer","admin"});
         constraint.setAuthenticate(true);
-        ConstraintMapping cm = new ConstraintMapping();
-        cm.setConstraint(constraint);
-        cm.setPathSpec("/protected/*");
 
-        EnhancedJaasLoginService loginService = new EnhancedJaasLoginService();
+        JAASLoginService loginService = new JAASLoginService();
         loginService.setName("Alternet Realm");
         loginService.setLoginModuleName("ldap");
 
@@ -147,6 +144,9 @@ public class LDAPAuthTest extends FormAuthServerTestHarness<Server> {
         security.setRealmName("Alternet Realm");
         security.setLoginService(loginService);
         security.setAuthMethod(Constraint.__FORM_AUTH);
+        ConstraintMapping cm = new ConstraintMapping();
+        cm.setConstraint(constraint);
+        cm.setPathSpec("/protected/*");
         security.setConstraintMappings(new ConstraintMapping[]{cm});
         security.setInitParameter(FormAuthenticator.__FORM_LOGIN_PAGE, "/login.html");
         security.setInitParameter(FormAuthenticator.__FORM_ERROR_PAGE, "/authFail.html");
@@ -206,7 +206,7 @@ public class LDAPAuthTest extends FormAuthServerTestHarness<Server> {
                     options.put("roleNameAttribute", "cn");
                     options.put("roleMemberAttribute", "member");
                     options.put("roleObjectClass", "groupOfNames");
-                    
+
                     options.put(CryptFormat.class.getName(),
                             ModularCryptFormat.class.getName()
                             + " , " + CurlyBracesCryptFormat.class.getName()
