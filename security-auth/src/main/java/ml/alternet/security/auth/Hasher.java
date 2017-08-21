@@ -207,16 +207,30 @@ public interface Hasher {
      */
     boolean check(Credentials credentials, String crypt) throws InvalidAlgorithmParameterException;
 
+    /**
+     * Find the hasher for a given crypt.
+     * 
+     * @param crypt The crypt to resolve.
+     * @param formats The list of candidate formats.
+     * @return If found, the hasher.
+     */
     static Optional<Hasher> resolve(String crypt, CryptFormat... formats) {
-    		return resolve(crypt, Arrays.asList(formats));
+        return resolve(crypt, Arrays.asList(formats));
     }
 
+    /**
+     * Find the hasher for a given crypt.
+     * 
+     * @param crypt The crypt to resolve.
+     * @param formats The list of candidate formats.
+     * @return If found, the hasher.
+     */
     static Optional<Hasher> resolve(String crypt, List<CryptFormat> formats) {
-    		return formats.stream()
-    			.map(f -> f.resolve(crypt))
-    			.filter(o -> o.isPresent())
-    			.findFirst()
-    			.map(o -> o.get().build());
+        return formats.stream()
+                .map(f -> f.resolve(crypt))
+                .filter(o -> o.isPresent())
+                .findFirst()
+                .map(o -> o.get().build());
     }
 
     /**

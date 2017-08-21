@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tomcat-users version="1.0" xmlns="http://tomcat.apache.org/xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://tomcat.apache.org/xml tomcat-users.xsd">
+  <role rolename="tomcat"/>
+  <role rolename="role1"/>
+  <user username="tomcat" password="PBKDF2:1000:hOB9xOwuxpl1vE02QqVP5Cx4dWcnMghJ:ruJNwcPd7nH4ebwSG0GaIdCdUmkzrYX3" roles="tomcat"/>
+  <user username="both" password="PBKDF2:1000:hOB9xOwuxpl1vE02QqVP5Cx4dWcnMghJ:ruJNwcPd7nH4ebwSG0GaIdCdUmkzrYX3" roles="tomcat,role1"/>
+  <user username="role1" password="PBKDF2:1000:hOB9xOwuxpl1vE02QqVP5Cx4dWcnMghJ:ruJNwcPd7nH4ebwSG0GaIdCdUmkzrYX3" roles="role1"/>
+</tomcat-users>

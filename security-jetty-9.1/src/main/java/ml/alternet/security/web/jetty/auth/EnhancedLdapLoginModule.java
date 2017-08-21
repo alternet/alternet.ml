@@ -30,6 +30,7 @@ public class EnhancedLdapLoginModule extends LdapLoginModule implements CryptFor
     {
         super.initialize(subject, callbackHandler, sharedState, options);
         // see LDAPAuthTest#setJaasConfiguration()
+        // a comma separated list of classes CryptFormat
         String[] cryptFormatClasses = ((String) options.get(CryptFormat.class.getName())).split("\\s*,\\s*");
         setCryptFormats(cryptFormatClasses);
     }

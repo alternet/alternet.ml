@@ -82,6 +82,7 @@ public class BasicAuthTest extends BasicAuthServerTestHarness<Server> {
                 CurlyBracesCryptFormat.class.getName(),
                 PlainTextCryptFormat.class.getName()
         );
+        // store a user with its crypt
         String crypt = ModularCryptFormatHashers.$2$.get().build()
             .encrypt(unsafePwd.toCharArray());
         loginService.putUser(userName, crypt, new String[] {"admin"});

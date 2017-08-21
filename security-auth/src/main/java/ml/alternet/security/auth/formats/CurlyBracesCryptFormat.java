@@ -38,7 +38,7 @@ public class CurlyBracesCryptFormat implements CryptFormat {
             if ("CRYPT".equals(schemePart.scheme)) {
                 String mcfPart = crypt.substring(schemePart.rcb + 1);
                 b = new ModularCryptFormat().resolve(mcfPart).get();
-                b.setFormatter(new CryptFormatterWrapper(b.getFormatter()));
+                b.setFormatter(new CryptFormatterWrapper<>(b.getFormatter()));
             } else if (schemePart.scheme != null) {
                 String lookupKey = Hasher.Builder.class.getCanonicalName() + "/" + family() + "/" + schemePart.scheme;
                 try {
