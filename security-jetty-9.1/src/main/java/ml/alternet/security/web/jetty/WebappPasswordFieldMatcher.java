@@ -1,7 +1,12 @@
 package ml.alternet.security.web.jetty;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletRequest;
@@ -22,10 +27,13 @@ import org.eclipse.jetty.security.authentication.LoginAuthenticator;
 import org.eclipse.jetty.security.authentication.SessionAuthentication;
 import org.eclipse.jetty.security.authentication.SpnegoAuthenticator;
 import org.eclipse.jetty.server.Authentication;
+import org.eclipse.jetty.server.HandlerContainer;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.util.component.LifeCycle;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.webapp.WebAppContext;
 
@@ -66,8 +74,10 @@ import ml.alternet.security.web.server.PasswordFieldMatcher;
  */
 public class WebappPasswordFieldMatcher implements PasswordFieldMatcher, FormLimit {
 
-    WebAppContext wac;
-    AuthenticationMethod am;
+    static Logger LOG = Log.getLogger(WebappPasswordFieldMatcher.class);
+
+    Function<ServletRequest, ServletContext> servletContextGetter;
+    Supplier<FormLimit> formLimitGetter;
 
     /**
      * Create a password field matcher for a Jetty Webapp.
@@ -75,8 +85,22 @@ public class WebappPasswordFieldMatcher implements PasswordFieldMatcher, FormLim
      * @param wac The Jetty Webapp context.
      */
     public WebappPasswordFieldMatcher(WebAppContext wac) {
-        this.wac = wac;
-        this.wac.addLifeCycleListener(new LifeCycle.Listener() {
+        servletContextGetter = req -> wac.getServletContext();
+        formLimitGetter = () -> new FormLimit() {
+            @Override
+            public int getMaxFormContentSize() {
+                return wac.getMaxFormContentSize();
+            }
+            @Override
+            public int getMaxFormKeys() {
+                return wac.getMaxFormKeys();
+            }
+        };
+        addLifeCycleListener(wac);
+    }
+
+    private void addLifeCycleListener(WebAppContext wac) {
+        wac.addLifeCycleListener(new LifeCycle.Listener() {
             @Override
             public void lifeCycleStopping(LifeCycle event) {
                 ServletContext sc = wac.getServletContext();
@@ -87,18 +111,106 @@ public class WebappPasswordFieldMatcher implements PasswordFieldMatcher, FormLim
             public void lifeCycleStopped(LifeCycle event) { }
             @Override
             public void lifeCycleStarting(LifeCycle event) {
-                am = getAuthenticationMethod();
-                if (am == AuthenticationMethod.Basic || am == AuthenticationMethod.Form) {
+//                am = getAuthenticationMethod();
+//                if (am == AuthenticationMethod.Basic || am == AuthenticationMethod.Form) {
                     wac.getSecurityHandler().setAuthenticatorFactory(
                         newAuthenticatorFactory()
                     );
-                }
+//                }
             }
             @Override
             public void lifeCycleStarted(LifeCycle event) { }
             @Override
             public void lifeCycleFailure(LifeCycle event, Throwable cause) { }
         });
+    }
+
+    /**
+     * Create a password field matcher for a Jetty Server.
+     *
+     * @param wac The Jetty Server.
+     */
+    public WebappPasswordFieldMatcher(Server server) {
+        servletContextGetter = req -> {
+            // lookup for webapps in tree handlers and in beans
+            return lookupForWebApps(server)
+                .sorted(Comparator.<WebAppContext> comparingInt(wac -> wac.getContextPath().length()).reversed())
+                 //                                          "/" is last, otherwise it always match
+                .filter(wac -> {
+                    HttpServletRequest hreq = ((HttpServletRequest) req);
+                    if (hreq.getContextPath() != null && hreq.getContextPath().length() > 0) {
+                        // when WebappPasswordFieldMatcher.this.login(this, username, request)
+                        // is called, it appears that _pathInfo is null, but the context path is not
+                        return hreq.getContextPath().equals(wac.getContextPath());
+                    } else if (hreq.getPathInfo() != null) {
+                        // no other fields are available
+                        return hreq.getPathInfo().startsWith(wac.getContextPath());
+                    } else {
+                        return hreq.getRequestURI().startsWith(wac.getContextPath());
+                    }
+                })
+                .findFirst()
+                .orElseThrow(() -> {
+                    // Uh ?
+                    LOG.warn("UNABLE TO FIND A WEB APP CONTEXT FOR THIS REQUEST", req);
+                    return new IllegalStateException("UNABLE TO FIND A WEB APP CONTEXT FOR THIS REQUEST "+ req);
+                })
+                .getServletContext();
+        };
+        formLimitGetter = () -> new FormLimit() {
+            @Override
+            public int getMaxFormContentSize() {
+                Integer mfcs = (Integer) server.getAttribute("org.eclipse.jetty.server.Request.maxFormContentSize");
+                if (mfcs == null) {
+                    return -1;
+                } else {
+                    return mfcs;
+                }
+            }
+            @Override
+            public int getMaxFormKeys() {
+                Integer mfk = (Integer) server.getAttribute("org.eclipse.jetty.server.Request.maxFormKeys");
+                if (mfk == null) {
+                    return -1;
+                } else {
+                    return mfk;
+                }
+            }
+        };
+        server.addLifeCycleListener(new LifeCycle.Listener() {
+            @Override
+            public void lifeCycleStopping(LifeCycle event) { }
+            @Override
+            public void lifeCycleStopped(LifeCycle event) { }
+            @Override
+            public void lifeCycleStarting(LifeCycle event) {
+                lookupForWebApps(server)
+                    .forEach(wac -> addLifeCycleListener(wac));
+            }
+            @Override
+            public void lifeCycleStarted(LifeCycle event) { }
+            @Override
+            public void lifeCycleFailure(LifeCycle event, Throwable cause) { }
+        });
+    }
+
+    private Stream<WebAppContext> lookupForWebApps(Server server) {
+        return Stream.concat(
+            server.getBeans(WebAppContext.class).stream(),
+            Stream.of(server.getHandler())
+                .flatMap(h -> {
+                    if (h instanceof HandlerContainer) {
+                        return Arrays.stream(
+                            ((HandlerContainer) h).getChildHandlersByClass(WebAppContext.class)
+                        )
+                        .map(handler -> (WebAppContext) handler);
+                    } else if (h instanceof WebAppContext){
+                        return Stream.of((WebAppContext) h);
+                    } else {
+                        return Stream.empty();
+                    }
+                })
+        );
     }
 
     /**
@@ -112,7 +224,7 @@ public class WebappPasswordFieldMatcher implements PasswordFieldMatcher, FormLim
     public UserIdentity login(LoginAuthenticator loginAuthenticator, String username, ServletRequest request) {
         // "password" contains "*****"
         // the pwd has been captured before, let's retrieve it
-        Credentials credentials = am.getCredentials(request);
+        Credentials credentials = getAuthenticationMethod(request).getCredentials(request);
         // use "pwd" instead of "password"
         UserIdentity user = loginAuthenticator.getLoginService().login(username, credentials);
         return user;
@@ -121,7 +233,7 @@ public class WebappPasswordFieldMatcher implements PasswordFieldMatcher, FormLim
     /**
      * Return an authenticator that login with the captured
      * Password class instead of the supplied password field
-     * that hes been filled with '*'.
+     * that has been filled with '*'.
      *
      * @return By default, a subclass of BasicAuthenticator ;
      *      see implementation for details.
@@ -194,24 +306,24 @@ public class WebappPasswordFieldMatcher implements PasswordFieldMatcher, FormLim
     public Optional<List<String>> matches(HttpServletRequest request) {
         // IMPL NOTE : the ServletContext can't be extract from the request
         // because Jetty didn't set it yet
-        ServletContext sc = wac.getServletContext();
+        ServletContext sc = servletContextGetter.apply(request);
         return FormFieldConfiguration.matches(sc, request);
     }
 
     @Override
-    public AuthenticationMethod getAuthenticationMethod() {
-        ServletContext sc = wac.getServletContext();
+    public AuthenticationMethod getAuthenticationMethod(ServletRequest request) {
+        ServletContext sc = servletContextGetter.apply(request);
         return AuthenticationMethod.extract(sc);
     }
 
     @Override
     public int getMaxFormContentSize() {
-        return wac.getMaxFormContentSize();
+        return formLimitGetter.get().getMaxFormContentSize();
     }
 
     @Override
     public int getMaxFormKeys() {
-        return wac.getMaxFormKeys();
+        return formLimitGetter.get().getMaxFormKeys();
     }
 
 }

@@ -9,9 +9,10 @@ import javax.security.auth.callback.PasswordCallback;
 
 import ml.alternet.security.Password;
 
-public class EnhancedPasswordCallback extends PasswordCallback implements Destroyable {
+@Deprecated
+public class AltPasswordCallback extends PasswordCallback implements Destroyable {
 
-    public EnhancedPasswordCallback(String prompt, boolean echoOn) {
+    public AltPasswordCallback(String prompt, boolean echoOn) {
         super(prompt, echoOn);
     }
 

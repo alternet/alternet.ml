@@ -2,7 +2,7 @@ package ml.alternet.test.security.web.jetty;
 
 import jodd.methref.Methref;
 import ml.alternet.security.web.Config;
-import ml.alternet.security.web.jetty.EnhancedHttpConnectionFactory;
+import ml.alternet.security.web.jetty.AltHttpConnectionFactory;
 import ml.alternet.test.security.web.server.RESTServerTestHarness;
 
 import org.eclipse.jetty.server.Connector;
@@ -44,7 +44,7 @@ public class RESTTest extends RESTServerTestHarness<Server> {
             // a reference to this test
             wac.setAttribute(RESTServerTestHarness.class.getName(), this);
 
-            EnhancedHttpConnectionFactory cf = new EnhancedHttpConnectionFactory(wac);
+            AltHttpConnectionFactory cf = new AltHttpConnectionFactory(wac);
 
             server = new Server();
             ServerConnector connector=new ServerConnector(server, cf);

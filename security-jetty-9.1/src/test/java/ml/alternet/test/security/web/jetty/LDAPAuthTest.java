@@ -33,8 +33,8 @@ import ml.alternet.security.auth.formats.CurlyBracesCryptFormat;
 import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.security.auth.formats.PlainTextCryptFormat;
 import ml.alternet.security.web.Config;
-import ml.alternet.security.web.jetty.EnhancedHttpConnectionFactory;
-import ml.alternet.security.web.jetty.auth.EnhancedLdapLoginModule;
+import ml.alternet.security.web.jetty.AltHttpConnectionFactory;
+import ml.alternet.security.web.jetty.auth.AltLdapLoginModule;
 import ml.alternet.test.security.web.jetty.ldap.LdapServer;
 import ml.alternet.test.security.web.server.FormAuthServerTestHarness;
 
@@ -105,9 +105,9 @@ public class LDAPAuthTest extends FormAuthServerTestHarness<Server> {
         // a reference to this test
         wac.setAttribute(FormAuthServerTestHarness.class.getName(), this);
 
-        EnhancedHttpConnectionFactory cf = new EnhancedHttpConnectionFactory(wac);
-
         server = new Server();
+        AltHttpConnectionFactory cf = new AltHttpConnectionFactory(server);
+
         ServerConnector connector=new ServerConnector(server, cf);
         connector.setPort(port);
         server.setConnectors(new Connector[]{connector});
@@ -158,6 +158,7 @@ public class LDAPAuthTest extends FormAuthServerTestHarness<Server> {
 
         server.start();
         //        server.dumpStdErr();
+        System.out.println("WEBAPPS :" + server.getBeans(WebAppContext.class));
     }
 
     protected void setJaasConfiguration() {
@@ -166,25 +167,7 @@ public class LDAPAuthTest extends FormAuthServerTestHarness<Server> {
             public AppConfigurationEntry[] getAppConfigurationEntry(String name){
                 if ("ldap".equals(name)) {
                     final Map<String,Object> options=new HashMap<String,Object>();
-/*
-                    options.put("useSSL", "false");
-                    options.put("debug","true");
-                    options.put("contextFactory","com.sun.jndi.ldap.LdapCtxFactory");
-                    options.put("userProvider","ldap://localhost:10389/ou=people,dc=alternet,dc=ml");
-                    options.put("userFilter","(&(uid={USERNAME})(objectClass=inetOrgPerson))");
 
-                    options.put("authenticationMethod", "simple");
-                    options.put("forceBindingLogin", "false");
-                    options.put("userBaseDn", "ou=people,dc=alternet,dc=ml");
-                    options.put("userRdnAttribute", "uid");
-                    options.put("userIdAttribute", "uid");
-                    options.put("userPasswordAttribute", "userPassword");
-                    options.put("userObjectClass", "inetOrgPerson");
-                    options.put("roleBaseDn", "ou=groups,dc=alternet,dc=ml");
-                    options.put("roleNameAttribute", "cn");
-                    options.put("roleMemberAttribute", "uniqueMember");
-                    options.put("roleObjectClass", "groupOfUniqueNames");
-*/
                     options.put("useSSL", "false");
                     options.put("debug","true");
                     options.put("contextFactory","com.sun.jndi.ldap.LdapCtxFactory");
@@ -194,7 +177,12 @@ public class LDAPAuthTest extends FormAuthServerTestHarness<Server> {
                     options.put("bindDn","ou=people,dc=alternet,dc=ml");
                     options.put("bindPassword","secret");
                     options.put("authenticationMethod", "simple");
+
                     options.put("forceBindingLogin", "false");
+                    options.put(CryptFormat.class.getName(),
+                            ModularCryptFormat.class.getName()
+                            + " , " + CurlyBracesCryptFormat.class.getName()
+                            + "," + PlainTextCryptFormat.class.getName());
 
                     options.put("userBaseDn", "ou=people,dc=alternet,dc=ml");
                     options.put("userRdnAttribute", "uid");
@@ -207,12 +195,7 @@ public class LDAPAuthTest extends FormAuthServerTestHarness<Server> {
                     options.put("roleMemberAttribute", "member");
                     options.put("roleObjectClass", "groupOfNames");
 
-                    options.put(CryptFormat.class.getName(),
-                            ModularCryptFormat.class.getName()
-                            + " , " + CurlyBracesCryptFormat.class.getName()
-                            + "," + PlainTextCryptFormat.class.getName());
-
-                    AppConfigurationEntry appConf = new AppConfigurationEntry(EnhancedLdapLoginModule.class.getName(), LoginModuleControlFlag.REQUIRED, options);
+                    AppConfigurationEntry appConf = new AppConfigurationEntry(AltLdapLoginModule.class.getName(), LoginModuleControlFlag.REQUIRED, options);
                     return new AppConfigurationEntry[]{ appConf };
                 } else {
                     return null;

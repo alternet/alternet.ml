@@ -5,20 +5,28 @@ import java.util.List;
 
 import org.eclipse.jetty.security.MappedLoginService;
 import org.eclipse.jetty.server.UserIdentity;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.security.Credential;
 
 import ml.alternet.security.auth.Credentials;
+import ml.alternet.security.auth.CredentialsChecker;
 import ml.alternet.security.auth.CryptFormat;
-import ml.alternet.security.web.jetty.auth.CredentialChecker;
-import ml.alternet.security.web.jetty.auth.CryptFormatAware;
 
-class MappedLoginServiceImpl extends MappedLoginService implements CryptFormatAware, CredentialChecker {
+class AltMappedLoginService extends MappedLoginService implements CredentialsChecker {
+
+    static Logger LOG = Log.getLogger(AltMappedLoginService.class);
 
     List<CryptFormat> formats;
 
     @Override
     public void setCryptFormats(List<CryptFormat> formats) {
         this.formats = formats;
+    }
+
+    @Override
+    public List<CryptFormat> getCryptFormats() {
+        return this.formats;
     }
 
     @Override
@@ -37,7 +45,7 @@ class MappedLoginServiceImpl extends MappedLoginService implements CryptFormatAw
                 @Override
                 public boolean check(Object credentials) {
                     if (credentials instanceof Credentials) {
-                        return MappedLoginServiceImpl.this.check(crypt, (Credentials) credentials);
+                        return AltMappedLoginService.this.check((Credentials) credentials, crypt);
                     } else {
                         return false;
                     }
@@ -47,8 +55,13 @@ class MappedLoginServiceImpl extends MappedLoginService implements CryptFormatAw
         );
     }
 
-    private boolean check(String crypt, Credentials credentials) {
-        return check(crypt, this.formats, credentials);
+    @Override
+    public void reportError(String message, String crypt, Exception e) {
+        if (e == null) {
+            LOG.warn(message);
+        } else {
+            LOG.warn(message, e);
+        }
     }
 
 }

@@ -19,7 +19,7 @@ import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.security.auth.formats.PlainTextCryptFormat;
 import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
 import ml.alternet.security.web.Config;
-import ml.alternet.security.web.jetty.EnhancedHttpConnectionFactory;
+import ml.alternet.security.web.jetty.AltHttpConnectionFactory;
 import ml.alternet.test.security.web.server.BasicAuthServerTestHarness;
 
 /**
@@ -51,7 +51,7 @@ public class BasicAuthTest extends BasicAuthServerTestHarness<Server> {
         // a reference to this test
         wac.setAttribute(BasicAuthServerTestHarness.class.getName(), this);
 
-        EnhancedHttpConnectionFactory cf = new EnhancedHttpConnectionFactory(wac);
+        AltHttpConnectionFactory cf = new AltHttpConnectionFactory(wac);
 
         server = new Server();
         ServerConnector connector=new ServerConnector(server, cf);
@@ -75,7 +75,7 @@ public class BasicAuthTest extends BasicAuthServerTestHarness<Server> {
         constraint.setRoles(new String[]{"customer","admin"});
         constraint.setAuthenticate(true);
 
-        MappedLoginServiceImpl loginService = new MappedLoginServiceImpl();
+        AltMappedLoginService loginService = new AltMappedLoginService();
         loginService.setName("realm");
         loginService.setCryptFormats(
                 ModularCryptFormat.class.getName(),

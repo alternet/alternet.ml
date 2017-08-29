@@ -35,7 +35,19 @@ import ml.alternet.util.StringUtil;
  *     &lt;/Arg&gt;
  *   &lt;/Call&gt;
  * &lt;/Configure&gt;
-</pre>
+ * </pre>
+ * 
+ * <h1>NOTE</h1>
+ * This LDAP server relies on <a href="https://www.ldap.com/unboundid-ldap-sdk-for-java">UnboundID LDAP SDK for Java</a>.
+ * It appears that hash passwords are not supported by this version,
+ * therefore the configuration (typically in <code>ldap.conf</code> file) should indicate
+ * <code>forceBindingLogin="false"</code> (which means that the LDAP server will sent back
+ * the password field and checking it with the clear password won't be performed by the LDAP server)
+ * rather than <code>forceBindingLogin="true"</code>
+ * (which means that the clear password will be sent to the LDAP server that will check if they
+ * match the password field, therefore the password field stored in LDAP can't be a hash,
+ * it must be a clear plaintext password only).
+ * In a new release these may change, <a href="https://github.com/pingidentity/ldapsdk/issues/32">as mentioned here</a>
  *
  * @author Philippe Poulard
  */
@@ -169,10 +181,10 @@ public class LdapServer extends AbstractLifeCycle {
         if (ldifFile != null && !ldifFile.isEmpty()) {
             InputStream inputStream = new FileInputStream(ldifFile);
             try {
-                final LDIFReader reader = new LDIFReader(inputStream);
-                for (LDIFChangeRecord changeRecord = reader.readChangeRecord(true);
+                final LDIFReader ldifReader = new LDIFReader(inputStream);
+                for (LDIFChangeRecord changeRecord = ldifReader.readChangeRecord(true);
                                       changeRecord != null;
-                                      changeRecord = reader.readChangeRecord(true)) {
+                                      changeRecord = ldifReader.readChangeRecord(true)) {
                     changeRecord.processChange(ldapServer.getConnection());
                 }
             } finally {
