@@ -12,7 +12,7 @@ import ml.alternet.security.auth.CredentialsChecker;
 import ml.alternet.security.auth.CryptFormat;
 
 /**
- *
+ * Jetty Jaas credentials callback for Alternet Security Authentication
  *
  * @author Philippe Poulard
  */

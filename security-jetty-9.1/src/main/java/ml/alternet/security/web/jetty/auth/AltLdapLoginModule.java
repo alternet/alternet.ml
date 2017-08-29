@@ -31,6 +31,11 @@ import ml.alternet.security.auth.CredentialsChecker;
 import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.web.jetty.auth.CredentialsCallback.AltCredential;
 
+/**
+ * Jetty Ldap login module for Alternet Security Authentication
+ *
+ * @author Philippe Poulard
+ */
 public class AltLdapLoginModule extends LdapLoginModule implements CredentialsChecker {
 
     private static final Logger LOG = Log.getLogger(AltLdapLoginModule.class);
@@ -47,14 +52,14 @@ public class AltLdapLoginModule extends LdapLoginModule implements CredentialsCh
 
     @Override
     public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String, ?> sharedState,
-        Map<String, ?> options) 
+        Map<String, ?> options)
     {
         super.initialize(subject, callbackHandler, sharedState, options);
         // see LDAPAuthTest#setJaasConfiguration()
         // a comma separated list of classes CryptFormat
         String[] cryptFormatClasses = ((String) options.get(CryptFormat.class.getName())).split("\\s*,\\s*");
         setCryptFormats(cryptFormatClasses);
-        
+
         initPrivateFields(options);
     }
 
@@ -106,6 +111,7 @@ public class AltLdapLoginModule extends LdapLoginModule implements CredentialsCh
     // and below the methods that use that fields
 
     // here, we are binding the login with a Password object that require a specific handling
+    @Override
     public boolean bindingLogin(String username, Object password) throws LoginException, NamingException {
         SearchResult searchResult = findUser(username);
         String userDn = searchResult.getNameInNamespace();
@@ -170,7 +176,7 @@ public class AltLdapLoginModule extends LdapLoginModule implements CredentialsCh
             throw new LoginException("User not found.");
         }
 
-        return (SearchResult) results.nextElement();
+        return results.nextElement();
     }
 
     private List<String> getUserRolesByDn(DirContext dirContext, String userDn) throws LoginException, NamingException
@@ -195,7 +201,7 @@ public class AltLdapLoginModule extends LdapLoginModule implements CredentialsCh
 
         while (results.hasMoreElements())
         {
-            SearchResult result = (SearchResult) results.nextElement();
+            SearchResult result = results.nextElement();
 
             Attributes attributes = result.getAttributes();
 
