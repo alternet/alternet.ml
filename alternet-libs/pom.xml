@@ -108,7 +108,7 @@
         <module>../security-auth</module>
         <!-- >module>../security-auth-impl</module-->
         <module>../security-jetty-9.1</module>
-        <module>../security-tomcat</module>
+        <module>../security-tomcat-8.0</module>
         <module>../tools</module>
         <module>../tools-generator</module>
     </modules>
