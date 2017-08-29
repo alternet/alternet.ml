@@ -19,9 +19,9 @@ import ml.alternet.security.web.server.AuthenticationMethod;
  *
  * @author Philippe Poulard
  */
-public class AlternetCredentialHandler implements CredentialHandler {
+public class AltCredentialHandler implements CredentialHandler {
 
-    private static final Log LOG = LogFactory.getLog(AlternetCredentialHandler.class);
+    private static final Log LOG = LogFactory.getLog(AltCredentialHandler.class);
 
     private Hasher hasher;
 
@@ -30,7 +30,7 @@ public class AlternetCredentialHandler implements CredentialHandler {
         if (storedCredentials == null) {
             return false;
         }
-        ServletRequest request = EnhancedProtocolHandler.request.get();
+        ServletRequest request = AltProtocolHandler.request.get();
         AuthenticationMethod am = AuthenticationMethod.extract(request.getServletContext());
         Credentials credentials = am.getCredentials(request);
         try {

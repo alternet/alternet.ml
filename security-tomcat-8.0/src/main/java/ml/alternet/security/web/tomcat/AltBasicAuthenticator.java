@@ -12,15 +12,15 @@ import org.apache.catalina.connector.Request;
  *
  * @author Philippe Poulard
  */
-public class AlternetBasicAuthenticator extends BasicAuthenticator {
+public class AltBasicAuthenticator extends BasicAuthenticator {
 
     @Override
     public boolean authenticate(Request request, HttpServletResponse response) throws IOException {
-        EnhancedProtocolHandler.request.set(request);
+        AltProtocolHandler.request.set(request);
         try {
             return super.authenticate(request, response);
         } finally {
-            EnhancedProtocolHandler.request.remove();
+            AltProtocolHandler.request.remove();
         }
     }
 

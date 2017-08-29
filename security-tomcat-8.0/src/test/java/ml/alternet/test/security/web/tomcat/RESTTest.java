@@ -44,7 +44,7 @@ public class RESTTest extends RESTServerTestHarness<Tomcat> implements TomcatSup
         server.getEngine().setName(server.getEngine().getName() + "-" + Objects.hashCode(server.getEngine()));
 
         // use the specific connector
-        Connector connector = new Connector("ml.alternet.security.web.tomcat.EnhancedProtocolHandler");
+        Connector connector = new Connector("ml.alternet.security.web.tomcat.AltProtocolHandler");
         connector.setPort(port);
         // set in "tomcatProtocol" what you would have set in the  Connector constructor
         connector.setProperty("tomcatProtocol", "HTTP/1.1");

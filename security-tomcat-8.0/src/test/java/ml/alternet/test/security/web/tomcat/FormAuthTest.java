@@ -23,8 +23,8 @@ import org.testng.annotations.Test;
 
 import jodd.methref.Methref;
 import ml.alternet.security.web.Config;
-import ml.alternet.security.web.tomcat.AlternetCredentialHandler;
-import ml.alternet.security.web.tomcat.AlternetFormAuthenticator;
+import ml.alternet.security.web.tomcat.AltCredentialHandler;
+import ml.alternet.security.web.tomcat.AltFormAuthenticator;
 import ml.alternet.test.security.web.server.FormAuthServerTestHarness;
 
 /**
@@ -69,7 +69,7 @@ public class FormAuthTest extends FormAuthServerTestHarness<Tomcat> implements T
         server = get();
 
         // use the specific connector
-        Connector connector = new Connector("ml.alternet.security.web.tomcat.EnhancedProtocolHandler");
+        Connector connector = new Connector("ml.alternet.security.web.tomcat.AltProtocolHandler");
 //        Connector connector = new Connector("HTTP/1.1");
         connector.setPort(port);
         // set in "tomcatProtocol" what you would have set in the  Connector constructor
@@ -115,7 +115,7 @@ public class FormAuthTest extends FormAuthServerTestHarness<Tomcat> implements T
         initParam.setValue("Form");
         wac.addApplicationParameter(initParam);
 
-        AuthenticatorBase auth = new AlternetFormAuthenticator();
+        AuthenticatorBase auth = new AltFormAuthenticator();
         auth.setSecurePagesWithPragma(false);
         auth.setChangeSessionIdOnAuthentication(true);
         auth.setAlwaysUseSession(true);
@@ -124,7 +124,7 @@ public class FormAuthTest extends FormAuthServerTestHarness<Tomcat> implements T
         MappedRealm realm = new MappedRealm();
         realm.putUser(userName, unsafePwd.toCharArray(), new String[] {"admin"});
         // specific conf
-        realm.setCredentialHandler(new AlternetCredentialHandler());
+        realm.setCredentialHandler(new AltCredentialHandler());
         wac.setRealm(realm);
 
         server.start();

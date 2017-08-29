@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.catalina.connector.Connector;
@@ -36,7 +37,7 @@ import ml.alternet.security.web.server.PasswordFieldMatcher;
  *
  * @author Philippe Poulard
  */
-public class AlternetCoyoteAdapter extends CoyoteAdapter {
+public class AltCoyoteAdapter extends CoyoteAdapter {
 
     FormLimit formLimit;
     DebugLevel debugLevel;
@@ -49,7 +50,7 @@ public class AlternetCoyoteAdapter extends CoyoteAdapter {
      * @param debugLevel The debug level.
      * @param pm The password manager.
      */
-    public AlternetCoyoteAdapter(Connector connector, DebugLevel debugLevel, PasswordManager pm) {
+    public AltCoyoteAdapter(Connector connector, DebugLevel debugLevel, PasswordManager pm) {
         super(connector);
         this.debugLevel = debugLevel;
         this.pm = pm;
@@ -85,14 +86,14 @@ public class AlternetCoyoteAdapter extends CoyoteAdapter {
                 }
 
                 @Override
-                public AuthenticationMethod getAuthenticationMethod() {
+                public AuthenticationMethod getAuthenticationMethod(ServletRequest request) {
                     return AuthenticationMethod.extract(scontext);
                 }
 
             };
 
             // process BASIC auth
-            if (pfm.getAuthenticationMethod() == AuthenticationMethod.Basic) {
+            if (pfm.getAuthenticationMethod(null) == AuthenticationMethod.Basic) {
                 MessageBytes auth = req.getMimeHeaders().getValue("authorization");
                 if (auth != null) {
                     // "Basic d2hvOmRhX0FjVHVAfCBQQHp6bTBSfCk="
@@ -115,7 +116,7 @@ public class AlternetCoyoteAdapter extends CoyoteAdapter {
                         @Override
                         public void debug(String msg) {
                             if (debugLevel.isAllowingUnsercureTrace()) {
-                                EnhancedProtocolHandler.LOG.debug(msg + " :\n" + new String(buffer, Charset.forName("ISO-8859-1")));
+                                AltProtocolHandler.LOG.debug(msg + " :\n" + new String(buffer, Charset.forName("ISO-8859-1")));
                             }
                         }
                     };
@@ -151,7 +152,7 @@ public class AlternetCoyoteAdapter extends CoyoteAdapter {
                         }
                         @Override
                         public void log(Exception exception) {
-                            EnhancedProtocolHandler.LOG.debug(exception.toString(), exception);
+                            AltProtocolHandler.LOG.debug(exception.toString(), exception);
                         }
                         @Override
                         public CaptureContext<ByteBuffer> getCurrentCaptureContext() {

@@ -2,8 +2,8 @@ package ml.alternet.test.security.web.tomcat;
 
 import jodd.methref.Methref;
 import ml.alternet.security.web.Config;
-import ml.alternet.security.web.tomcat.AlternetBasicAuthenticator;
-import ml.alternet.security.web.tomcat.AlternetCredentialHandler;
+import ml.alternet.security.web.tomcat.AltBasicAuthenticator;
+import ml.alternet.security.web.tomcat.AltCredentialHandler;
 import ml.alternet.test.security.web.server.BasicAuthServerTestHarness;
 
 import java.util.Objects;
@@ -49,7 +49,7 @@ public class BasicAuthTest extends BasicAuthServerTestHarness<Tomcat> implements
         server = get();
 
         // use the specific connector
-        Connector connector = new Connector("ml.alternet.security.web.tomcat.EnhancedProtocolHandler");
+        Connector connector = new Connector("ml.alternet.security.web.tomcat.AltProtocolHandler");
         connector.setPort(port);
         // set in "tomcatProtocol" what you would have set in the  Connector constructor
         connector.setProperty("tomcatProtocol", "HTTP/1.1");
@@ -88,7 +88,7 @@ public class BasicAuthTest extends BasicAuthServerTestHarness<Tomcat> implements
         initParam.setValue("Basic");
         wac.addApplicationParameter(initParam);
 
-        AuthenticatorBase auth = new AlternetBasicAuthenticator();
+        AuthenticatorBase auth = new AltBasicAuthenticator();
         auth.setSecurePagesWithPragma(false);
         auth.setChangeSessionIdOnAuthentication(false);
         auth.setAlwaysUseSession(true);
@@ -97,7 +97,7 @@ public class BasicAuthTest extends BasicAuthServerTestHarness<Tomcat> implements
         MappedRealm realm = new MappedRealm();
         realm.putUser(userName, unsafePwd.toCharArray(), new String[] {"admin"});
         // specific conf
-        realm.setCredentialHandler(new AlternetCredentialHandler());
+        realm.setCredentialHandler(new AltCredentialHandler());
         wac.setRealm(realm);
 
         server.start();

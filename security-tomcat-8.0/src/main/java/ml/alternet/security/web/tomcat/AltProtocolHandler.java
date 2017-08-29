@@ -48,9 +48,9 @@ import org.apache.tomcat.util.IntrospectionUtils;
  *
  * @author Philippe Poulard
  */
-public class EnhancedProtocolHandler implements ProtocolHandler, DebugLevel.Debuggable {
+public class AltProtocolHandler implements ProtocolHandler, DebugLevel.Debuggable {
 
-    static final Log LOG = LogFactory.getLog(EnhancedProtocolHandler.class);
+    static final Log LOG = LogFactory.getLog(AltProtocolHandler.class);
 
     public static ThreadLocal<org.apache.catalina.connector.Request> request = new ThreadLocal<>();
 
@@ -164,7 +164,7 @@ public class EnhancedProtocolHandler implements ProtocolHandler, DebugLevel.Debu
         try {
             CoyoteAdapter ca = (CoyoteAdapter) adapter;
             Connector connector = Invoker.get(ca, "connector");
-            adapter = new AlternetCoyoteAdapter(connector, getDebugLevel(), this.pm);
+            adapter = new AltCoyoteAdapter(connector, getDebugLevel(), this.pm);
             ph.setAdapter(adapter);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             Thrower.doThrow(e);
