@@ -155,7 +155,6 @@
                 <artifactId>jetty-maven-plugin</artifactId>
                 <version>${version.org.eclipse.jetty}</version>
                 <configuration>
-                    <!--jettyConfig>${project.basedir}/src/test/resources/config/jetty9.1.xml</jettyConfig-->
                     <jettyConfig>${project.basedir}/src/test/resources/jetty-http.xml</jettyConfig>
                     <stopKey>STOP</stopKey>
                     <stopPort>9876</stopPort>
@@ -165,7 +164,6 @@
                         <scanTarget>${project.basedir}/src/main</scanTarget>
                         <scanTarget>${project.basedir}/src/test</scanTarget>
                     </scanTargets>
-                    <!-->contextXml>${project.basedir}/src/test/resources/jetty-context.xml</contextXml-->
                     <!-- available in Alternet Security main module -->
                     <webAppSourceDirectory>${project.basedir}/../security/src/test/resources/webapp/</webAppSourceDirectory>
                     <webAppConfig>
@@ -178,26 +176,6 @@
                       </systemProperty>
                     </systemProperties>
                 </configuration>
-<!--                 <executions> -->
-<!--                     <execution> -->
-<!--                         <id>start-jetty</id> -->
-<!--                         <phase>pre-integration-test</phase> -->
-<!--                         <goals> -->
-<!--                             <goal>run-exploded</goal> -->
-<!--                         </goals> -->
-<!--                         <configuration> -->
-<!--                             <scanIntervalSeconds>0</scanIntervalSeconds> -->
-<!--                             <daemon>true</daemon> -->
-<!--                         </configuration> -->
-<!--                     </execution> -->
-<!--                     <execution> -->
-<!--                         <id>stop-jetty</id> -->
-<!--                         <phase>post-integration-test</phase> -->
-<!--                         <goals> -->
-<!--                             <goal>stop</goal> -->
-<!--                         </goals> -->
-<!--                     </execution> -->
-<!--                 </executions> -->
             </plugin>
         </plugins>
     </build>
