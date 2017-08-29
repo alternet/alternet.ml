@@ -380,10 +380,10 @@ which paths and form fields to intercept in the HTTP requests
     // configure for handling the "pwd" field when POSTing on the "/doRegister.html" path
     wac.setInitParameter(Passwords.FORMS_INIT_PARAM, "/doRegister.html?pwd");
 
-    server = new Server();
+    Server server = new Server();
     AltHttpConnectionFactory cf = new AltHttpConnectionFactory(server);
 
-    ServerConnector connector=new ServerConnector(server, cf);
+    ServerConnector connector = new ServerConnector(server, cf);
     connector.setPort(port);
     server.setConnectors(new Connector[]{connector});
 
@@ -409,15 +409,15 @@ Various full working examples of programmatic configurations are available in th
 Instead of configuring the Jetty server with :
 
 ```XML
-    &lt;New class="org.eclipse.jetty.server.HttpConnectionFactory"/&gt;
+    <New class="org.eclipse.jetty.server.HttpConnectionFactory"/>
 ```
 
 ...you have to replace it with :
 
 ```XML
-    &lt;New class="ml.alternet.security.web.jetty.AltHttpConnectionFactory"&gt;
-        &lt;Arg&gt;&lt;Ref refid="Server"/&gt;&lt;/Arg&gt;
-    &lt;/New&gt;
+    <New class="ml.alternet.security.web.jetty.AltHttpConnectionFactory">
+        <Arg><Ref refid="Server"/></Arg>
+    </New>
 ```
 
 #### Jetty authentication
@@ -431,32 +431,32 @@ according to the underlying authentication mechanism.
 Here is the full XML configuration file :
 
 ```XML
-&lt;Configure id="Server" class="org.eclipse.jetty.server.Server"&gt;
-  &lt;Call name="addBean"&gt;
-    &lt;Arg&gt;
-       &lt;New class="org.eclipse.jetty.jaas.JAASLoginService"&gt;
-         &lt;Set name="name"&gt;Alternet Realm&lt;/Set&gt;
-         &lt;Set name="loginModuleName"&gt;ldap&lt;/Set&gt;
-       &lt;/New&gt;
-    &lt;/Arg&gt;
-  &lt;/Call&gt;
-  &lt;Call name="addConnector"&gt;
-    &lt;Arg&gt;
-      &lt;New id="httpConnector" class="org.eclipse.jetty.server.ServerConnector"&gt;
-        &lt;Arg name="server"&gt;&lt;Ref refid="Server" /&gt;&lt;/Arg&gt;
-        &lt;Arg name="factories"&gt;
-          &lt;Array type="org.eclipse.jetty.server.ConnectionFactory"&gt;
-            &lt;Item&gt;
-              &lt;New class="ml.alternet.security.web.jetty.AltHttpConnectionFactory"&gt;
-                &lt;Arg&gt;&lt;Ref refid="Server"/&gt;&lt;/Arg&gt;
-              &lt;/New&gt;
-            &lt;/Item&gt;
-          &lt;/Array&gt;
-        &lt;/Arg&gt;
-      &lt;/New&gt;
-    &lt;/Arg&gt;
-  &lt;/Call&gt;
-&lt;/Configure&gt;
+<Configure id="Server" class="org.eclipse.jetty.server.Server">
+  <Call name="addBean">
+    <Arg>
+       <New class="org.eclipse.jetty.jaas.JAASLoginService">
+         <Set name="name">Alternet Realm</Set>
+         <Set name="loginModuleName">ldap</Set>
+       </New>
+    </Arg>
+  </Call>
+  <Call name="addConnector">
+    <Arg>
+      <New id="httpConnector" class="org.eclipse.jetty.server.ServerConnector">
+        <Arg name="server"><Ref refid="Server" /></Arg>
+        <Arg name="factories">
+          <Array type="org.eclipse.jetty.server.ConnectionFactory">
+            <Item>
+              <New class="ml.alternet.security.web.jetty.AltHttpConnectionFactory">
+                <Arg><Ref refid="Server"/></Arg>
+              </New>
+            </Item>
+          </Array>
+        </Arg>
+      </New>
+    </Arg>
+  </Call>
+</Configure>
 ```
 
 The JAAS login module, (typically in `${jetty.base}/etc/ldap.conf`) must be :

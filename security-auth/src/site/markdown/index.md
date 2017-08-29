@@ -13,11 +13,6 @@ JavaDoc API :
 * [Jetty JavaDoc API documentation](../security-jetty-9.1/apidocs/index.html)
 * [Tomcat JavaDoc API documentation](../security-tomcat/apidocs/index.html)
 
-Other Alternet guides :
-
-* [Alternet Scanner](../scanner/scanner.html)
-* [Alternet Tools](../tools/tools.html)
-
 ## ![download](../images/download.png) [Download](../download.html)
 
 Alternet Security is distributed mainly via Maven.
