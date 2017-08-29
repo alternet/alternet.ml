@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_2.dtd">
+<Configure id="Server" class="org.eclipse.jetty.server.Server">
+  <Call name="addBean">
+    <Arg>
+      <New class="ml.alternet.test.security.web.jetty.ldap.LdapServer">
+        <Set name="port"><Property name="ldap.port" default="10389"/></Set>
+        <Set name="baseDn"><Property name="ldap.baseDn" default="dc=alternet,dc=ml"/></Set>
+        <Set name="ldifFiles"><Property name="ldap.ldifFiles"/></Set>
+      </New>
+    </Arg>
+  </Call>
+</Configure>
