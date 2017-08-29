@@ -28,7 +28,7 @@ import ml.alternet.security.binary.BytesEncoding;
  * a variant make from the crypt format family name and the
  * hasher scheme.</p>
  *
- * <p>{@link HashUtil} supply several means to find a hasher or
+ * <p>{@link CredentialsChecker} supply several means to find a hasher or
  * to check a password.</p>
  *
  * <p>This class defines 6 standard parameters.</p>
@@ -38,35 +38,7 @@ import ml.alternet.security.binary.BytesEncoding;
  *
  * @author Philippe Poulard
  */
-public interface Hasher {
-
-    /**
-     * The default variant of this class to lookup is "/ColonCryptFormat/PBKDF2".
-     *
-     * @see ml.alternet.discover.DiscoveryService#lookupSingleton(String)
-     * @see #getDefault()
-     */
-//    public static String DEFAULT_VARIANT = "/ColonCryptFormat/PBKDF2";
-
-    /**
-     * Return the default hasher. The lookup key is :
-     * "<code>ml.alternet.security.auth.Hasher/ColonCryptFormat/PBKDF2</code>".
-     *
-     * <p>Note that Alternet Security supply an implementation of this hasher
-     * available in the separate module : <code>ml.alternet:alternet-security-auth-impl</code></p>
-     *
-     * @return The PBKDF2 hasher implementation.
-     *
-     * @see #DEFAULT_VARIANT
-     */
-//    static Hasher getDefault() {
-//        try {
-//            return DiscoveryService.lookupSingleton(Hasher.class.getName() + DEFAULT_VARIANT);
-//        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-//            return Thrower.doThrow(e);
-//        }
-//    }
-
+public interface Hasher extends Credentials.Checker {
 
     /**
      * Get the default builder according to the configuration.
@@ -193,23 +165,8 @@ public interface Hasher {
     }
 
     /**
-     * Check whether a password matches a crypt.
-     *
-     * @param credentials Credentials, that must contain at least the password.
-     *
-     * @param crypt The crypt that has been previously computed by
-     *          the same hasher.
-     *
-     * @return <code>true</code> if the password matches the crypt,
-     *          <code>false</code> otherwise.
-     *
-     * @throws InvalidAlgorithmParameterException When the hash algorithm fails.
-     */
-    boolean check(Credentials credentials, String crypt) throws InvalidAlgorithmParameterException;
-
-    /**
      * Find the hasher for a given crypt.
-     * 
+     *
      * @param crypt The crypt to resolve.
      * @param formats The list of candidate formats.
      * @return If found, the hasher.
@@ -220,7 +177,7 @@ public interface Hasher {
 
     /**
      * Find the hasher for a given crypt.
-     * 
+     *
      * @param crypt The crypt to resolve.
      * @param formats The list of candidate formats.
      * @return If found, the hasher.
@@ -696,7 +653,6 @@ public interface Hasher {
             return this;
         }
 
-//        @Override
         @Override
         public int getSaltByteSize() {
             return this.conf.saltByteSize;
@@ -937,125 +893,3 @@ public interface Hasher {
     }
 
 }
-
-    /*
-
- * Format : <code>$[scheme]$[salt]$[crypt]</code>
- *
- * <table><tr><th>ID</th><th>Method</th></tr>
- * <tr><td>1</td><td>MD5 with salt</td></tr>
- * <tr><td>2a</td><td>Blowfish</td></tr>
- * <tr><td>5</td><td>SHA-256</td></tr>
- * <tr><td>6</td><td>SHA-512</td></tr>
- * <h4>Examples :</h4>
- * <ul>
- * <li>Apache MD5 crypt format :
- * <pre>$apr1$jgwedrkq$jzeetEHMGal5H0SUFDMEl1</pre></li>
- * <li>Crypt MD5 :
- * <pre>$1$3iuE5z/b$JHyXMzQOIq3cl6WlEMoZC.</pre></li>
- * </ul>
-
-
-
- * <ul>
- * <li>Contains the password encoded to base64 (just like {SSHA}) :
- * <pre>{SSHA.b64}986H5cS9JcDYQeJd6wKaITMho4M9CrXM</pre></li>
- * <li>Contains the password encoded to hexa :
- * <pre>{SSHA.HEX}3f5ca6203f8cdaa44d9160575c1ee1d77abcf59ca5f852d1</pre></li>
- * </ul>
- *
- * SSHA : Salted SHA
-
-Base64 encoded hash with salt
-userPassword: {SSHA}MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0
-
-Base64 decoded value
-     SHA1 Hash      Salt
---------------------++++
-123456789012345678901234
-
-
-
-http://tools.ietf.org/id/draft-stroeder-hashed-userpassword-values-01.html
-             */
-
-
-            /*
-            SHA-1        {SHA} magic in hash, 33 characters total             admin:{SHA}QvQHx34cyGz2cjXj6cauQoAwtIg=
-            Crypt        (no magic) - 11 character hash                       admin:$cnhJ7swqUWTc
-            Apache MD5   $apr1$ magic in hash<br />(Not supported by Foswiki) admin:$apr1$jgwedrkq$jzeetEHMGal5H0SUFDMEl1
-            crypt-MD5    $1$ magic in hash, 34 characters total               admin:$1$3iuE5z/b$JHyXMzQOIq3cl6WlEMoZC.
-             */
-
-
-/*
-
-root:$1$hdhxObPx$TYFuTKsB9GGIgo53rF4bi1:0:0:root:/:/bin/sh
-
-Crypt based password hashes have several parts separated by $
-
-The hash type, 1 in your case, this stands for MD5-crypt (this is not plain MD5)
-The salt, hdhxObPx in your case
-The actual hash TYFuTKsB9GGIgo53rF4bi1 in your case
-Some schemes have additional parameters, such as a work-factor, but this does not apply to the scheme used in your example.
-The MD5-Crypt scheme should be avoided, in favor of modern schemes, such as bcrypt (usually starting with $2a$). Not because MD5 is cryptographically broken, but because it has a constant work-factor, that's too small for the computational power modern attackers can field
-
-
-
-
-
-
-
-
-
-Encrypts a password in a crypt(3) compatible way.
-The exact algorithm depends on the format of the salt string:
-SHA-512 salts start with $6$ and are up to 16 chars long.
-SHA-256 salts start with $5$ and are up to 16 chars long
-MD5 salts start with $1$ and are up to 8 chars long
-DES, the traditional UnixCrypt algorithm is used with only 2 chars. Only the first 8 chars of the passwords are used in the DES algorithm!
-The magic strings "$apr1$" and "$2a$" are not recognized by this method as its output should be identical with that of the libc implementation.
-The rest of the salt string is drawn from the set [a-zA-Z0-9./] and is cut at the maximum length of if a "$" sign is encountered. It is therefore valid to enter a complete hash value as salt to e.g. verify a password with:
- storedPwd.equals(crypt(enteredPwd, storedPwd))
-
-The resulting string starts with the marker string ($6$), continues with the salt value and ends with a "$" sign followed by the actual hash value.
-For DES the string only contains the salt and actual hash. It's total length is dependent on the algorithm used:
-SHA-512: 106 chars
-SHA-256: 63 chars
-MD5: 34 chars
-DES: 13 chars
-Example:
-      crypt("secret", "$1$xxxx") => "$1$xxxx$aMkevjfEIpa35Bh3G4bAc."
-      crypt("secret", "xx") => "xxWAum7tHdIUw"
-
-
-
-*/
-
-            // 3 families of hasher are supported :
-            // -WorkFactorHasher (e.g. PBKDF2, Bcrypt, Scrypt) : salt + iteration (e.g. PBKDF2WithHmacSHA1)
-            // -SaltedHasher (e.g. SSHA, MD5Crypt, UNIX CRYPT)
-            // -SimpleHasher : w/o salt and iteration (e.g. MD5Plain)
-
-            // MD5Crypt ($1$ and $arp1$), MD5Plain (MD5 w/o salt)
-
-/*
-        BCrypt : isoler le scheme writing/parsing de la production du crypt
-
-        CryptFormat
-        Il faut juste parser le scheme :
-            scheme + ssp
-            Le ssp dépend du Hasher
-            Le Hasher est construit à partir du scheme
-            Certains ssp doivent savoir s'il y a un salt ou un iterateur pour appeler la bonne famille de hasher
-            Le hasher peut s'autoconfigurer (e.g. BCrypt utilise toujours base64 encoding et fournit lui-même l'implémentation)
-
-        ModularCryptFormat ne doit pas traiter le cas "_" ou "" : il faut un unix crypt format pour "" (et je sais pas quoi pour "_")
-                    et devra être passé en tant que dernier cryptformat
-
-        Les crypt formats doivent aussi pouvoir tester la taille des données (SALT) pour déterminer les bons paramètres.
-
-http://forum.insidepro.com/viewtopic.php?t=8225
-
-
-*/

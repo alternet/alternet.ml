@@ -24,16 +24,14 @@ import ml.alternet.util.StringUtil;
  */
 public class BCryptHasher extends HasherBase<WorkFactorSaltedParts> {
 
+    /**
+     * Create a BCrypt hasher.
+     *
+     * @param config The configuration of this hasher.
+     */
     public BCryptHasher(Configuration config) {
         super(config);
     }
-
-//    @Override
-//    public Properties getConfiguration() {
-//        Properties prop = super.getConfiguration();
-//        prop.put(Builder.LOG_ROUNDS_PROPERTY_NAME, getLogRounds());
-//        return prop;
-//    }
 
     static char getVersion(Hasher hr) {
         String variant = hr.getConfiguration().getVariant();
@@ -97,31 +95,6 @@ public class BCryptHasher extends HasherBase<WorkFactorSaltedParts> {
                 }
             }
             return parts;
-//            char version = (char) 0;
-//
-//            if (crypt.charAt(0) != '$' || crypt.charAt(1) != '2')
-//                throw new IllegalArgumentException ("Invalid salt version");
-//            if (crypt.charAt(2) == '$') {
-//                off = 3;
-//            } else {
-//                version = crypt.charAt(2);
-//                if ((version != 'a' && version != 'b' && version != 'y') || crypt.charAt(3) != '$')
-//                    throw new IllegalArgumentException ("Invalid salt revision");
-//                off = 4;
-//            }
-//            if (crypt.charAt(off + 2) > '$') {
-//                throw new IllegalArgumentException ("Missing salt rounds");
-//            }
-//            parts.workFactor = Integer.parseInt(crypt.substring(off, off + 2));
-//
-//            String realSalt = crypt.substring(off + 3, off + 25);
-//            BytesEncoding encoding = hr.getConfiguration().getEncoding();
-//            parts.salt = encoding.decode(realSalt);
-//            String hash = crypt.substring(off + 25);
-//            if (hash.length() > 0) {
-//                parts.hash = encoding.decode(hash);
-//            }
-//            return parts;
         }
 
         @Override
@@ -149,10 +122,10 @@ public class BCryptHasher extends HasherBase<WorkFactorSaltedParts> {
             return crypt.toString();
         }
 
-		@Override
-		public CryptFormat getCryptFormat() {
-			return new ModularCryptFormat();
-		}
+        @Override
+        public CryptFormat getCryptFormat() {
+            return new ModularCryptFormat();
+        }
     };
 
     @Override

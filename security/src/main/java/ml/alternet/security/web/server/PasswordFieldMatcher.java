@@ -3,6 +3,7 @@ package ml.alternet.security.web.server;
 import java.util.List;
 import java.util.Optional;
 
+import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -30,10 +31,11 @@ public interface PasswordFieldMatcher {
 
     /**
      * Indicates whether HTTP Basic | Form authentication has to
-     * be processed.
+     * be processed for a given request.
      *
+     * @param request The HTTP request.
      * @return The authentication method.
      */
-    AuthenticationMethod getAuthenticationMethod();
+    AuthenticationMethod getAuthenticationMethod(ServletRequest request);
 
 }

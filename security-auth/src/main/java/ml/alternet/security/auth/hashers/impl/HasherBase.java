@@ -1,6 +1,7 @@
 package ml.alternet.security.auth.hashers.impl;
 
 import java.security.InvalidAlgorithmParameterException;
+import java.util.logging.Logger;
 
 import ml.alternet.misc.Thrower;
 import ml.alternet.security.auth.Credentials;
@@ -20,6 +21,8 @@ import ml.alternet.security.auth.formats.CryptParts;
  * @param <T> The kind of crypt parts to support.
  */
 public abstract class HasherBase<T extends CryptParts> implements Hasher {
+
+    static Logger LOG = Logger.getLogger(HasherBase.class.getName());
 
     private Configuration conf;
 
@@ -61,7 +64,7 @@ public abstract class HasherBase<T extends CryptParts> implements Hasher {
     }
 
     @Override
-    public boolean check(Credentials credentials, String crypt) throws InvalidAlgorithmParameterException {
+    public boolean check(Credentials credentials, String crypt) {
         T parts = getFormatter().parse(crypt, this);
         byte[] hash = encrypt(credentials, parts);
         // do not use Arrays.equals(hash, pwdHash);
@@ -91,6 +94,11 @@ public abstract class HasherBase<T extends CryptParts> implements Hasher {
      *      its hash field.
      */
     public abstract T initializeParts();
+
+    @Override
+    public void reportError(String message, String crypt, Exception e) {
+        LOG.warning(message + "\n" + e == null ? "" : e.toString());
+    }
 
     @Override
     public String toString() {

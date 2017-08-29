@@ -11,7 +11,7 @@
             <url-pattern>/auth.html</url-pattern>
         </web-resource-collection>
         <auth-constraint>
-            <role-name>role1</role-name>
+            <role-name>admin</role-name>
         </auth-constraint>
     </security-constraint>
     <login-config>
@@ -23,7 +23,7 @@
       </form-login-config>
     </login-config>
     <security-role>
-        <role-name>role1</role-name>
+        <role-name>admin</role-name>
     </security-role>
     <context-param>
         <description>Alternet Security will handle FORM authentication</description>

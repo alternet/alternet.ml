@@ -66,7 +66,7 @@ public class CaptureContext<T> implements Destroyable {
     public void add(String name, Password newPassword) {
         List<Password> pwds = passwords.get(name);
         if (pwds == null) {
-            pwds = new ArrayList<>(2); // oldPwd + newPwd : that'a all we should get
+            pwds = new ArrayList<>(2); // oldPwd + newPwd : that's all we should get
             passwords.put(name, pwds);
         }
         pwds.add(newPassword);

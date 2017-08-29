@@ -68,10 +68,10 @@ public class UnixCryptHasher extends HasherBase<SaltedParts> {
             return new String(b, 0, 13, StandardCharsets.US_ASCII);
         }
 
-		@Override
-		public CryptFormat getCryptFormat() {
-			return new UnixCryptFormat();
-		}
+        @Override
+        public CryptFormat getCryptFormat() {
+            return new UnixCryptFormat();
+        }
     };
 
     @Override

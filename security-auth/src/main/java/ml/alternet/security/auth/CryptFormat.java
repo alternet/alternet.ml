@@ -34,29 +34,22 @@ import java.util.logging.Logger;
  * }
  * </pre>
  *
- * <!--p>Now, to check a crypt that may exist in several format, use :</p>
+ * <p>Now, to check a crypt that may exist in several format, use :</p>
  *
- * <pre>// find the right hasher from the format of a crypt
- *Hasher h = HashUtil.lookup(crypt, prop,
- *    new SHAHasherWithSquareBrackets(),
- *    ModularCryptFormat.SINGLETON,
- *    ColonCryptFormat.SINGLETON);
- *if (h.check(password, crypt)) {
- *    // ...
- *}
- * </pre-->
+ * <pre>CredentialsChecker checker = new CredentialsChecker.$(
+ *    ModularCryptFormat,
+ *    CurlyBracesCryptFormat,
+ *    PlainTextCryptFormat
+ *);
+ *if (checker.check(credentials, crypt)) {
+ *    // authentication succeeds
+ *} else {
+ *    // authentication fails
+ *}</pre>
  *
  * @author Philippe Poulard
  */
 public interface CryptFormat {
-
-    /*
-    Digest (md5) 3 colon delimited field, 32 character hash           admin:The Realm:11fbe079ed3476f7712030d24042ca35
-    SHA-1        {SHA} magic in hash, 33 characters total             admin:{SHA}QvQHx34cyGz2cjXj6cauQoAwtIg=
-    Crypt        (no magic) - 11 character hash                       admin:$cnhJ7swqUWTc
-    Apache MD5   $apr1$ magic in hash<br />(Not supported by Foswiki) admin:$apr1$jgwedrkq$jzeetEHMGal5H0SUFDMEl1
-    crypt-MD5    $1$ magic in hash, 34 characters total               admin:$1$3iuE5z/b$JHyXMzQOIq3cl6WlEMoZC.
-     */
 
     /**
      * A logger for this class.
@@ -77,8 +70,6 @@ public interface CryptFormat {
      *
      * @return The family name, use as the first part of the variant
      * of the hasher to lookup.
-     *
-     * @see HashUtil#DEFAULT
      */
     String family();
 

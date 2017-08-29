@@ -101,7 +101,7 @@ The user has to ensure to keep the try-with-resource
 block as short as possible, and to not make copies of
 the char array if possible.
 
-### Credentials verification
+## Credentials
 
 Credentials are informations supplied by a user that
 are used to authenticate him on an application.
@@ -115,7 +115,7 @@ implementations that reasonably clean sensible data from the memory after
 the hash is computed, which can't be guaranteed by Java
 standard packages.
 
-#### Maven import
+### Maven import
 
 This module (or any other implementation) is required for
 performing credentials verification, such as in Web applications
@@ -129,21 +129,74 @@ performing credentials verification, such as in Web applications
 </dependency>
 ```
 
-#### Usage
+### Usage
+
+Alternet Security Authentication comes with out-of-the-box popular hashers and
+crypt formatters, including legacy algorithms (Unix crypt, MD5, etc).
+Those last ones should be used only if you still have old passwords to check.
+Consider using moderns hashers instead such as PBKDF2 or BCrypt.
+
+#### Generate a hash
+
+Pick a hasher, its parameters, and a formatter family. For example,
+let's hash "`password`" with PBKDF2 and format it in curly braces :
+
+"`password`" -&gt; "`{PBKDF2}131000$tLbWWssZ45zzfi9FiDEmxA$dQlpmhY4dGvmx4MOK/uOj/WU7Lg`"
 
 ``` java
-String crypt = ... // some hash stored in a database
 Password pwd = ... // see above
 Credentials credentials = Credentials.fromPassword(pwd);
                        // or         .fromUserPassword(user, pwd)
-if (HashUtil.check(credentials, crypt)) {
+
+// pick a hasher
+Hasher hasher = CurlyBracesCryptFormatHashers.PBKDF2.get()
+        .setIterations(15000) // before build, you can change the parameters
+        .build();
+
+// create a crypt
+String crypt = hasher.encrypt(credentials);
+
+// now you can store it in your database
+```
+
+#### Check the credentials
+
+``` java
+Password pwd = ... // see above
+Credentials credentials = Credentials.fromPassword(pwd);
+                       // or         .fromUserPassword(user, pwd)
+
+String crypt = ... // some hash stored in a database
+
+// get the hasher
+Hasher hasher = CurlyBracesCryptFormatHashers.PBKDF2.get()
+        .build(); // no need to change the iteration, it is encoded in the crypt
+
+if (hasher.check(credentials, crypt)) {
     // authentication succeeds
 } else {
     // authentication fails
 }
 ```
 
-If you have to support several crypt formats, see [CryptFormat](../security-auth/apidocs/ml/alternet/security/auth/CryptFormat.html)
+If you have to support several candidates crypt formats (see [CryptFormat](../security-auth/apidocs/ml/alternet/security/auth/CryptFormat.html))
+you may use a more suitable credentials checker (see [CredentialsChecker](../security-auth/apidocs/ml/alternet/security/auth/CredentialsChecker.html)) :
+
+``` java
+CredentialsChecker checker = new CredentialsChecker.$(
+    ModularCryptFormat, 
+    CurlyBracesCryptFormat, 
+    PlainTextCryptFormat
+);
+if (checker.check(credentials, crypt)) {
+    // authentication succeeds
+} else {
+    // authentication fails
+}
+```
+
+That credentials checker will try all the formats in sequence. Note in the example above the `PlainTextCryptFormat`
+is used as the last attempt, and should not be used in production.
 
 <a name="webapps"></a>
 
@@ -158,6 +211,8 @@ It consist on two parts :
 * Enhancing an existing Web container (Jetty, Tomcat) to make that feature available in Web applications.
 
 The default password manager used in Web application is the strong password manager that encrypt passwords.
+
+According to the Web container (Jetty, Tomcat) in use, additional configurations are expected (see below).
 
 ## Web applications
 
@@ -317,49 +372,133 @@ Configuring Jetty is very simple :
 * set a parameter to the Web app context to tell
 which paths and form fields to intercept in the HTTP requests
 (like in the `web.xml` configuration file, see above),
-* create a [EnhancedHttpConnectionFactory](../security-jetty/apidocs/ml/alternet/security/web/jetty/EnhancedHttpConnectionFactory.html)
+* create a [AltHttpConnectionFactory](../security-jetty/apidocs/ml/alternet/security/web/jetty/AltHttpConnectionFactory.html)
 * and bound it to the Jetty server connector.
 
 ```Java
-WebAppContext wac = new WebAppContext();
-// configure for handling the "pwd" field when POSTing on the "/doRegister.html" path
-wac.setInitParameter(Passwords.FORMS_INIT_PARAM, "/doRegister.html?pwd");
-EnhancedHttpConnectionFactory cf = new EnhancedHttpConnectionFactory(wac);
+    WebAppContext wac = new WebAppContext();
+    // configure for handling the "pwd" field when POSTing on the "/doRegister.html" path
+    wac.setInitParameter(Passwords.FORMS_INIT_PARAM, "/doRegister.html?pwd");
 
-Server server = new Server();
-ServerConnector connector=new ServerConnector(server, cf);
-connector.setPort(port);
-server.setConnectors(new Connector[]{connector});
+    server = new Server();
+    AltHttpConnectionFactory cf = new AltHttpConnectionFactory(server);
 
-ServletHolder sh = ... // your servlet
+    ServerConnector connector=new ServerConnector(server, cf);
+    connector.setPort(port);
+    server.setConnectors(new Connector[]{connector});
 
-ServletHandler servletHandler = new ServletHandler();
-servletHandler.addServletWithMapping(sh, "/*");
+    // do things normally with Jetty
+    ServletHolder sh = ... // your servlet
 
-wac.setServletHandler(servletHandler);
-wac.setResourceBase(resourceBase); // static resources
-wac.setContextPath("/app");
+    ServletHandler servletHandler = new ServletHandler();
+    servletHandler.addServletWithMapping(sh, "/*");
 
-server.setHandler(wac);
+    wac.setServletHandler(servletHandler);
+    wac.setResourceBase(resourceBase); // static resources
+    wac.setContextPath("/app");
 
-server.start();
+    server.setHandler(wac);
+
+    server.start();
 ```
 
 Various full working examples of programmatic configurations are available in the [project test pages](https://github.com/alternet/alternet.ml/blob/master/security-jetty/src/test/java/ml/alternet/test/security/web/jetty/).
 
-TODO : HasherCredential
-
 #### Jetty XML configuration
 
-TODO
+Instead of configuring the Jetty server with :
 
-#### Jetty HTTP authentication
+```XML
+    &lt;New class="org.eclipse.jetty.server.HttpConnectionFactory"/&gt;
+```
 
-TODO
+...you have to replace it with :
 
-#### Jetty HTTPS
+```XML
+    &lt;New class="ml.alternet.security.web.jetty.AltHttpConnectionFactory"&gt;
+        &lt;Arg&gt;&lt;Ref refid="Server"/&gt;&lt;/Arg&gt;
+    &lt;/New&gt;
+```
 
-TODO : check that all the stuff also works in HTTPS
+#### Jetty authentication
+
+So far, the configuration above will only capture passwords.
+If you want let Jetty to perform authentication, you need additional configuration,
+according to the underlying authentication mechanism.
+
+##### LDAP authentication
+
+Here is the full XML configuration file :
+
+```XML
+&lt;Configure id="Server" class="org.eclipse.jetty.server.Server"&gt;
+  &lt;Call name="addBean"&gt;
+    &lt;Arg&gt;
+       &lt;New class="org.eclipse.jetty.jaas.JAASLoginService"&gt;
+         &lt;Set name="name"&gt;Alternet Realm&lt;/Set&gt;
+         &lt;Set name="loginModuleName"&gt;ldap&lt;/Set&gt;
+       &lt;/New&gt;
+    &lt;/Arg&gt;
+  &lt;/Call&gt;
+  &lt;Call name="addConnector"&gt;
+    &lt;Arg&gt;
+      &lt;New id="httpConnector" class="org.eclipse.jetty.server.ServerConnector"&gt;
+        &lt;Arg name="server"&gt;&lt;Ref refid="Server" /&gt;&lt;/Arg&gt;
+        &lt;Arg name="factories"&gt;
+          &lt;Array type="org.eclipse.jetty.server.ConnectionFactory"&gt;
+            &lt;Item&gt;
+              &lt;New class="ml.alternet.security.web.jetty.AltHttpConnectionFactory"&gt;
+                &lt;Arg&gt;&lt;Ref refid="Server"/&gt;&lt;/Arg&gt;
+              &lt;/New&gt;
+            &lt;/Item&gt;
+          &lt;/Array&gt;
+        &lt;/Arg&gt;
+      &lt;/New&gt;
+    &lt;/Arg&gt;
+  &lt;/Call&gt;
+&lt;/Configure&gt;
+```
+
+The JAAS login module, (typically in `${jetty.base}/etc/ldap.conf`) must be :
+
+```
+ldap {
+    ml.alternet.security.web.jetty.auth.AltLdapLoginModule required
+
+    useSSL="false"
+    debug="true"
+    contextFactory="com.sun.jndi.ldap.LdapCtxFactory"
+    hostname="localhost"
+    port="10389"
+
+    bindDn="ou=people,dc=alternet,dc=ml"
+    bindPassword="secret"
+    authenticationMethod="simple"
+    forceBindingLogin="false"
+    ml.alternet.security.auth.CryptFormat="ml.alternet.security.auth.formats.ModularCryptFormat, ml.alternet.security.auth.formats.CurlyBracesCryptFormat, ml.alternet.security.auth.formats.PlainTextCryptFormat"
+
+    userBaseDn="ou=people,dc=alternet,dc=ml"
+    userRdnAttribute="uid"
+    userIdAttribute="uid"
+    userPasswordAttribute="userPassword"
+    userObjectClass="inetOrgPerson"
+
+    roleBaseDn="ou=groups,dc=alternet,dc=ml"
+    roleNameAttribute="cn"
+    roleMemberAttribute="member"
+    roleObjectClass="groupOfNames";
+
+};
+```
+
+If `forceBindingLogin="true"`, it means that the LDAP server will perform the check
+of the credentials ; in that case the `ml.alternet.security.auth.CryptFormat` parameter may be omitted.
+
+If `forceBindingLogin="false"`, it means that Jetty will retrieve the hash from the
+LDAP server and perform the check of the credentials ; in that case the `ml.alternet.security.auth.CryptFormat` parameter will contain a comma-separated
+list of concrete classes. Note that `ml.alternet.security.auth.formats.PlainTextCryptFormat` is used for plain text
+passwords stored not hashed in the LDAP server and MUST NOT be used in production
+environments.
 
 ### Tomcat
 

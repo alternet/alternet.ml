@@ -10,7 +10,9 @@
 <body>
   <% 
     HttpSession s = request.getSession(false);
-    s.invalidate();
+    if (s != null) {
+        s.invalidate();
+    }
    %>
    <h1>Logout</h1>
 

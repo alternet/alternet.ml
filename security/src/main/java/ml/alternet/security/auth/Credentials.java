@@ -20,6 +20,40 @@ import ml.alternet.security.PasswordManagerFactory;
  */
 public class Credentials implements Destroyable {
 
+    /**
+     * Check some credentials with a given crypt.
+     *
+     * @author Philippe Poulard
+     */
+    public interface Checker {
+
+        /**
+         * Check some credentials with a given crypt.
+         *
+         * @param credentials The credentials to check, that must contain at
+         *              least the password.
+         * @param crypt The crypt to compare with.
+         *
+         * @return <code>true</code> when the credentials matches the
+         *      crypt, <code>false</code> otherwise. When <code>false</code>
+         *      is returned, an error may have been reported.
+         *
+         * @see #reportError(String, String, Exception)
+         */
+        boolean check(Credentials credentials, String crypt);
+
+        /**
+         * Report an error, typically when a bad parameter was set to the hasher,
+         *      or when no suitable hasher were found for a given crypt.
+         *
+         * @param message The error message.
+         * @param crypt The crypt to check.
+         * @param e The exception, may be <code>null</code>
+         */
+        void reportError(String message, String crypt, Exception e);
+
+    }
+
     String username;
     Password password;
     String realm;

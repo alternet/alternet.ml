@@ -20,10 +20,22 @@ import ml.alternet.security.auth.formats.WorkFactorSaltedParts;
 import ml.alternet.security.binary.SafeBuffer;
 import ml.alternet.util.BytesUtil;
 
+/**
+ * A slightly modified PBKDF2 hasher, that erase intermediate data.
+ *
+ * The underlying MAC algorithm is unchanged.
+ *
+ * @author Philippe Poulard
+ */
 public class PBKDF2Hasher extends HasherBase<WorkFactorSaltedParts> {
 
     static final Logger LOGGER = Logger.getLogger(PBKDF2Hasher.class.getName());
 
+    /**
+     * Create a PBKDF2 hasher.
+     *
+     * @param config The configuration of this hasher.
+     */
     public PBKDF2Hasher(Configuration config) {
         super(config);
     }
