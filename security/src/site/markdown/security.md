@@ -10,14 +10,14 @@ to unset its characters. Strings are unsafe for storing passwords.
 Usually, a password may be used for granting an access to
 a resource ; before and after granting such permit, the intermediate
 data used as the password should not remain in memory :
-the idea of the [Password](apidocs/ml/alternet/security/Password.html) class is to allow a long-term
+the idea of the [`Password`](apidocs/ml/alternet/security/Password.html) class is to allow a long-term
 storage of the password between its creation and when it is used.
-The [Password](apidocs/ml/alternet/security/Password.html) class aims to
+The [`Password`](apidocs/ml/alternet/security/Password.html) class aims to
 obfuscate the characters of a password, if the memory is dumped
 it will be difficult to guess which part of the memory was
 a password, and even to deobfuscate it when it has been encrypted.
 The idea is to limit usage of the clear password
-outside of the [Password](apidocs/ml/alternet/security/Password.html) class.
+outside of the [`Password`](apidocs/ml/alternet/security/Password.html) class.
 
 In some cases, passwords will be built from data that are coming from
 a String. In this case it is recommended to not keep a strong reference
@@ -78,9 +78,9 @@ The idea is to keep low the period where a password
 appeared in clear in the memory, in order to make it
 difficult to find when a memory dump is performed.
 
-A password can be created thanks to a [PasswordManager](apidocs/ml/alternet/security/PasswordManager.html), that
+A password can be created thanks to a [`PasswordManager`](apidocs/ml/alternet/security/PasswordManager.html), that
 exist in several flavors (weak, default, or strong with encryption).
-To pick one, use the [PasswordManagerFactory](apidocs/ml/alternet/security/PasswordManagerFactory.html)
+To pick one, use the [`PasswordManagerFactory`](apidocs/ml/alternet/security/PasswordManagerFactory.html)
 or supply your own implementation (your own implementation can
 override the default one with the [discovery service](../tools/tools.html)).
 
@@ -154,17 +154,18 @@ The latter should be used only if you still have old passwords to check.
 Consider using moderns hashers instead such as PBKDF2 or BCrypt.
 
 3 main classes are supplied :
- * `[Credentials](../security/apidocs/ml/alternet/security/auth/Credentials.html)`, which is roughly a wrapper around `Password`
- * `[Hasher](../security-auth/apidocs/ml/alternet/security/auth/Hasher.html)` which allow to compute a crypt, and check some credentials given a crypt
- * `[CryptFormat](../security-auth/apidocs/ml/alternet/security/auth/CryptFormat.html)` which allow to turn the bytes of a hash to a string crypt, or to parse a crypt in its parts
+
+ * [`Credentials`](../security/apidocs/ml/alternet/security/auth/Credentials.html), which is roughly a wrapper around `Password`
+ * [`Hasher`](../security-auth/apidocs/ml/alternet/security/auth/Hasher.html) which allow to compute a crypt, and check some credentials given a crypt
+ * [`CryptFormat`](../security-auth/apidocs/ml/alternet/security/auth/CryptFormat.html) which allow to turn the bytes of a hash to a string crypt, or to parse a crypt in its parts
 
 ### Generate a hash
 
 Most common hashers are available and parameterized in :
 
- * `[CurlyBracesCryptFormatHashers](../security-auth/apidocs/ml/alternet/security/auth/hashers/CurlyBracesCryptFormatHashers.html)`
- * `[ModularCryptFormatHashers](../security-auth/apidocs/ml/alternet/security/auth/hashers/ModularCryptFormatHashers.html)`
- * `[UnixHashersUnixHashers](../security-auth/apidocs/ml/alternet/security/auth/hashers/UnixHashersUnixHashers.html)`
+ * [`CurlyBracesCryptFormatHashers`](../security-auth/apidocs/ml/alternet/security/auth/hashers/CurlyBracesCryptFormatHashers.html)
+ * [`ModularCryptFormatHashers`](../security-auth/apidocs/ml/alternet/security/auth/hashers/ModularCryptFormatHashers.html)
+ * [`UnixHashersUnixHashers`](../security-auth/apidocs/ml/alternet/security/auth/hashers/UnixHashersUnixHashers.html)
 
 If the default configuration doesn't suit your needs, you can alter
 any supported parameter.
@@ -217,7 +218,7 @@ if (hasher.check(credentials, crypt)) {
 ```
 
 Sometimes, you may have existing crypts available in various formats.
-For that purpose, a more suitable credentials checker (see [CredentialsChecker](../security-auth/apidocs/ml/alternet/security/auth/CredentialsChecker.html))
+For that purpose, a more suitable credentials checker (see [`CredentialsChecker`](../security-auth/apidocs/ml/alternet/security/auth/CredentialsChecker.html))
 will lookup for the right hasher.
 
 For example, the following credentials checker will try all the formats in sequence.
@@ -299,11 +300,11 @@ is missing, no login will be handled by Alternet Security.
 Once configured properly (see below ([Jetty](#jetty) and [Tomcat](#tomcat)) configurations),
 the Web container will substitute the passwords found in the form fields or HTTP authentication header
 with '*' characters, in order to make such strings unusable ; the actual passwords will be wrapped in
-[Password](apidocs/ml/alternet/security/Password.html) instances, and will be available like shown hereafter :
+[`Password`](apidocs/ml/alternet/security/Password.html) instances, and will be available like shown hereafter :
 
 ### Servlets applications
 
-To retrieve the passwords in a Servlet, use the [Passwords](apidocs/ml/alternet/security/web/Passwords.html) class :
+To retrieve the passwords in a Servlet, use the [`Passwords`](apidocs/ml/alternet/security/web/Passwords.html) class :
 
 ```java
 public void doPost(HttpServletRequest req, HttpServletResponse resp) {
@@ -313,7 +314,7 @@ public void doPost(HttpServletRequest req, HttpServletResponse resp) {
 }
 ```
 
-The [PasswordParam](apidocs/ml/alternet/security/web/PasswordParam.html) class represent
+The [`PasswordParam`](apidocs/ml/alternet/security/web/PasswordParam.html) class represent
 a sequence of passwords, since fields (in Web forms or in HTTP headers) can be multivalued :
 
 ```java
@@ -328,8 +329,8 @@ public void doPost(HttpServletRequest req, HttpServletResponse resp) {
 
 ### RESTfull applications (JAX-RS)
 
-Simply use the [Password](apidocs/ml/alternet/security/Password.html) class
-(or the [PasswordParam](apidocs/ml/alternet/security/web/PasswordParam.html) class
+Simply use the [`Password`](apidocs/ml/alternet/security/Password.html) class
+(or the [`PasswordParam`](apidocs/ml/alternet/security/web/PasswordParam.html) class
 for handling multiple values) in the parameter of a REST method :
 
 <div class="alert alert-danger" role="alert">
@@ -345,9 +346,9 @@ public String getSomeData(@FormParam("username") String userName,
 }
 ```
 
-Note that the [Password](apidocs/ml/alternet/security/Password.html) instance
-as well as the [PasswordParam](apidocs/ml/alternet/security/web/PasswordParam.html)
-instance are supplied thanks to the [PasswordConverterProvider](apidocs/ml/alternet/security/web/PasswordConverterProvider.html)
+Note that the [`Password`](apidocs/ml/alternet/security/Password.html) instance
+as well as the [`PasswordParam`](apidocs/ml/alternet/security/web/PasswordParam.html)
+instance are supplied thanks to the [`PasswordConverterProvider`](apidocs/ml/alternet/security/web/PasswordConverterProvider.html)
 annotated as a provider. According to the JAX-RS specification, this provider has to
 be registered to the concrete JAX-RS engine (this can be done either manually or discovered
 automatically ; please check the documentation of your JAX-RS engine).
@@ -420,7 +421,7 @@ Configuring Jetty is very simple :
 * set a parameter to the Web app context to tell
 which paths and form fields to intercept in the HTTP requests
 (like in the `web.xml` configuration file, see above),
-* create a [AltHttpConnectionFactory](../security-jetty/apidocs/ml/alternet/security/web/jetty/AltHttpConnectionFactory.html)
+* create a [`AltHttpConnectionFactory`](../security-jetty/apidocs/ml/alternet/security/web/jetty/AltHttpConnectionFactory.html)
 * and bound it to the Jetty server connector.
 
 ```Java
@@ -580,9 +581,9 @@ All Alternet APIs :
 
 Configuring Tomcat is very simple :
 
-* create a specific connector [AltProtocolHandler](../security-tomcat-8.0/apidocs/ml/alternet/security/web/tomcat/AltProtocolHandler.html)
-* create a specific authenticator [AlternetBasicAuthenticator](../security-tomcat-8.0/apidocs/ml/alternet/security/web/tomcat/AltBasicAuthenticator.html)
-* create a specific credential handler [AlternetCredentialHandler](../security-tomcat-8.0/apidocs/ml/alternet/security/web/tomcat/AltCredentialHandler.html)
+* create a specific connector [`AltProtocolHandler`](../security-tomcat-8.0/apidocs/ml/alternet/security/web/tomcat/AltProtocolHandler.html)
+* create a specific authenticator [`AlternetBasicAuthenticator`](../security-tomcat-8.0/apidocs/ml/alternet/security/web/tomcat/AltBasicAuthenticator.html)
+* create a specific credential handler [`AlternetCredentialHandler`](../security-tomcat-8.0/apidocs/ml/alternet/security/web/tomcat/AltCredentialHandler.html)
 
 ```Java
 Tomcat server = new Tomcat();
@@ -707,8 +708,8 @@ Edit the file `$CATALINA_BASE/conf/server.xml` and change it as follow :
 </Server>
 ```
 
-* configure the Alternet `<Connector>` : the "passwordManager" attributes contains the name of a class that implements [PasswordManager](apidocs/ml/alternet/security/PasswordManager.html) ; the default value is shown in the example above
-* set the Alternet `<CredentialHandler>` to your `<Realm>` : the "hasher" attribute contains the name of a class that implements [Hasher](apidocs/ml/alternet/security/auth/Hasher.html) ; the default value is shown in the example above
+* configure the Alternet `<Connector>` : the "passwordManager" attributes contains the name of a class that implements [`PasswordManager`](apidocs/ml/alternet/security/PasswordManager.html) ; the default value is shown in the example above
+* set the Alternet `<CredentialHandler>` to your `<Realm>` : the "hasher" attribute contains the name of a class that implements [`Hasher`](apidocs/ml/alternet/security/auth/Hasher.html) ; the default value is shown in the example above
 * configure your `<Context>` with an Alternet `<Valve>` that use a specific authenticator (if you intend to deploy an application that use BASIC HTTP Authentication)
 
 Ensure that the passwords available in your realm are hashed values.
@@ -792,7 +793,7 @@ support char arrays passwords)
 
 However a cleaner way would be to build a hash from the password
 (plus a random salt per password) and to have an authenticator that
-would simply check that hash. See [Hasher](apidocs/ml/alternet/security/auth/Hasher.html)
+would simply check that hash. See [`Hasher`](apidocs/ml/alternet/security/auth/Hasher.html)
 for that purpose.
 
 <!--
