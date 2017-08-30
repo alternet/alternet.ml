@@ -26,7 +26,7 @@ import ml.alternet.security.PasswordState;
  *
  * @author Philippe Poulard
  */
-public class PasswordParam implements Password, Iterator<PasswordParam>, Unwrappable<Password> {
+public class PasswordParam implements Password, Iterator<PasswordParam>, Iterable<Password>, Unwrappable<Password> {
 
     private Iterator<Password> seq; // the sequence
     private Password that; // the current pwd
@@ -93,6 +93,20 @@ public class PasswordParam implements Password, Iterator<PasswordParam>, Unwrapp
             this.that = EmptyPassword.SINGLETON;
         }
         return this;
+    }
+
+    @Override
+    public Iterator<Password> iterator() {
+        return new Iterator<Password>() {
+            @Override
+            public boolean hasNext() {
+                return PasswordParam.this.hasNext();
+            }
+            @Override
+            public Password next() {
+                return PasswordParam.this.next();
+            }
+        };
     }
 
     @Override
