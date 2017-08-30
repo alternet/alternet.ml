@@ -1,5 +1,3 @@
-# Secure password handling
-
 ## Passwords in Java
 
 The [Crypto Specification](http://docs.oracle.com/javase/8/docs/technotes/guides/security/crypto/CryptoSpec.html#PBEEx)
@@ -33,6 +31,27 @@ built from the incoming data. The obfuscation method used by default
 in Web applications is the strongest obfuscation method in Alternet
 Security, which relies on cryptography.
 
+You will find in Alternet Security 3 mains features :
+
+1. Means to [handle secure passwords](#passwords)
+2. A nice [authentication framework](#auth) that relies on such passwords
+3. Extensions for [Web applications](#webapps) with implementations for [Tomcat](#tomcat) and [Jetty](#jetty) web servers
+
+<a name="passwords"></a>
+
+## JavaDoc API documentation
+
+* [Alternet Security](apidocs/index.html)
+* [Alternet Security Authentication](../security-auth/apidocs/index.html)
+* [Alternet Security for Jetty](../security-jetty-9.1/apidocs/index.html)
+* [Alternet Security for Tomcat](../security-tomcat/apidocs/index.html)
+
+All Alternet APIs :
+
+* [Alternet Libs](../apidocs/index.html)
+
+# Secure passwords handling
+
 ## Maven import
 
 ```xml
@@ -43,15 +62,11 @@ Security, which relies on cryptography.
 </dependency>
 ```
 
-Additional Maven modules are available for using Alternet
-Security in Tomcat or Jetty (see below).
+Additional Maven modules are available for using Alternet Security in Tomcat or Jetty (see below).
 
 ## JavaDoc API documentation
 
 * [Alternet Security](apidocs/index.html)
-* [Alternet Security Authentication](../security-auth/apidocs/index.html)
-* [Alternet Security for Jetty](../security-jetty-9.1/apidocs/index.html)
-* [Alternet Security for Tomcat](../security-tomcat/apidocs/index.html)
 
 All Alternet APIs :
 
@@ -101,7 +116,9 @@ The user has to ensure to keep the try-with-resource
 block as short as possible, and to not make copies of
 the char array if possible.
 
-## Credentials
+<a name="auth"></a>
+
+# Authentication framework
 
 Credentials are informations supplied by a user that
 are used to authenticate him on an application.
@@ -115,7 +132,7 @@ implementations that reasonably clean sensible data from the memory after
 the hash is computed, which can't be guaranteed by Java
 standard packages.
 
-### Maven import
+## Maven import
 
 This module (or any other implementation) is required for
 performing credentials verification, such as in Web applications
@@ -129,17 +146,32 @@ performing credentials verification, such as in Web applications
 </dependency>
 ```
 
-### Usage
+## Usage
 
 Alternet Security Authentication comes with out-of-the-box popular hashers and
-crypt formatters, including legacy algorithms (Unix crypt, MD5, etc).
-Those last ones should be used only if you still have old passwords to check.
+crypt formatters, including legacy algorithms such as Unix crypt.
+The latter should be used only if you still have old passwords to check.
 Consider using moderns hashers instead such as PBKDF2 or BCrypt.
 
-#### Generate a hash
+3 main classes are supplied :
+ * `[Credentials](../security/apidocs/ml/alternet/security/auth/Credentials.html)`, which is roughly a wrapper around `Password`
+ * `[Hasher](../security-auth/apidocs/ml/alternet/security/auth/Hasher.html)` which allow to compute a crypt, and check some credentials given a crypt
+ * `[CryptFormat](../security-auth/apidocs/ml/alternet/security/auth/CryptFormat.html)` which allow to turn the bytes of a hash to a string crypt, or to parse a crypt in its parts
 
-Pick a hasher, its parameters, and a formatter family. For example,
-let's hash "`password`" with PBKDF2 and format it in curly braces :
+### Generate a hash
+
+Most common hashers are available and parameterized in :
+
+ * `[CurlyBracesCryptFormatHashers](../security-auth/apidocs/ml/alternet/security/auth/hashers/CurlyBracesCryptFormatHashers.html)`
+ * `[ModularCryptFormatHashers](../security-auth/apidocs/ml/alternet/security/auth/hashers/ModularCryptFormatHashers.html)`
+ * `[UnixHashersUnixHashers](../security-auth/apidocs/ml/alternet/security/auth/hashers/UnixHashersUnixHashers.html)`
+
+If the default configuration doesn't suit your needs, you can alter
+any supported parameter.
+
+Pick a hasher and set its parameters from a formatter family. For example,
+let's hash "`password`" with PBKDF2,  set a custom number of iterations,
+and format it in curly braces :
 
 "`password`" -&gt; "`{PBKDF2}131000$tLbWWssZ45zzfi9FiDEmxA$dQlpmhY4dGvmx4MOK/uOj/WU7Lg`"
 
@@ -159,7 +191,12 @@ String crypt = hasher.encrypt(credentials);
 // now you can store it in your database
 ```
 
-#### Check the credentials
+### Check the credentials
+
+When checking some credentials, you don't need to alter parameters such as the
+number of iterations, since when supported they are encoded in the string crypt.
+
+Typically you will use the same hasher for creating a crypt or checking credentials :
 
 ``` java
 Password pwd = ... // see above
@@ -179,8 +216,13 @@ if (hasher.check(credentials, crypt)) {
 }
 ```
 
-If you have to support several candidates crypt formats (see [CryptFormat](../security-auth/apidocs/ml/alternet/security/auth/CryptFormat.html))
-you may use a more suitable credentials checker (see [CredentialsChecker](../security-auth/apidocs/ml/alternet/security/auth/CredentialsChecker.html)) :
+Sometimes, you may have existing crypts available in various formats.
+For that purpose, a more suitable credentials checker (see [CredentialsChecker](../security-auth/apidocs/ml/alternet/security/auth/CredentialsChecker.html))
+will lookup for the right hasher.
+
+For example, the following credentials checker will try all the formats in sequence.
+Note in the example the `PlainTextCryptFormat` is used as the last attempt to check clear passwords,
+and should not be used in production.
 
 ``` java
 CredentialsChecker checker = new CredentialsChecker.$(
@@ -195,9 +237,6 @@ if (checker.check(credentials, crypt)) {
 }
 ```
 
-That credentials checker will try all the formats in sequence. Note in the example above the `PlainTextCryptFormat`
-is used as the last attempt, and should not be used in production.
-
 <a name="webapps"></a>
 
 # Alternet Security for Web applications
@@ -207,21 +246,20 @@ during the Web processing chain, a password NEVER appear as a String (unsafe) in
 
 It consist on two parts :
 
-* Using safe password in servlet-based applications or RESTful (JAX-RS) applications
-* Enhancing an existing Web container (Jetty, Tomcat) to make that feature available in Web applications.
+* Using safe password in servlet-based applications or RESTful (JAX-RS) applications (included in the first Maven module)
+* Enhancing an existing Web container ([Jetty](#jetty), [Tomcat](#tomcat)) to make that feature available in Web applications (specifics Maven modules are supplied).
 
 The default password manager used in Web application is the strong password manager that encrypt passwords.
 
-According to the Web container (Jetty, Tomcat) in use, additional configurations are expected (see below).
+According to the Web container ([Jetty](#jetty), [Tomcat](#tomcat)) in use, additional configurations are expected (see below).
 
 ## Web applications
 
-Safe passwords can be handled in the same way whatever the
-concrete underlying Web container.
+Safe passwords can be handled in the same way whatever the concrete underlying Web container.
 
 In web applications, a password can be sent to the server :
 
-* For authentication
+* For authentication (with HTTP Basic or Form authentications)
 * For other specific process, such as the registration of a new user account, or for changing a user password.
 
 Note that sending a form with a password (for login, for registration, for changing a
@@ -258,11 +296,10 @@ passwords during HTTP Form Authentication (in this case no need to mention
 the path and password fields if they are standard values). If this parameter
 is missing, no login will be handled by Alternet Security.
 
-Once configured properly (see below Jetty and Tomcat configuration), the Web 
-container will substitute the passwords found in the form fields or HTTP authentication
-header with '*' characters, in order to make such strings unusable ;
-the actual passwords will be wrapped in [Password](apidocs/ml/alternet/security/Password.html)
-instances, and will be available like shown hereafter :
+Once configured properly (see below ([Jetty](#jetty) and [Tomcat](#tomcat)) configurations),
+the Web container will substitute the passwords found in the form fields or HTTP authentication header
+with '*' characters, in order to make such strings unusable ; the actual passwords will be wrapped in
+[Password](apidocs/ml/alternet/security/Password.html) instances, and will be available like shown hereafter :
 
 ### Servlets applications
 
@@ -281,9 +318,11 @@ a sequence of passwords, since fields (in Web forms or in HTTP headers) can be m
 
 ```java
 public void doPost(HttpServletRequest req, HttpServletResponse resp) {
-    // retrieve passwords of a multivalued field
-    PasswordParam pwd = Passwords.getPasswords(req, "pwdField");
-    // ...
+    // retrieve all passwords of a multivalued field
+    PasswordParam allPwd = Passwords.getPasswords(req, "pwdField");
+    for (Password pwd: allPwd) {
+        // ...
+    }
 }
 ```
 
@@ -315,8 +354,7 @@ automatically ; please check the documentation of your JAX-RS engine).
 
 ## Web containers
 
-Specific submodules supply means for the Web container to capture the received
-passwords.
+Specific submodules supply means for the Web container to capture the received passwords.
 
 To ensure security, passwords received by the server are NEVER stored in a String.
 
@@ -326,6 +364,8 @@ stored in a safe password object ; the raw data are replaced by a dummy value
 uselessly by the application. Of course, this value can't be used in the
 application, instead, the safe password object will be injected in the Web
 application.
+
+<a name="Jetty"></a>
 
 ### Jetty
 
@@ -364,6 +404,14 @@ Jetty 9.3 :
     <version>1.0</version>
 </dependency>
 ```
+
+#### JavaDoc API documentation
+
+* [Alternet Security for Jetty](../security-jetty-9.1/apidocs/index.html)
+
+All Alternet APIs :
+
+* [Alternet Libs](../apidocs/index.html)
 
 #### Jetty programmatic configuration
 
@@ -420,7 +468,7 @@ Instead of configuring the Jetty server with :
     </New>
 ```
 
-#### Jetty authentication
+#### Native Jetty Authentication
 
 So far, the configuration above will only capture passwords.
 If you want let Jetty to perform authentication, you need additional configuration,
@@ -459,7 +507,7 @@ Here is the full XML configuration file :
 </Configure>
 ```
 
-The JAAS login module, (typically in `${jetty.base}/etc/ldap.conf`) must be :
+The JAAS login module, (typically in `${jetty.base}/etc/ldap.conf`) will look like :
 
 ```
 ldap {
@@ -497,8 +545,9 @@ of the credentials ; in that case the `ml.alternet.security.auth.CryptFormat` pa
 If `forceBindingLogin="false"`, it means that Jetty will retrieve the hash from the
 LDAP server and perform the check of the credentials ; in that case the `ml.alternet.security.auth.CryptFormat` parameter will contain a comma-separated
 list of concrete classes. Note that `ml.alternet.security.auth.formats.PlainTextCryptFormat` is used for plain text
-passwords stored not hashed in the LDAP server and MUST NOT be used in production
-environments.
+passwords stored not hashed in the LDAP server and MUST NOT be used in production environments.
+
+<a name="tomcat"></a>
 
 ### Tomcat
 
@@ -514,24 +563,32 @@ Don't forget to also import a module that checks the credentials (see above).
 ```xml
 <dependency>
     <groupId>ml.alternet</groupId>
-    <artifactId>alternet-security-tomcat</artifactId>
+    <artifactId>alternet-security-tomcat-8.0</artifactId>
     <version>1.0</version>
 </dependency>
 ```
+
+#### JavaDoc API documentation
+
+* [Alternet Security for Tomcat](../security-tomcat-8.0/apidocs/index.html)
+
+All Alternet APIs :
+
+* [Alternet Libs](../apidocs/index.html)
 
 #### Tomcat programmatic configuration
 
 Configuring Tomcat is very simple :
 
-* create a specific connector [EnhancedProtocolHandler](../security-tomcat/apidocs/ml/alternet/security/web/tomcat/EnhancedProtocolHandler.html)
-* create a specific authenticator [AlternetBasicAuthenticator](../security-tomcat/apidocs/ml/alternet/security/web/tomcat/AlternetBasicAuthenticator.html)
-* create a specific credential handler [AlternetCredentialHandler](../security-tomcat/apidocs/ml/alternet/security/web/tomcat/AlternetCredentialHandler.html)
+* create a specific connector [AltProtocolHandler](../security-tomcat-8.0/apidocs/ml/alternet/security/web/tomcat/AltProtocolHandler.html)
+* create a specific authenticator [AlternetBasicAuthenticator](../security-tomcat-8.0/apidocs/ml/alternet/security/web/tomcat/AltBasicAuthenticator.html)
+* create a specific credential handler [AlternetCredentialHandler](../security-tomcat-8.0/apidocs/ml/alternet/security/web/tomcat/AltCredentialHandler.html)
 
 ```Java
 Tomcat server = new Tomcat();
 
 // use the specific connector
-Connector connector = new Connector("ml.alternet.security.web.tomcat.EnhancedProtocolHandler");
+Connector connector = new Connector("ml.alternet.security.web.tomcat.AltProtocolHandler");
 connector.setPort(port);
 // set in "tomcatProtocol" what you would have set in the Connector constructor
 connector.setProperty("tomcatProtocol", "HTTP/1.1");
@@ -546,7 +603,7 @@ Wrapper servlet = Tomcat.addServlet(wac, "YOUR_SERVLET", new YourServlet());
 wac.addServletMapping("/*", "YOUR_SERVLET");
 
 // specific security config
-AuthenticatorBase auth = new AlternetBasicAuthenticator();
+AuthenticatorBase auth = new AltBasicAuthenticator();
 auth.setSecurePagesWithPragma(false);
 auth.setChangeSessionIdOnAuthentication(false);
 auth.setAlwaysUseSession(true);
@@ -559,7 +616,7 @@ initParam.setValue("Basic");
 wac.addApplicationParameter(initParam);
 
 Realm realm = new ...();
-realm.setCredentialHandler(new AlternetCredentialHandler());
+realm.setCredentialHandler(new AltCredentialHandler());
 wac.setRealm(realm);
 
 // the remaining configuration is standard tomcat configuration
@@ -580,7 +637,7 @@ wac.addConstraint(security);
 server.start();
 ```
 
-Various full working examples of programmatic configurations are available in the [project test pages](https://github.com/alternet/alternet.ml/blob/master/security-tomcat/src/test/java/ml/alternet/test/security/web/tomcat/).
+Various full working examples of programmatic configurations are available in the [project test pages](https://github.com/alternet/alternet.ml/blob/master/security-tomcat-8.0/src/test/java/ml/alternet/test/security/web/tomcat/).
 
 #### Tomcat XML configuration
 
@@ -625,13 +682,13 @@ Edit the file `$CATALINA_BASE/conf/server.xml` and change it as follow :
     <Service name="Catalina">
         <Connector connectionTimeout="20000" port="8080" redirectPort="8443"
             tomcatProtocol="HTTP/1.1"
-            protocol="ml.alternet.security.web.tomcat.EnhancedProtocolHandler"
+            protocol="ml.alternet.security.web.tomcat.AltProtocolHandler"
             passwordManager="ml.alternet.security.impl.StrongPasswordManager"/>
             <!-- you can omit the "passwordManager" attribute if the default
                 value shown above suits your needs -->
         <Engine defaultHost="localhost" name="Catalina">
             <Realm className="org.apache.catalina.realm.UserDatabaseRealm" resourceName="UserDatabase">
-                <CredentialHandler className="ml.alternet.security.web.tomcat.AlternetCredentialHandler"
+                <CredentialHandler className="ml.alternet.security.web.tomcat.AltCredentialHandler"
                     hasher="ml.alternet.security.auth.impl.PBKDF2Hasher"/>
                     <!-- you can omit the "hasher" attribute if the default
                          value shown above suits your needs -->
@@ -639,7 +696,7 @@ Edit the file `$CATALINA_BASE/conf/server.xml` and change it as follow :
             <Host appBase="webapps" autoDeploy="true" name="localhost" unpackWARs="true">
                 <Context docBase="webapps/ROOT"
                     path="" reloadable="false" >
-                    <Valve className="ml.alternet.security.web.tomcat.AlternetBasicAuthenticator"/>
+                    <Valve className="ml.alternet.security.web.tomcat.AltBasicAuthenticator"/>
                     <!-- you can omit the <Valve> element if you don't want
                          Alternet handling your BASIC HTTP Authentication, or
                          use your own -->
@@ -689,9 +746,9 @@ Launch tomcat :
 /path/to/server/apache-tomcat-8.0.18/bin/catalina.sh start
 ```
 
-##### Example
+#### Example
 
-A full working example of Tomcat XML configuration + Webapp is available in the [project demo page](https://github.com/alternet/alternet.ml/blob/master/security-tomcat/src/server/tomcat.8080/).
+A full working example of Tomcat XML configuration + Webapp is available in the [project demo page](https://github.com/alternet/alternet.ml/blob/master/security-tomcat-8.0/src/server/tomcat.8080/).
 
 It can be launched from the project directory :
 
@@ -699,6 +756,7 @@ It can be launched from the project directory :
 export CATALINA_BASE=/path/to/projects/ml.alternet/security-tomcat/src/server/tomcat.8080/
 /path/to/server/apache-tomcat-8.0.18/bin/catalina.sh start
 ```
+<!--
 
 ### Grizzly
 
@@ -713,6 +771,8 @@ Maven import :
     <version>1.0</version>
 </dependency>
 ```
+
+-->
 
 # Background
 
@@ -735,6 +795,10 @@ However a cleaner way would be to build a hash from the password
 would simply check that hash. See [Hasher](apidocs/ml/alternet/security/auth/Hasher.html)
 for that purpose.
 
+<!--
+
 ## OWASP
 
 TODO
+
+-->
