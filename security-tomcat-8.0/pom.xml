@@ -17,7 +17,7 @@
     <url>http://alternet.ml/alternet-libs/security-tomcat/security-tomcat.html</url>
 
     <properties>
-        <shortName>security-tomcat</shortName>
+        <shortName>security-tomcat-8.0</shortName>
         <site.deploy.dir>${project.build.directory}/../../alternet-libs/target/staging/${shortName}</site.deploy.dir>
 
         <version.org.apache.tomcat>8.0.45</version.org.apache.tomcat>

@@ -17,7 +17,7 @@
     <url>http://alternet.ml/alternet-libs/security-jetty/security-jetty.html</url>
 
     <properties>
-        <shortName>security-jetty</shortName>
+        <shortName>security-jetty-9.1</shortName>
         <site.deploy.dir>${project.build.directory}/../../alternet-libs/target/staging/${shortName}</site.deploy.dir>
 
         <version.org.eclipse.jetty><!-- 9.1.6.v20160112-->9.2.22.v20170606<!-- 9.3.20.v20170531--><!-- 9.4.6.v20170531--></version.org.eclipse.jetty>
