@@ -28,7 +28,7 @@ how to ignore diacritics and ligatures.
 
 Try it : just type "éta" in the form :
 
-<iframe width="800" height="100" border="0" src="http://alternet.ml/demo/Countries/index.html" ></iframe>
+<iframe width="800" height="300" border="0" src="http://alternet.ml/demo/Countries/index.html" ></iframe>
 
 ---
 

@@ -169,7 +169,7 @@ Consider using moderns hashers instead such as PBKDF2 or BCrypt.
 
  * [Credentials](../security/apidocs/ml/alternet/security/auth/Credentials.html), which is roughly a wrapper around `Password`
  * [Hasher](../security-auth/apidocs/ml/alternet/security/auth/Hasher.html) which allow to compute a crypt, and check some credentials given a crypt
- * [CryptFormat](../security-auth/apidocs/ml/alternet/security/auth/CryptFormat.html) which allow to turn the bytes of a hash to a string crypt, or to parse a crypt in its parts
+ * [CryptFormatter](../security-auth/apidocs/ml/alternet/security/auth/formats/CryptFormatter.html) which allow to turn the bytes of a hash to a string crypt, or to parse a crypt in its parts
 
 ### Generate a hash
 
