@@ -15,3 +15,17 @@ how to render a repeatable composite structure in a table cell.
 <iframe width="800" height="400" border="0" src="http://alternet.ml/demo/Conspiracy/" ></iframe>
 
 * As stated in the article visit the [following page] (http://alternet.ml/demo/Firefox-button/index.html) with 2 different browsers
+
+---
+
+### <a name="countriesAutocompleter">Countries Autocompleter</a>
+
+"Countries Autocompleter" is a sample [GWT] (http://www.gwtproject.org/)/[Sencha] (http://www.sencha.com/products/gxt/) autocompleter demonstrating 
+how to ignore diacritics and ligatures.
+
+* See [the article on Semantic Mismatch] (http://semantic-mismatch.blogspot.fr/2015/11/ignorer-la-casse-les-diacritiques-et.html)
+* The [source code] (https://github.com/alternet/demo-gwt/tree/master/countries-autocompleter)
+
+Try it : just type "éta" in the form :
+
+<iframe width="800" height="400" border="0" src="http://alternet.ml/demo/Countries/index.html" ></iframe>

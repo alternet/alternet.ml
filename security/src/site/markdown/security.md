@@ -146,6 +146,18 @@ performing credentials verification, such as in Web applications
 </dependency>
 ```
 
+## JavaDoc API documentation
+
+* [Alternet Security Authentication](../security-auth/apidocs/index.html)
+
+All Alternet APIs :
+
+* [Alternet Libs](../apidocs/index.html)
+
+## Project page
+
+(../security-auth/security.html)
+
 ## Usage
 
 Alternet Security Authentication comes with out-of-the-box popular hashers and
@@ -414,6 +426,10 @@ All Alternet APIs :
 
 * [Alternet Libs](../apidocs/index.html)
 
+## Project page
+
+(../security-jetty-9.1/security.html)
+
 #### Jetty programmatic configuration
 
 Configuring Jetty is very simple :
@@ -550,6 +566,14 @@ passwords stored not hashed in the LDAP server and MUST NOT be used in productio
 
 <a name="tomcat"></a>
 
+### Jetty full running example
+
+You can checkout this full featured example available here https://github.com/alternet/alternet.ml/tree/master/security-jetty-9.1-demo-jaas-ldap
+
+Run it with `mvn verify` and launch a browser to http://localhost:8080
+
+This example runs a Jetty server and an LDAP server and connect the authentication plumbing with Alternet Security.
+
 ### Tomcat
 
 * Require Java 8+ and Tomcat 8.0.17 and above.
@@ -576,6 +600,10 @@ Don't forget to also import a module that checks the credentials (see above).
 All Alternet APIs :
 
 * [Alternet Libs](../apidocs/index.html)
+
+## Project page
+
+(../security-tomcat-8.0/security.html)
 
 #### Tomcat programmatic configuration
 

@@ -15,11 +15,12 @@ crypt-MD5    $1$ magic in hash, 34 characters total               admin:$1$3iuE5
 
 ## Format : `$[scheme]$[salt]$[crypt]`
 
-<table><tr><th>ID</th><th>Method</th></tr>
-<tr><td>1</td><td>MD5 with salt</td></tr>
-<tr><td>2a</td><td>Blowfish</td></tr>
-<tr><td>5</td><td>SHA-256</td></tr>
-<tr><td>6</td><td>SHA-512</td></tr>
+|ID|Method       |
+|--|-------------|
+|1 |MD5 with salt|
+|2a|Blowfish-----|
+|5 |SHA-256------|
+|6 |SHA-512------|
 
 ### Examples
 

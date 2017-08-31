@@ -14,16 +14,21 @@ Alternet Libs guides :
 * [Alternet Tools](tools/tools.html)
 * [Alternet Parsing](parsing/parsing.html)
 
+Pages :
+
+* [Alternet Security Auth](security-auth/index.html)
+* [Alternet Security Jetty](security-jetty-9.1/index.html)
+* [Alternet Security Tomcat](security-tomcat-8.0/index.html)
+
+
+* [Alternet Tools Generator](tools-generator/generator.html)
+
+
 [JavaDoc API documentation](apidocs/index.html)
 
 ## ![download](images/download.png) [Download](download.html)
 
 Alternet Libs are distributed mainly via Maven.
-
-
-## ![related projects](images/connect.png) [Related Projects](related.html)
-
-List of related projects.
 
 
 ## ![contribute](images/settings.png) Contribute
