@@ -40,9 +40,9 @@
                 <configuration>
                     <reportsDirectories>
                         <file>${project.build.directory}/surefire-reports/</file>
-                        <file>${basedir}-auth-impl/target/surefire-reports/</file>
+                        <file>${basedir}-auth/target/surefire-reports/</file>
                         <file>${basedir}-jetty-9.1/target/surefire-reports/</file>
-                        <file>${basedir}-tomcat/target/surefire-reports/</file>
+                        <file>${basedir}-tomcat-8.0/target/surefire-reports/</file>
                     </reportsDirectories>
                 </configuration>
             </plugin>
