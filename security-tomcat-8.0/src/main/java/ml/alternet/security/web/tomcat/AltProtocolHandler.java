@@ -119,6 +119,8 @@ public class AltProtocolHandler implements ProtocolHandler, DebugLevel.Debuggabl
      *
      * @param name The name of the property.
      * @param value The value of the property.
+     *
+     * @return <code>true</code> the more often.
      */
     public boolean setProperty(String name, String value) {
         if ("tomcatProtocol".equals(name)) {

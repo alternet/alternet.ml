@@ -1,7 +1,5 @@
 package ml.alternet.security.web.tomcat;
 
-import java.security.InvalidAlgorithmParameterException;
-
 import javax.servlet.ServletRequest;
 
 import org.apache.catalina.CredentialHandler;
@@ -33,13 +31,13 @@ public class AltCredentialHandler implements CredentialHandler {
         ServletRequest request = AltProtocolHandler.request.get();
         AuthenticationMethod am = AuthenticationMethod.extract(request.getServletContext());
         Credentials credentials = am.getCredentials(request);
-        try {
+//        try {
             // TODO : use CryptFormat instead ? (and change the doc accordingly)
             return getHasher().check(credentials, storedCredentials);
-        } catch (InvalidAlgorithmParameterException e) {
-            LOG.error("Unable to check password hash.", e);
-            return false;
-        }
+//        } catch (InvalidAlgorithmParameterException e) {
+//            LOG.error("Unable to check password hash.", e);
+//            return false;
+//        }
     }
 
     @Override
