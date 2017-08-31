@@ -167,6 +167,24 @@
                         <showDeprecation>true</showDeprecation>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${version.maven-javadoc-plugin}</version>
+                    <configuration>
+                        <failOnError>false</failOnError>
+                        <additionalparam>-Xdoclint:none</additionalparam>
+                        <links>
+                            <link>http://docs.oracle.com/javase/8/docs/api/</link>
+                            <link>http://docs.oracle.com/javaee/7/api/</link>
+                            <link>http://alternet.ml/alternet-libs/apidocs/</link>
+                        </links>
+                        <excludePackageNames>org.isk.jvmhardcore.pjba:org.isk.jvmhardcore.pjba.*</excludePackageNames>
+                        <sourceFileExcludes>
+                            <exclude>${project.basedir}/../tools-generator/download/pjba/jvm_hardcore-p22/03_projects/pjba/01_src/main/**/*.*</exclude>
+                        </sourceFileExcludes>
+                    </configuration>
+                </plugin>
                 <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
                 <plugin>
                     <groupId>org.eclipse.m2e</groupId>
