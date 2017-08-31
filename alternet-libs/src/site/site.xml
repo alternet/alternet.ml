@@ -35,7 +35,7 @@
 
         <menu name="Main" inherit="top">
             <item name="Home" href="./" />
-            <item name="GitHub project" href="https://github.com/alternet/alternet-libs" />
+            <item name="GitHub project" href="https://github.com/alternet/alternet.ml" />
             <item name="Blog" href="http://semantic-mismatch.blogspot.fr/" />
             <item name="Release notes" href="release-notes.html" />
         </menu>
