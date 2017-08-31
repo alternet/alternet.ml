@@ -6,8 +6,8 @@
  * appear clear in the memory, in order to make it
  * difficult to find when a memory dump is performed.
  *
- * A password can be created thanks to {@link PasswordManager}, that
- * exist in several flavors. To pick one, use the {@link PasswordManagerFactory}
+ * A password can be created thanks to {@link ml.alternet.security.PasswordManager}, that
+ * exist in several flavors. To pick one, use the {@link ml.alternet.security.PasswordManagerFactory}
  * or supply your own implementation (your own implementation can
  * override the default one with the discovery service).
  *
