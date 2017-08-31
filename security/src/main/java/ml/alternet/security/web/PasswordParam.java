@@ -26,7 +26,7 @@ import ml.alternet.security.PasswordState;
  *
  * @author Philippe Poulard
  */
-public class PasswordParam implements Password, Iterator<PasswordParam>, Iterable<Password>, Unwrappable<Password> {
+public class PasswordParam implements Password, Iterable<Password>, Unwrappable<Password> {
 
     private Iterator<Password> seq; // the sequence
     private Password that; // the current pwd
@@ -78,12 +78,20 @@ public class PasswordParam implements Password, Iterator<PasswordParam>, Iterabl
         return that.getClearCopy();
     }
 
-    @Override
+    /**
+     * Indicates whether there is a next password in this sequence.
+     *
+     * @return <code>true</code> if a password is available, <code>false</code> otherwise.
+     */
     public boolean hasNext() {
         return seq.hasNext();
     }
 
-    @Override
+    /**
+     * Return the next password in this sequence.
+     *
+     * @return The next password in this sequence.
+     */
     public PasswordParam next() {
         if (this.seq.hasNext()) {
             this.that = this.seq.next();
