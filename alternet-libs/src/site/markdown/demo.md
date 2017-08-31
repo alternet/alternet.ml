@@ -28,4 +28,15 @@ how to ignore diacritics and ligatures.
 
 Try it : just type "éta" in the form :
 
-<iframe width="800" height="400" border="0" src="http://alternet.ml/demo/Countries/index.html" ></iframe>
+<iframe width="800" height="100" border="0" src="http://alternet.ml/demo/Countries/index.html" ></iframe>
+
+---
+
+### <a name="jettySecurity">Jetty + LDAP with Alternet Security</a>
+
+This demo runs a Jetty server and an LDAP server and connect the authentication plumbing with Alternet Security.
+
+You can checkout this full featured example available here https://github.com/alternet/alternet.ml/tree/master/security-jetty-9.1-demo-jaas-ldap
+
+Run it with `mvn verify` and launch a browser to http://localhost:8080
+
