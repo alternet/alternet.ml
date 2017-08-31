@@ -606,7 +606,7 @@ public interface Calc extends Grammar {
 
     // tokens and rules definition here
 
-    CalcGrammar $ = $();
+    Calc $ = $();
 }
 ```
 
@@ -940,7 +940,8 @@ a `Parameter` object with the first and the last tokens ; the `=` token is
 ignored, no need to use `.skip()` on it (but you could, it wouldn't change anything).
 
 ```java
-    TypedToken<Parameter> Parameter = TOKEN.seq(EQUAL, ParameterValue)
+    //                    Parameter ::= TOKEN     EQUAL  ParameterValue
+    TypedToken<Parameter> Parameter =   TOKEN.seq(EQUAL, ParameterValue)  // e.g. "aName = aValue"
         .asToken(tokens ->
             new Parameter(
                     tokens.getFirst().getValue(), // TOKEN
@@ -960,8 +961,8 @@ processing the stream :
     @WhitespacePolicy
     @Fragment Token COMMA = is(',');
 
-    // Parameters ::= Parameter (COMMA Parameter?)*
-    TypedToken<List<Parameter>> Parameters = Parameter.seq(COMMA.seq(Parameter.optional()).zeroOrMore())
+    //                          Parameters ::= Parameter    (COMMA     Parameter?)*
+    TypedToken<List<Parameter>> Parameters =   Parameter.seq(COMMA.seq(Parameter.optional()).zeroOrMore())
         .asToken(tokens ->
                 tokens.stream()
                     // drop ","
@@ -982,9 +983,9 @@ Finally, the production of the `Challenge` is obvious.
 It is marked as the main rule of our grammar :
 
 ```java
-    // Challenge      ::= TOKEN Parameters
+    //                    Challenge ::= TOKEN     Parameters
     @MainRule
-    TypedToken<Challenge> Challenge = TOKEN.seq(Parameters)
+    TypedToken<Challenge> Challenge =   TOKEN.seq(Parameters)
         .asToken(tokens -> new Challenge(
                 tokens.removeFirst().getValue(), // TOKEN
                 tokens.removeFirst().getValue()) // Parameters
