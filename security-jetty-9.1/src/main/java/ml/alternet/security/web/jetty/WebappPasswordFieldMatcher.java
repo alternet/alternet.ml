@@ -99,36 +99,10 @@ public class WebappPasswordFieldMatcher implements PasswordFieldMatcher, FormLim
         addLifeCycleListener(wac);
     }
 
-    private void addLifeCycleListener(WebAppContext wac) {
-        wac.addLifeCycleListener(new LifeCycle.Listener() {
-            @Override
-            public void lifeCycleStopping(LifeCycle event) {
-                ServletContext sc = wac.getServletContext();
-                FormFieldConfiguration.reset(sc);
-                AuthenticationMethod.reset(sc);
-            }
-            @Override
-            public void lifeCycleStopped(LifeCycle event) { }
-            @Override
-            public void lifeCycleStarting(LifeCycle event) {
-//                am = getAuthenticationMethod();
-//                if (am == AuthenticationMethod.Basic || am == AuthenticationMethod.Form) {
-                    wac.getSecurityHandler().setAuthenticatorFactory(
-                        newAuthenticatorFactory()
-                    );
-//                }
-            }
-            @Override
-            public void lifeCycleStarted(LifeCycle event) { }
-            @Override
-            public void lifeCycleFailure(LifeCycle event, Throwable cause) { }
-        });
-    }
-
     /**
      * Create a password field matcher for a Jetty Server.
      *
-     * @param wac The Jetty Server.
+     * @param server The Jetty Server.
      */
     public WebappPasswordFieldMatcher(Server server) {
         servletContextGetter = req -> {
@@ -194,6 +168,32 @@ public class WebappPasswordFieldMatcher implements PasswordFieldMatcher, FormLim
         });
     }
 
+    private void addLifeCycleListener(WebAppContext wac) {
+        wac.addLifeCycleListener(new LifeCycle.Listener() {
+            @Override
+            public void lifeCycleStopping(LifeCycle event) {
+                ServletContext sc = wac.getServletContext();
+                FormFieldConfiguration.reset(sc);
+                AuthenticationMethod.reset(sc);
+            }
+            @Override
+            public void lifeCycleStopped(LifeCycle event) { }
+            @Override
+            public void lifeCycleStarting(LifeCycle event) {
+//                am = getAuthenticationMethod();
+//                if (am == AuthenticationMethod.Basic || am == AuthenticationMethod.Form) {
+                    wac.getSecurityHandler().setAuthenticatorFactory(
+                        newAuthenticatorFactory()
+                    );
+//                }
+            }
+            @Override
+            public void lifeCycleStarted(LifeCycle event) { }
+            @Override
+            public void lifeCycleFailure(LifeCycle event, Throwable cause) { }
+        });
+    }
+
     private Stream<WebAppContext> lookupForWebApps(Server server) {
         return Stream.concat(
             server.getBeans(WebAppContext.class).stream(),
@@ -225,6 +225,9 @@ public class WebappPasswordFieldMatcher implements PasswordFieldMatcher, FormLim
         // "password" contains "*****"
         // the pwd has been captured before, let's retrieve it
         Credentials credentials = getAuthenticationMethod(request).getCredentials(request);
+        if (credentials.getUserName() == null) {
+            credentials.withUser(username);
+        }
         // use "pwd" instead of "password"
         UserIdentity user = loginAuthenticator.getLoginService().login(username, credentials);
         return user;
