@@ -156,7 +156,7 @@ All Alternet APIs :
 
 ## Project page
 
-* [Project page](../security-auth/security.html)
+* [Project page](../security-auth/index.html)
 
 ## Usage
 
@@ -428,7 +428,7 @@ All Alternet APIs :
 
 #### Project page
 
-* [Project page](../security-jetty-9.1/security.html)
+* [Project page](../security-jetty-9.1/index.html)
 
 #### Jetty programmatic configuration
 
@@ -603,7 +603,7 @@ All Alternet APIs :
 
 #### Project page
 
-* [Project page](../security-tomcat-8.0/security.html)
+* [Project page](../security-tomcat-8.0/index.html)
 
 #### Tomcat programmatic configuration
 
