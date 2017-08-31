@@ -98,7 +98,7 @@ public interface Calc extends Grammar {
 
     // Expression ::= Sum
     @MainRule @Fragment
-    Rule Expression = Sum;
+    Rule Expression = is(Sum);
 
     // Argument ::= FUNCTION Argument | Value | '(' Expression ')'
     @Fragment Rule Argument = ( FUNCTION.seq($self) ).or(Value).or( LBRACKET.seq( Expression, RBRACKET ) );
