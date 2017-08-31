@@ -38,11 +38,11 @@ import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 import ml.alternet.misc.Thrower;
 import ml.alternet.security.Password;
 import ml.alternet.security.binary.SafeBuffer;
-import ml.alternet.util.BytesUtil;
 
 /**
  * Encrypt an OpenBSD/FreeBSD/Linux-compatible md5-salted-encoded password.
@@ -102,7 +102,7 @@ public class MD5Crypt {
                 /* the original code claimed that finalState was being cleared
                 to keep dangerous bits out of memory, but doing this is also
                 required in order to get the right output. */
-                BytesUtil.unset(fs);
+                Arrays.fill(fs, (byte) 0);
 
                 /* Then something really weird... */
                 for (int i = pwd.get().length; i != 0; i >>>=1) {
@@ -151,7 +151,7 @@ public class MD5Crypt {
             }
         } finally {
             if (pwdBuf != null) {
-                BytesUtil.unset(pwdBuf.array());
+                Arrays.fill(pwdBuf.array(), (byte) 0);
             }
         }
         return fs;

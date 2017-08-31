@@ -18,7 +18,6 @@ import ml.alternet.security.Password;
 import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.formats.WorkFactorSaltedParts;
 import ml.alternet.security.binary.SafeBuffer;
-import ml.alternet.util.BytesUtil;
 
 /**
  * A slightly modified PBKDF2 hasher, that erase intermediate data.
@@ -110,7 +109,7 @@ public class PBKDF2Hasher extends HasherBase<WorkFactorSaltedParts> {
             } else {
                 pBytes = new byte[bb.limit()];
                 bb.get(pBytes);
-                BytesUtil.unset(bb.array());
+                Arrays.fill(bb.array(), (byte) 0);
             }
             final byte[] passwordBytes = pBytes;
             // HmacSHA1, HmacSHA224, HmacSHA256, HmacSHA384, HmacSHA512
@@ -188,7 +187,7 @@ public class PBKDF2Hasher extends HasherBase<WorkFactorSaltedParts> {
         } catch (NoSuchAlgorithmException | ShortBufferException | IllegalStateException | InvalidKeyException e) {
             throw new InvalidAlgorithmParameterException(e);
         } finally {
-            BytesUtil.unset(pBytes);
+            Arrays.fill(pBytes, (byte) 0);
         }
     }
 

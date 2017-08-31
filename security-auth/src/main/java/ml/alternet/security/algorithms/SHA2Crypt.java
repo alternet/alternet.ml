@@ -21,6 +21,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 import ml.alternet.misc.WtfException;
 import ml.alternet.security.Password;
@@ -328,7 +329,7 @@ public class SHA2Crypt {
             }
         } finally {
             if (pwdBuf != null) {
-                BytesUtil.unset(pwdBuf.array());
+                Arrays.fill(pwdBuf.array(), (byte) 0);
             }
         }
     }

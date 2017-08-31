@@ -1,9 +1,10 @@
 package ml.alternet.security.impl;
 
+import java.util.Arrays;
+
 import ml.alternet.security.EmptyPassword;
 import ml.alternet.security.Password;
 import ml.alternet.security.PasswordManager;
-import ml.alternet.util.BytesUtil;
 
 /**
  * Base implementation of a password manager.
@@ -18,7 +19,7 @@ public abstract class AbstractPasswordManager implements PasswordManager {
             return EmptyPassword.SINGLETON;
         }
         Password pwd = newValidPassword(password);
-        BytesUtil.unset(password);
+        Arrays.fill(password, (char) 0);
         return pwd;
     }
 

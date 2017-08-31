@@ -1,5 +1,7 @@
 package ml.alternet.util;
 
+import java.util.Arrays;
+
 /**
  * Bytes-related utilities.
  *
@@ -73,30 +75,6 @@ public final class BytesUtil {
             chars[i] = c;
         }
         return chars;
-    }
-
-    /**
-     * Unset an array of bytes.
-     *
-     * @param bytes
-     *            The actual array of bytes.
-     */
-    public static void unset(byte[] bytes) {
-        for (int i = 0; i < bytes.length; i++) {
-            bytes[i] = 0;
-        }
-    }
-
-    /**
-     * Unset an array of chars.
-     *
-     * @param chars
-     *            The actual array of chars.
-     */
-    public static void unset(char[] chars) {
-        for (int i = 0; i < chars.length; i++) {
-            chars[i] = 0;
-        }
     }
 
 }

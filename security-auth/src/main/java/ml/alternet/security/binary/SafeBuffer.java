@@ -6,8 +6,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
+import java.util.Arrays;
 
-import ml.alternet.util.BytesUtil;
 import ml.alternet.util.Util;
 
 /**
@@ -67,7 +67,7 @@ public final class SafeBuffer {
                     ByteBuffer o = ByteBuffer.allocate(n);
                     bb.flip();
                     o.put(bb);
-                    BytesUtil.unset(bb.array());
+                    Arrays.fill(bb.array(), (byte) 0);
                     bb = o;
                     continue;
                 }
@@ -101,7 +101,7 @@ public final class SafeBuffer {
             int len = bb.limit();
             bb = ByteBuffer.allocate(requiredSize);
             bb.put(b, 0, len);
-            BytesUtil.unset(b);
+            Arrays.fill(b, (byte) 0);
             bb.put(bytes);
             bb.position(pos);
         }
@@ -123,7 +123,7 @@ public final class SafeBuffer {
         } else { // larger than necessary
             bytes = new byte[bb.remaining()];
             bb.get(bytes);
-            BytesUtil.unset(bb.array());
+            Arrays.fill(bb.array(), (byte) 0);
         }
         return bytes;
     }

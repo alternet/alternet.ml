@@ -2,6 +2,7 @@ package ml.alternet.security.auth.hashers.impl;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.util.Arrays;
 
 import ml.alternet.security.Password;
 import ml.alternet.security.algorithms.BCrypt;
@@ -14,7 +15,6 @@ import ml.alternet.security.auth.formats.WorkFactorSaltedParts;
 import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
 import ml.alternet.security.binary.SafeBuffer;
 import ml.alternet.security.binary.BytesEncoding;
-import ml.alternet.util.BytesUtil;
 import ml.alternet.util.StringUtil;
 
 /**
@@ -55,7 +55,7 @@ public class BCryptHasher extends HasherBase<WorkFactorSaltedParts> {
         }
         byte[] passwordb = SafeBuffer.getData(bb);
         byte[] hash = new BCrypt().crypt_raw(passwordb, parts.salt, parts.workFactor);
-        BytesUtil.unset(passwordb);
+        Arrays.fill(passwordb, (byte) 0);
 
         // adjust size
         if (hash.length > BCrypt.resLen) {

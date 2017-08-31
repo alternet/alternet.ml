@@ -1,12 +1,13 @@
 package ml.alternet.security.impl;
 
+import java.util.Arrays;
+
 import ml.alternet.security.Password;
 import ml.alternet.security.PasswordState;
-import ml.alternet.util.BytesUtil;
 
 /**
  * Base implementation of a password.
- * 
+ *
  * @author Philippe Poulard
  */
 public abstract class AbstractPassword implements Password {
@@ -27,7 +28,7 @@ public abstract class AbstractPassword implements Password {
     public final void destroy() {
         this.state = PasswordState.Invalid;
         byte[] pwd = getPrivatePassword();
-        BytesUtil.unset(pwd);
+        Arrays.fill(pwd, (byte) 0);
     }
 
     @Override
@@ -40,7 +41,7 @@ public abstract class AbstractPassword implements Password {
 
     /**
      * Return a new clear copy of this valid password.
-     * 
+     *
      * @return A new clear password
      */
     protected abstract Clear getClearValidPassword();
@@ -48,7 +49,7 @@ public abstract class AbstractPassword implements Password {
     /**
      * Get the private bytes of this password, used internally to unset the
      * bytes when the password is invalidated.
-     * 
+     *
      * @return The private bytes of this password.
      */
     protected abstract byte[] getPrivatePassword();

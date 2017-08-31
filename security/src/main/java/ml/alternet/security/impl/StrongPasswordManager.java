@@ -4,6 +4,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -62,7 +63,7 @@ public class StrongPasswordManager extends AbstractPasswordManager implements Pa
             jcaCipher.init(Cipher.ENCRYPT_MODE, secret, new IvParameterSpec(iv));
             byte[] clearBytes = BytesUtil.cast(password);
             obfuscate = jcaCipher.doFinal(clearBytes);
-            BytesUtil.unset(clearBytes); // clear intermediate data
+            Arrays.fill(clearBytes, (byte) 0); // clear intermediate data
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException
                 | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e)
         {
@@ -79,7 +80,7 @@ public class StrongPasswordManager extends AbstractPasswordManager implements Pa
                             jcaCipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
                             byte[] clearBytes = jcaCipher.doFinal(obfuscate);
                             char[] clearChars = BytesUtil.cast(clearBytes);
-                            BytesUtil.unset(clearBytes); // clear intermediate data
+                            Arrays.fill(clearBytes, (byte) 0); // clear intermediate data
                             return clearChars;
                         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException
                                 | InvalidAlgorithmParameterException | IllegalBlockSizeException

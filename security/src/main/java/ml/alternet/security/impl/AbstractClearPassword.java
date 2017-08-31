@@ -1,7 +1,8 @@
 package ml.alternet.security.impl;
 
+import java.util.Arrays;
+
 import ml.alternet.security.Password;
-import ml.alternet.util.BytesUtil;
 
 /**
  * Base implementation of a clear password.
@@ -40,7 +41,7 @@ public abstract class AbstractClearPassword implements Password.Clear {
     @Override
     public void close() {
         if (this.clearPassword != null) {
-            BytesUtil.unset(this.clearPassword);
+            Arrays.fill(this.clearPassword, (char) 0);
             this.clearPassword = null;
         }
     }
