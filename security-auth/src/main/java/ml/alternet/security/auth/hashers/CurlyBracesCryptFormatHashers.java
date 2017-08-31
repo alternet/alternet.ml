@@ -15,9 +15,12 @@ import ml.alternet.util.EnumUtil;
 
 /**
  * LDAP hash formats specified by RFC 2307 including standard formats {MD5}, {SMD5}, {SHA}, {SSHA}
- * and extensions.
+ * and extensions. These schemes range from somewhat to very insecure, and should not be used except when required.
  *
- * These schemes range from somewhat to very insecure, and should not be used except when required.
+ * <h1>Configuration</h1>
+ *
+ * You can examine the configuration of each value
+ * <a href="https://github.com/alternet/alternet.ml/blob/master/security-auth/src/main/java/ml/alternet/security/auth/hashers/CurlyBracesCryptFormatHashers.java">here</a>.
  *
  * @author Philippe Poulard
  */

@@ -11,6 +11,11 @@ import ml.alternet.security.binary.BytesEncoder;
 /**
  * Unix algorithms.
  *
+ * <h1>Configuration</h1>
+ *
+ * You can examine the configuration of each value
+ * <a href="https://github.com/alternet/alternet.ml/blob/master/security-auth/src/main/java/ml/alternet/security/auth/hashers/UnixHashers.java">here</a>.
+ *
  * @author Philippe Poulard
  */
 public enum UnixHashers implements Supplier<Hasher.Builder> {
