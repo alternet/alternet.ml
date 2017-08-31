@@ -156,7 +156,7 @@ All Alternet APIs :
 
 ## Project page
 
-(../security-auth/security.html)
+* [Project page](../security-auth/security.html)
 
 ## Usage
 
@@ -177,7 +177,7 @@ Most common hashers are available and parameterized in :
 
  * [CurlyBracesCryptFormatHashers](../security-auth/apidocs/ml/alternet/security/auth/hashers/CurlyBracesCryptFormatHashers.html)
  * [ModularCryptFormatHashers](../security-auth/apidocs/ml/alternet/security/auth/hashers/ModularCryptFormatHashers.html)
- * [UnixHashersUnixHashers](../security-auth/apidocs/ml/alternet/security/auth/hashers/UnixHashersUnixHashers.html)
+ * [UnixHashers](../security-auth/apidocs/ml/alternet/security/auth/hashers/UnixHashers.html)
 
 If the default configuration doesn't suit your needs, you can alter
 any supported parameter.
@@ -426,9 +426,9 @@ All Alternet APIs :
 
 * [Alternet Libs](../apidocs/index.html)
 
-## Project page
+#### Project page
 
-(../security-jetty-9.1/security.html)
+* [Project page](../security-jetty-9.1/security.html)
 
 #### Jetty programmatic configuration
 
@@ -601,9 +601,9 @@ All Alternet APIs :
 
 * [Alternet Libs](../apidocs/index.html)
 
-## Project page
+#### Project page
 
-(../security-tomcat-8.0/security.html)
+* [Project page](../security-tomcat-8.0/security.html)
 
 #### Tomcat programmatic configuration
 
