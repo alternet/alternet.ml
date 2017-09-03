@@ -7,11 +7,13 @@ import ml.alternet.misc.TodoException;
 import ml.alternet.security.algorithms.BCrypt;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.formats.SaltlessModularCryptFormatter;
+import ml.alternet.security.auth.hashers.impl.Argon2Hasher;
 import ml.alternet.security.auth.hashers.impl.BCryptHasher;
 import ml.alternet.security.auth.hashers.impl.MD5BasedHasher;
 import ml.alternet.security.auth.hashers.impl.MessageHasher;
 import ml.alternet.security.auth.hashers.impl.SHA2Hasher;
 import ml.alternet.security.binary.BytesEncoder;
+import ml.alternet.security.binary.BytesEncoder.ValueSpace;
 import ml.alternet.util.EnumUtil;
 
 /**
@@ -178,7 +180,35 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher.Builder> {
 
     $pbkdf2$,
     $pbkdf2_sha256$("pbkdf2-sha256"),
-    $pbkdf2_sha512$("pbkdf2-sha512");
+    $pbkdf2_sha512$("pbkdf2-sha512"),
+
+    $argon2i$ {
+        @Override
+        public Hasher.Builder get() {
+            return Hasher.builder()
+                .setClass(Argon2Hasher.class)
+                .setVariant("argon2i")
+                .setAlgorithm("Blake2b") // because it is its name
+                .setHashByteSize(32)
+                .setSaltByteSize(16)
+                .setEncoding(BytesEncoder.base64(ValueSpace.base64.get(), false))
+                .setFormatter(Argon2Hasher.ARGON2_FORMATTER);
+        }
+    },
+    $argon2d$ {
+        @Override
+        public Hasher.Builder get() {
+            return $argon2i$.get()
+                    .setVariant("argon2d");
+        }
+    },
+    $argon2id$ {
+        @Override
+        public Hasher.Builder get() {
+            return $argon2i$.get()
+                    .setVariant("argon2id");
+        }
+    };
 
     ModularCryptFormatHashers() {
         EnumUtil.replace(ModularCryptFormatHashers.class, this, s -> s.replace("\\$", ""));
