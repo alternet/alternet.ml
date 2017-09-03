@@ -9,7 +9,7 @@ import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
 import ml.alternet.security.auth.hashers.impl.MessageHasher;
 
 @Test
-public class NTHashTest extends CryptTestBase<MessageHasher, CryptParts> { // FIXME : replace CryptParts with SaltedParts ???
+public class NTHashTest extends CryptTestBase<MessageHasher, CryptParts> {
 
     String data[][] = {
         { "password", "$3$$",

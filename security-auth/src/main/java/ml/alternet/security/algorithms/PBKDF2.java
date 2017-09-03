@@ -29,7 +29,7 @@ public class PBKDF2 {
      *
      * @throws InvalidAlgorithmParameterException When the hash algorithm fails.
      */
-    protected byte[] hash(Password password, byte[] salt, String algorithm, int iterCount, int keyLength) throws InvalidAlgorithmParameterException {
+    public static byte[] hash(Password password, byte[] salt, String algorithm, int iterCount, int keyLength) throws InvalidAlgorithmParameterException {
         // JCE algorithm that computes a hash
 
         // Same as :
