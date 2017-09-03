@@ -185,7 +185,7 @@ public abstract class Utf8Appendable
                 break;
 
             case UTF8_REJECT:
-                String reason = "byte "+StringUtil.getHex(new byte[] {b})+" in state "+(_state/12);
+                String reason = "byte "+StringUtil.getHex(new byte[] {b}, false)+" in state "+(_state/12);
                 _codep=0;
                 _state = UTF8_ACCEPT;
                 _appendable.append(REPLACEMENT);

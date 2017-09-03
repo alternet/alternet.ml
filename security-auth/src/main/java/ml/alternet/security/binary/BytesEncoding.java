@@ -1,7 +1,5 @@
 package ml.alternet.security.binary;
 
-import java.util.stream.Collectors;
-
 import ml.alternet.misc.CharRange;
 
 /**

@@ -21,17 +21,20 @@ public final class StringUtil {
     private StringUtil() { }
 
     private static final char[] HEXES = "0123456789ABCDEF".toCharArray();
+    private static final char[] hexes = "0123456789abcdef".toCharArray();
 
     /**
      * Convert an array of bytes to an hexa string.
      *
      * @param raw
      *            An array of bytes.
+     * @param uppercase <code>true</code> to write hexa chars in uppercase
+     *          <code>false</false> to write hexa chars in lowercase
      * @return The hexa string conversion of that bytes; each byte is
      *         represented with 2 hexa chars.
      */
-    public static String getHex(byte[] raw) {
-        return getHex(raw, 0, raw.length);
+    public static String getHex(byte[] raw, boolean uppercase) {
+        return getHex(raw, 0, raw.length, uppercase);
     }
 
     /**
@@ -43,19 +46,22 @@ public final class StringUtil {
      *            The start offset.
      * @param length
      *            The length of bytes to convert.
+     * @param uppercase <code>true</code> to write hexa chars in uppercase
+     *          <code>false</false> to write hexa chars in lowercase
      * @return The hexa string conversion of that bytes; each byte is
      *         represented with 2 hexa chars.
      */
-    public static String getHex(byte[] raw, int start, int length) {
+    public static String getHex(byte[] raw, int start, int length, boolean uppercase) {
         if (raw == null) {
             return null;
         }
         char[] hexChars = new char[length * 2];
+        char[] h = uppercase ? HEXES : hexes;
         int v = -1;
         for (int i = 0; i < length; i++) {
             v = raw[i + start] & 0xFF;
-            hexChars[i * 2] = HEXES[v >>> 4];
-            hexChars[i * 2 + 1] = HEXES[v & 0x0F];
+            hexChars[i * 2] = h[v >>> 4];
+            hexChars[i * 2 + 1] = h[v & 0x0F];
         }
         return new String(hexChars);
     }
@@ -118,7 +124,7 @@ public final class StringUtil {
     public static String getHash(char[] string) {
         try {
             byte[] hash = MessageDigest.getInstance("MD5").digest(convert(string));
-            return getHex(hash);
+            return getHex(hash, false);
         } catch (NoSuchAlgorithmException nsae) {
             throw WtfException.throwException(nsae);
         }

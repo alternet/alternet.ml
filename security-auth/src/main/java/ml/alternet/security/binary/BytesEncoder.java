@@ -127,7 +127,7 @@ public enum BytesEncoder implements BytesEncoding {
     hexa {
         @Override
         public String encode(byte[] data, int offset, int len) {
-            return StringUtil.getHex(data, offset, len);
+            return StringUtil.getHex(data, offset, len, true);
         }
 
         @Override
@@ -146,7 +146,7 @@ public enum BytesEncoder implements BytesEncoding {
     hexaLower {
         @Override
         public String encode(byte[] data, int offset, int len) {
-            return StringUtil.getHex(data, offset, len).toLowerCase();
+            return StringUtil.getHex(data, offset, len, false);
         }
 
         @Override
@@ -227,6 +227,7 @@ public enum BytesEncoder implements BytesEncoding {
         char[] encodeMap;
         byte[] decodeMap;
         PaddingMode padding;
+        char padChar = '=';
 
         private static final byte PADDING = 127;
 
@@ -278,8 +279,8 @@ public enum BytesEncoder implements BytesEncoding {
                     buf[ptr++] = encode(((data[i]) & 0x3) << 4);
                 }
                 if (this.padding == PaddingMode.PADDING) {
-                    buf[ptr++] = '=';
-                    buf[ptr++] = '=';
+                    buf[ptr++] = this.padChar;
+                    buf[ptr++] = this.padChar;
                 }
             }
             // encode when exactly 2 elements (left) to encode
@@ -294,7 +295,7 @@ public enum BytesEncoder implements BytesEncoding {
                     buf[ptr++] = encode((data[i + 1] & 0xF) << 2);
                 }
                 if (this.padding == PaddingMode.PADDING) {
-                    buf[ptr++] = '=';
+                    buf[ptr++] = this.padChar;
                 }
             }
             return new String(buf, 0, ptr);
@@ -471,26 +472,25 @@ public enum BytesEncoder implements BytesEncoding {
                         .collect(Collectors.joining()).toCharArray();
             }
         }
+
     };
 
-    /*
+    public static BytesEncoding base64(char[] valueSpace, char padding) {
+        if (valueSpace.length != ValueSpace.base64.chars.length()) {
+            throw new IllegalArgumentException("Illegal value space length \"" + new String(valueSpace, 0, valueSpace.length) + "\"");
+        }
+        PaddingMode pm = PaddingMode.PADDING;
+        Base64 b64 = new Base64(valueSpace, pm);
+        b64.padChar = padding;
+        return b64;
+    }
 
-
-BASE64 Encoding :
-
-BASE64_CHARS
-'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-HASH64_CHARS
-'./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
-BCRYPT_CHARS
-'./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-
-Options :
-DES crypt :
-    big-endian encoding
-custom pbkdf2 hashes :
-    BASE64_CHARS , except that it uses '.' instead of '+', and omits trailing padding '=' and whitespace.
-
-     */
+    public static BytesEncoding base64(char[] valueSpace, boolean skipHighBits) {
+        if (valueSpace.length != ValueSpace.base64.chars.length()) {
+            throw new IllegalArgumentException("Illegal value space length \"" + new String(valueSpace, 0, valueSpace.length) + "\"");
+        }
+        PaddingMode pm = skipHighBits ? PaddingMode.NO_PADDING_SKIP_HIGH_BITS : PaddingMode.NO_PADDING;
+        return new Base64(valueSpace, pm);
+    }
 
 }
