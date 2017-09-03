@@ -132,6 +132,12 @@ implementations that reasonably clean sensible data from the memory after
 the hash is computed, which can't be guaranteed by Java
 standard packages.
 
+<div class="alert alert-danger" role="alert">
+Many of the hash algorithms supplied by this library are <b>NOT</b> secure.
+Alternet Security Authentication supports a wide array of hash algorithms,
+primarily to support legacy data and systems.
+</div>
+
 ## Maven import
 
 This module (or any other implementation) is required for
@@ -158,12 +164,43 @@ All Alternet APIs :
 
 * [Project page](../security-auth/index.html)
 
-## Usage
+## Hashers
 
 Alternet Security Authentication comes with out-of-the-box popular hashers and
 crypt formatters, including legacy algorithms such as Unix crypt.
-The latter should be used only if you still have old passwords to check.
-Consider using moderns hashers instead such as PBKDF2 or BCrypt.
+
+There are currently four good choices [<a href="#note_1">1</a>] for secure hashing:
+
+<ul>
+    <li>Argon2</li>
+    <li>BCrypt</li>
+    <li>PBKDF2 SHA256 / PBKDF2 SHA512</li>
+    <li>SHA256 / SHA512</li>
+</ul>
+
+All four hashes share the following properties:
+
+<ul>
+    <li>No known vulnerabilities.</li>
+    <li>Based on documented &amp; widely reviewed algorithms.</li>
+    <li>Public-domain or BSD-licensed reference implementations available.</li>
+    <li>variable rounds for configuring flexible cpu cost on a per-hash basis.</li>
+    <li>At least 96 bits of salt.</li>
+    <li>Basic algorithm has seen heavy scrutiny and use for at least 10 years (except for Argon2, born around 2013).</li>
+    <li>In use across a number of OSes and/or a wide variety of applications.</li>
+    <li>While Argon2 is much younger than the others, it has seen heavy scrutiny, and was purpose-designed for password hashing.
+        In the near future, it stands likely to become the recommended standard.</li>
+</ul>
+
+<a name="note_1">[1]</a> As of June 2016, the most commonly used password hashes are BCrypt and PBKDF2,
+followed by SHA512, with Argon2 rapidly moving up the ranks.
+
+<div class="alert alert-info" role="alert">
+Argon2 is the recommended choice in Alternet Security : it safely erase sensitive data at the very beginning
+of hashing, unlike PBKDF2 and BCrypt (that keep a reference to the password during all the long hashing process).
+</div>
+
+## Usage
 
 3 main classes are supplied :
 

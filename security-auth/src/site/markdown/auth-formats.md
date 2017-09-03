@@ -3,6 +3,19 @@
  * Description of popular crypt formats
  * Design considerations
 
+## Few words about the design
+
+For checking a password, most tools will get all the expected parameters, then compute a formatted crypt string, and compare
+it with the one stored in the database. Alternet Security is designed with a neat separation of concepts in mind : algorithms and
+their parameters, charsets, encodings, formattings, and crypt format families. It gives the advantage that you can combine them
+at will, and you'll have the same base code when, for example, you want to encode some bytes in a specific format. Everything work in
+the same way. Moreover, for checking a password, the parameters are extracted from the crypt stored in the database, the binary
+hash is isolated, and it is the value that will be compared to the password after hashing it, without formatting it.
+It sounds more natural to me.
+
+Most of the description of the popular hash formats was largely inspired from the
+outstanding [Passlib library for Python](http://passlib.readthedocs.io/en/stable/index.html).
+
 ## Crypt formats
 
 ```
@@ -91,7 +104,9 @@ For DES the string only contains the salt and actual hash. It's total length is 
       crypt("secret", "xx") => "xxWAum7tHdIUw"
 ```
 
-## Hasher families
+## Hashers
+
+### Families
 
 3 families of hasher are supported :
 
@@ -99,9 +114,12 @@ For DES the string only contains the salt and actual hash. It's total length is 
  * SaltedHasher (e.g. SSHA, MD5Crypt, UNIX CRYPT)
  * SimpleHasher : w/o salt and iteration (e.g. MD5Plain)
 
- * MD5Crypt ($1$ and $arp1$), MD5Plain (MD5 w/o salt)
+### MD5 Variants
 
-## BCrypt
+ * MD5Crypt ($1$ and $arp1$)
+ * MD5Plain (MD5 w/o salt)
+
+### BCrypt
 
 Isolation of the scheme writing/parsing from the production of the crypt.
 
@@ -120,3 +138,19 @@ We just need to parse the scheme :
  * Crypt formats must be able to check the data size (SALT) in order to guess the rights parameters.
 
 http://forum.insidepro.com/viewtopic.php?t=8225
+
+# Binary
+
+Many base64 encodings are used across crypt formats :
+
+|Name|Value space|
+|----|-----------|
+|BASE64_CHARS|'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'|
+|HASH64_CHARS|'./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'|
+|BCRYPT_CHARS|'./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'|
+
+Sometimes, hashers are setting specific options :
+
+* DES crypt : use a big-endian encoding ; this is rather taken in charge when producing the bytes
+* custom pbkdf2 hashes : BASE64_CHARS , except that it uses '.' instead of '+', and omits trailing padding '=' and whitespace.
+
