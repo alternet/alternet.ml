@@ -438,6 +438,17 @@ public interface Hasher extends Credentials.Checker {
 
         Builder setConfiguration(Configuration configuration);
 
+        /**
+         * Set the crypt that was used for resolving the hasher when appropriate.
+         *
+         * @see CryptFormat#resolve(String)
+         *
+         * @param crypt An existing crypt may hold parameters useful on the configuration.
+         *
+         * @return This builder.
+         */
+        Builder use(String crypt);
+
     }
 
     public interface Configuration {
@@ -460,6 +471,27 @@ public interface Hasher extends Credentials.Checker {
         int getHashByteSize();
         int getSaltByteSize();
         int getIterations();
+        String getCrypt();
+
+        /**
+         * A hasher can extend this configuration extension
+         * when a crypt can be used for configuration.
+         *
+         * @author Philippe Poulard
+         */
+        interface Extension {
+
+            /**
+             * If a new hasher is built, its builder MUST unset its crypt.
+             *
+             * @see Builder#use(String)
+             *
+             * @param crypt
+             * @return
+             */
+            Hasher configureWithCrypt(String crypt);
+
+        }
 
     }
 
@@ -495,6 +527,7 @@ public interface Hasher extends Credentials.Checker {
             private int hashByteSize = -1;
             private int logRounds = -1;
             private CryptFormatter<? extends CryptParts> formatter;
+            private String crypt;
 
             @Override
             public Conf clone() throws CloneNotSupportedException {
@@ -546,6 +579,11 @@ public interface Hasher extends Credentials.Checker {
             }
 
             @Override
+            public String getCrypt() {
+                return this.crypt;
+            }
+
+            @Override
             public Properties asProperties() {
                 Properties props = new Properties();
                 if (this.saltByteSize != -1) {
@@ -583,6 +621,7 @@ public interface Hasher extends Credentials.Checker {
             public String toString() {
                 return asProperties().toString();
             }
+
         };
 
         @Override
@@ -771,6 +810,17 @@ public interface Hasher extends Credentials.Checker {
         }
 
         @Override
+        public String getCrypt() {
+            return this.conf.crypt;
+        }
+
+        @Override
+        public Builder use(String crypt) {
+            this.conf.crypt = crypt;
+            return this;
+        }
+
+        @Override
         public Builder configure(Properties properties) throws InvalidAlgorithmParameterException {
             int p = 0;
             try {
@@ -860,8 +910,12 @@ public interface Hasher extends Credentials.Checker {
         @Override
         public Hasher build() {
             try {
-                return this.conf.clazz.getConstructor(Configuration.class)
-                    .newInstance(getConfiguration());
+                Hasher hr = this.conf.clazz.getConstructor(Configuration.class)
+                        .newInstance(getConfiguration());
+                if (this.conf.getCrypt() != null && hr instanceof Configuration.Extension) {
+                    hr = ((Configuration.Extension) hr).configureWithCrypt(this.conf.getCrypt());
+                }
+                return hr;
             } catch (Exception e) {
                 return Thrower.doThrow(e);
             }

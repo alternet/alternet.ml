@@ -61,6 +61,9 @@ public class ModularCryptFormat implements CryptFormat {
                 }
             }
         }
+        if (b != null) {
+            b.use(crypt);
+        }
         return Optional.ofNullable(b);
     }
 
