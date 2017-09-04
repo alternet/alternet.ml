@@ -1,24 +1,12 @@
 package ml.alternet.security.auth.hashers.impl;
 
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.logging.Logger;
 
-import javax.crypto.Mac;
-import javax.crypto.SecretKey;
-import javax.crypto.ShortBufferException;
-
 import ml.alternet.misc.Thrower;
-import ml.alternet.security.Password;
 import ml.alternet.security.algorithms.PBKDF2;
 import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.formats.WorkFactorSaltedParts;
-import ml.alternet.security.binary.SafeBuffer;
 
 /**
  * A slightly modified PBKDF2 hasher, that erase intermediate data.
