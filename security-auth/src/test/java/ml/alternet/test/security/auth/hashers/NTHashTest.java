@@ -35,7 +35,7 @@ public class NTHashTest extends CryptTestBase<MessageHasher, CryptParts> {
 
     @Override
     protected MessageHasher newHasher(String salt) {
-      return (MessageHasher) mcf.resolve(salt).get().build();
+      return (MessageHasher) resolve(salt).build();
     }
 
     @Override

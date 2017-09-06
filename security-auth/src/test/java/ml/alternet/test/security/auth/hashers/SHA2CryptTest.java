@@ -45,7 +45,7 @@ public class SHA2CryptTest extends CryptTestBase<SHA2Hasher, WorkFactorSaltedPar
 
     @Override
     protected SHA2Hasher newHasher(String salt) {
-      return (SHA2Hasher) mcf.resolve(salt).get().build();
+      return (SHA2Hasher) resolve(salt).build();
     }
 
     @Override

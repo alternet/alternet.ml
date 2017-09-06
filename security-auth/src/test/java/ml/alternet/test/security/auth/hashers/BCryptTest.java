@@ -151,7 +151,7 @@ public class BCryptTest extends CryptTestBase<BCryptHasher, WorkFactorSaltedPart
 
     @Override
     protected BCryptHasher newHasher(String salt) {
-        return (BCryptHasher) mcf.resolve(salt).get().build();
+        return (BCryptHasher) resolve(salt).build();
     }
 
     /**
@@ -196,7 +196,7 @@ public class BCryptTest extends CryptTestBase<BCryptHasher, WorkFactorSaltedPart
     @Test(dataProvider="goodCreds")
     public void checkPassword_should_success(String plain, String expected) throws InvalidAlgorithmParameterException {
         Credentials cred = Credentials.fromPassword(plain.toCharArray());
-        Hasher hr = mcf.resolve(expected).get().build();
+        Hasher hr = resolve(expected).build();
         Assertions.assertThat(hr.check(cred, expected)).isTrue();
 
         if (expected.startsWith("$2a$")) {
