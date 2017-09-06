@@ -1,52 +1,110 @@
 package ml.alternet.security.web.server;
 
-//
-//========================================================================
-//Copyright (c) 1995-2015 Mort Bay Consulting Pty. Ltd.
-//------------------------------------------------------------------------
-//All rights reserved. This program and the accompanying materials
-//are made available under the terms of the Eclipse Public License v1.0
-//and Apache License v2.0 which accompanies this distribution.
-//
-//  The Eclipse Public License is available at
-//  http://www.eclipse.org/legal/epl-v10.html
-//
-//  The Apache License v2.0 is available at
-//  http://www.opensource.org/licenses/apache2.0.php
-//
-//You may elect to redistribute this code under either of these licenses.
-//========================================================================
-//
+import java.util.Arrays;
 
-/* ------------------------------------------------------------ */
 /**
- * UTF-8 StringBuilder, based on the same Jetty class + additional code
- * in order to allow char extraction and cleaning.
+ * UTF-8 StringBuilder that allow char extraction and cleaning.
  *
- * This class wraps a standard {@link java.lang.StringBuilder} and provides methods to append
- * UTF-8 encoded bytes, that are converted into characters.
+ * This class provides methods to append UTF-8 encoded bytes, that are converted into characters.
  *
  * This class is stateful and up to 4 calls to {@link #append(byte)} may be needed before
- * state a character is appended to the string buffer.
+ * state a character is appended to the buffer.
  *
  * The UTF-8 decoding is done by this class and no additional buffers or Readers are used.
- * The UTF-8 code was inspired by http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
- *
  */
 public class Utf8StringBuilder extends Utf8Appendable {
 
-    final StringBuilder _buffer;
+    /**
+     * A safe appendable clean unused data when growing.
+     *
+     * @author Philippe Poulard
+     */
+    static class SafeAppendable implements Appendable {
+
+        char[] c;
+        int len = 0;
+
+        public SafeAppendable(int capacity) {
+            c = new char[Math.max(capacity, 32)];
+        }
+
+        public SafeAppendable() {
+            this(32);
+        }
+
+        @Override
+        public Appendable append(CharSequence csq) {
+            return append(csq, 0, csq.length());
+        }
+
+        @Override
+        public Appendable append(CharSequence csq, int start, int end) {
+            ensureCapacity(end - start);
+            csq.chars().forEach(ch -> c[len++] = (char) ch);
+            return this;
+        }
+
+        @Override
+        public Appendable append(char ch) {
+            ensureCapacity(1);
+            c[len++] = ch;
+            return this;
+        }
+
+        public Appendable append(char[] chars) {
+            ensureCapacity(chars.length);
+            for (int i = 0 ; i < chars.length ; i++) {
+                c[len++] = chars[i];
+            }
+            return this;
+        }
+
+        public int length() {
+            return len;
+        }
+
+        public void reset() {
+            Arrays.fill(c, (char) 0);
+            len = 0;
+        }
+
+        public void clear() {
+            Arrays.fill(c, (char) 0);
+        }
+
+        public char[] toChars() {
+            if (len != c.length) {
+                char[] chars = new char[len];
+                System.arraycopy(c, 0, chars, 0, len);
+                return chars;
+            }
+            return c;
+        }
+
+        void ensureCapacity(int size) {
+            if (len + size > c.length) {
+                char[] chars = new char[Math.min(Math.max(c.length * 2, len + size), Integer.MAX_VALUE - 5)];
+                System.arraycopy(c, 0, chars, 0, len);
+                clear();
+                c = chars;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return new String(toChars());
+        }
+
+    }
 
     public Utf8StringBuilder()
     {
-        super(new StringBuilder());
-        _buffer=(StringBuilder)_appendable;
+        super(new SafeAppendable());
     }
 
     public Utf8StringBuilder(int capacity)
     {
-        super(new StringBuilder(capacity));
-        _buffer=(StringBuilder)_appendable;
+        super(new SafeAppendable(capacity));
     }
 
     /**
@@ -56,47 +114,42 @@ public class Utf8StringBuilder extends Utf8Appendable {
      */
     public char[] toChars() {
         checkState();
-        StringBuilder sb = getStringBuilder();
-        char[] c = new char[sb.length()];
-        sb.getChars(0, sb.length(), c, 0);
-        return c;
+        return ((SafeAppendable) _appendable).toChars();
     }
 
     /**
      * Clear all the char in this content.
      */
     public void clear() {
-        StringBuilder sb = getStringBuilder();
-        for (int i = 0 ; i < sb.length() ; i++) {
-            sb.setCharAt(i, ' ');
-        }
+        ((SafeAppendable) _appendable).clear();
     }
 
     @Override
     public int length()
     {
-        return _buffer.length();
+        return ((SafeAppendable) _appendable).length();
     }
 
     @Override
     public void reset()
     {
         super.reset();
-        _buffer.setLength(0);
-    }
-
-    public StringBuilder getStringBuilder()
-    {
-        checkState();
-        return _buffer;
+        ((SafeAppendable) _appendable).reset();
     }
 
     @Override
     public String toString()
     {
         checkState();
-        return _buffer.toString();
+        return ((SafeAppendable) _appendable).toString();
     }
 
+    public void append(char[] chars) {
+        ((SafeAppendable) _appendable).append(chars);
+    }
+
+    public void append(char replacement) {
+        ((SafeAppendable) _appendable).append(replacement);
+    }
 
 }

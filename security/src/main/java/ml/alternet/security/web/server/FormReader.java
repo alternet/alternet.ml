@@ -122,7 +122,7 @@ public abstract class FormReader {
                                 if (code2 >= 0) {
                                     int code3 = readItem(buf, i++);
                                     if (code3 >= 0) {
-                                        buffer.getStringBuilder().append(Character.toChars
+                                        buffer.append(Character.toChars
                                                 ((convertHexDigit(code0) << 12)
                                                 + (convertHexDigit(code1) << 8)
                                                 + (convertHexDigit(code2) << 4)
@@ -141,7 +141,7 @@ public abstract class FormReader {
                         }
                     }
                     if (!decoded) {
-                        buffer.getStringBuilder().append(Utf8Appendable.REPLACEMENT);
+                        buffer.append(Utf8Appendable.REPLACEMENT);
                     }
                     break;
                 default:
