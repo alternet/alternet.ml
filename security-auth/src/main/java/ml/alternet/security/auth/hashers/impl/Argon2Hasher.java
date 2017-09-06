@@ -61,8 +61,7 @@ public class Argon2Hasher extends HasherBase<Argon2Hasher.Argon2Parts> implement
         int outputLength = conf.getHashByteSize();
         byte[] hash = Argon2Bridge.$.encrypt(passwordb, parts.salt, parts.memoryCost, parts.timeCost, parts.parallelism,
                 Argon2Bridge.Type.valueOf(conf.getVariant()), parts.version,
-                outputLength, parts.data, null);
-        // TODO : get byte[]"secret" from conf
+                outputLength, parts.data, getSecret(parts.keyid));
 
         Arrays.fill(passwordb, (byte) 0);
 
@@ -81,6 +80,64 @@ public class Argon2Hasher extends HasherBase<Argon2Hasher.Argon2Parts> implement
         return "Argon2";
     }
 
+    /**
+     * Return the secret bound to the given key.
+     *
+     * You must supply an implementation of {@link SecretResolver} in order to
+     * support the "keyid" parameter.
+     *
+     * @param keyid The key ID.
+     *
+     * @return The secret bound to the key ID, or <code>null</code> if the key ID was null.
+     *
+     * @throws IllegalArgumentException When the key is not found.
+     *
+     * @see SecretResolver
+     */
+    public byte[] getSecret(byte[] keyid) { // TODO : should try with hash conf to get an implementation ???
+        if (keyid == null) {
+            return null;
+        } else {
+            try {
+                SecretResolver sr = DiscoveryService.lookupSingleton(SecretResolver.class);
+                return sr.getSecret(keyid);
+            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+                return Thrower.doThrow(e);
+            }
+        }
+    };
+
+    /**
+     * You must supply an implementation of this interface in order to
+     * support the "keyid" parameter.
+     *
+     * <pre>@LookupKey(forClass=SecretResolver.class)
+     *public static class MySecretResolver implements SecretResolver {
+     *
+     *    @Override
+     *    public byte[] getSecret(byte[] keyid) {
+     *        byte[] secret = ... // your code here
+     *        return secret;
+     *    }
+     *}</pre>
+     *
+     * @author Philippe Poulard
+     */
+    public static interface SecretResolver {
+
+        /**
+         * Return the secret bound to the given key.
+         *
+         * @param keyid The key ID.
+         *
+         * @throws IllegalArgumentException When the key is not found.
+         *
+         * @return The secret.
+         */
+        byte[] getSecret(byte[] keyid) throws IllegalArgumentException;
+
+    }
+
     public static class Argon2Parts extends SaltedParts {
 
         public Argon2Parts(Hasher hr) {
@@ -91,6 +148,7 @@ public class Argon2Hasher extends HasherBase<Argon2Hasher.Argon2Parts> implement
         public int memoryCost = -1;
         public int timeCost = -1;
         public int parallelism = -1;
+        public byte[] keyid;
         public byte[] data;
 
     }
@@ -162,8 +220,15 @@ public class Argon2Hasher extends HasherBase<Argon2Hasher.Argon2Parts> implement
                 if (params.length > 2 && params[2].startsWith("p=")) {
                     parts.parallelism = Integer.parseInt(params[2].substring(2));
                 }
-                if (params.length > 3 && params[3].startsWith("data=")) {
-                    parts.data = encoding.decode(params[3].substring(5));
+                if (params.length > 3) {
+                    int keyPresent = 0;
+                    if (params[3].startsWith("keyid=")) {
+                        keyPresent = 1;
+                        parts.keyid = encoding.decode(params[3].substring(6));
+                    }
+                    if (params.length > 3+keyPresent && params[3+keyPresent].startsWith("data=")) {
+                        parts.data = encoding.decode(params[3+keyPresent].substring(5));
+                    }
                 }
             }
             if (stringParts.length > 3 + versionPresent && ! StringUtil.isVoid(stringParts[3 + versionPresent])) {
@@ -189,6 +254,10 @@ public class Argon2Hasher extends HasherBase<Argon2Hasher.Argon2Parts> implement
                 .append(",p=")
                 .append(Integer.toString(parts.parallelism));
             BytesEncoding encoding = parts.hr.getConfiguration().getEncoding();
+            if (parts.keyid != null) {
+                crypt.append(",keyid=")
+                .append(encoding.encode(parts.keyid));
+            }
             if (parts.data != null) {
                 crypt.append(",data=")
                     .append(encoding.encode(parts.data));

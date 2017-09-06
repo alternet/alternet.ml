@@ -34,7 +34,7 @@ public class Argon2Test extends CryptTestBase<Argon2Hasher, Argon2Hasher.Argon2P
 
     @Override
     protected Argon2Hasher newHasher(String salt) {
-        return (Argon2Hasher) mcf.resolve(salt).get().build();
+        return (Argon2Hasher) resolve(salt).build();
     }
 
     @Override
