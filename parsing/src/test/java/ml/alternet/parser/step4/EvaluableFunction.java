@@ -14,6 +14,6 @@ public interface EvaluableFunction {
      *
      * @return The computed value.
      */
-    public abstract Number eval(Number value);
+    Number eval(Number value);
 
 }

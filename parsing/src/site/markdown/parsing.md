@@ -361,11 +361,11 @@ The `or()` method is lazy : while parsing, the first rule that will match the in
 <div class="alert alert-error" role="alert">
 As a consequence, grammars expressed with :
 <div class="source"><pre class="prettyprint">
-// [1]     Items    ::=      ITEM | Items ',' ITEM
+[1]     Items    ::=      ITEM | Items ',' ITEM
 </pre></div>
 must be rewrite to :
 <div class="source"><pre class="prettyprint">
-// [1]     Items    ::=      ITEM ( ',' ITEM )*
+[1]     Items    ::=      ITEM ( ',' ITEM )*
 </pre></div>
 </div>
 
@@ -472,8 +472,8 @@ definition of the field `Argument` :
 `$("Sum")` stands for a reference to the following rule declaration :
 
 ```java
-    // Sum ::= SignedTerm (ADDITIVE Product)*
-    Rule Sum = SignedTerm.seq(ADDITIVE.seq(Product).zeroOrMore());
+    //   Sum ::= SignedTerm    (ADDITIVE     Product)*
+    Rule Sum =   SignedTerm.seq(ADDITIVE.seq(Product).zeroOrMore());
 ```
 
 (at this time we assume that `SignedTerm` and `Product` have been already defined).
@@ -799,7 +799,9 @@ can authenticate :
 <div class="source"><pre class="prettyprint">
 # Challenge Basic
 WWW-Authenticate: Basic realm="FooCorp"
+</pre></div>
  
+<div class="source"><pre class="prettyprint">
 # Challenge OAuth 2.0 après l'envoi d'un token expiré
 WWW-Authenticate: Bearer realm="FooCorp", error=invalid_token, error_description="The \"access token\" has expired"
 </pre></div>
@@ -936,7 +938,7 @@ argument the `List` of tokens parsed by the rule and that returns a
 value that can be consumed by the enclosing rule.
 
 Below, the rule will match `aName = aValue` in 3 tokens, and we produced
-a `Parameter` object with the first and the last tokens ; the `=` token is
+a `Parameter` object with the **first** and the **last** tokens ; the `=` token is
 ignored, no need to use `.skip()` on it (but you could, it wouldn't change anything).
 
 ```java
@@ -944,8 +946,8 @@ ignored, no need to use `.skip()` on it (but you could, it wouldn't change anyth
     TypedToken<Parameter> Parameter =   TOKEN.seq(EQUAL, ParameterValue)  // e.g. "aName = aValue"
         .asToken(tokens ->
             new Parameter(
-                    tokens.getFirst().getValue(), // TOKEN
-                    tokens.getLast().getValue()   // ParameterValue
+                    tokens.getFirst().getValue(), // TOKEN          e.g. "aName"
+                    tokens.getLast().getValue()   // ParameterValue e.g. "aValue"
         ));
 ```
 
@@ -973,7 +975,7 @@ processing the stream :
         );
 ```
 
-It's worth to mention that the token values available in the list are
+It's worth to mention that the tokens available in the list are
 instances of [`TokenValue<V>`](apidocs/ml/alternet/parser/EventsHandler.TokenValue.html)
 from which you can extract the rule/token that matched the input
 (`.getRule()`) and the actual value (`.getValue()`). You can aslo
@@ -1064,8 +1066,484 @@ but you will be sure that the input is made of valid tokens.
 
 ## Parsing tutorial
 
-Alternet Parsing comes with an out-of-the-box [`TreeHandler`](apidocs/ml/alternet/parser/TreeHandler.html)
+Alternet Parsing comes with out-of-the-box [`Handler`s](apidocs/ml/alternet/parser/Handler.html)
 that can receive the result of the parsing, that will be handy for processing that result :
+
+* [`TreeHandler`](apidocs/ml/alternet/parser/handlers/TreeHandler.html) : low-level API
+* [`NodeBuilder`](apidocs/ml/alternet/parser/ast/NodeBuilder.html) : high-level API
+
+### AST builder
+
+The [AST package](apidocs/ml/alternet/parser/ast/package-summary.html) contains helper classes to build
+an AST while parsing.
+
+#### Target data model
+
+Let's go back to our `Calc` grammar. We intend to compute expressions, and therefore build a target data
+model with the help of the [`Expression<T,C>`](apidocs/ml/alternet/parser/ast/Expression.html) class :
+
+* where T is the type of the result of the computation, it will be a `Number`
+* and C the context of the evaluation ; according to the grammar, it may hold all the necessary for an expression, for example supply
+built-in and custom functions, namespace mappers, bound variables to their name, etc. In our example we just need
+to resolve variable name, and the context will be as simple as a `Map<String,Number>`.
+
+```java
+/**
+ * The user data model is a tree of expressions.
+ */
+public interface NumericExpression extends Expression<Number, Map<String,Number>> {
+}
+```
+
+From this base, we are defining every kind of `NumericExpression` expected :
+
+* A constant expression wraps a number value :
+
+```java
+    class Constant implements NumericExpression {
+
+        Number n;
+
+        public Constant(Number n) {
+            this.n = n;
+        }
+
+        @Override
+        public Number eval(Map<String, Number> variables) {
+            return n;
+        }
+
+    }
+```
+
+* A variable expression wraps a variable name and can be resolved with the context :
+
+```java
+    class Variable implements NumericExpression {
+
+        String name;
+
+        public Variable(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public Number eval(Map<String, Number> variables) {
+            return variables.get(this.name);
+        }
+
+    }
+```
+
+* An exponent expression is made of a base and an exponent :
+
+```java
+    class Exponent implements NumericExpression {
+
+        NumericExpression base;
+        NumericExpression exponent;
+
+        public Exponent(NumericExpression base, NumericExpression exponent) {
+            this.base = base;
+            this.exponent = exponent;
+        }
+
+        @Override
+        public Number eval(Map<String, Number> variables) {
+            Number base = this.base.eval(variables);
+            Number exponent = this.exponent.eval(variables);
+            return Math.pow(base.doubleValue(), exponent.doubleValue());
+        }
+    }
+```
+
+* A function expression embeds an evaluable function :
+
+```java
+    class Function implements NumericExpression {
+
+        NumericExpression argument;
+        EvaluableFunction function;
+
+        public Function(EvaluableFunction function, NumericExpression argument) {
+            this.function = function;
+            this.argument = argument;
+        }
+
+        @Override
+        public Number eval(Map<String, Number> variables) {
+            Number arg = this.argument.eval(variables);
+            return function.eval(arg);
+        }
+
+    }
+
+    public interface EvaluableFunction {
+
+        Number eval(Number value);
+    }
+```
+
+* A term is an expression bound with an operation that appears in sums or factors expressions :
+
+```java
+    class Term<T> implements NumericExpression {
+        T operation;
+        NumericExpression term;
+
+        public Term(T operation, NumericExpression term) {
+            this.operation = operation;
+            this.term = term;
+        }
+
+        @Override
+        public Number eval(Map<String, Number> variables) {
+            return (this.operation == Additive.MINUS) ?
+                - term.eval(variables).doubleValue() :
+                + term.eval(variables).doubleValue();
+            // can have +a or -a but can't have *a or /a
+        }
+    }
+
+    class Sum implements NumericExpression {
+
+        List<Term<Additive>> arguments = new ArrayList<>();
+
+        public Sum(List<Term<Additive>> arguments) {
+            this.arguments = arguments;
+        }
+
+        @Override
+        public Number eval(Map<String, Number> variables) {
+            double sum = this.arguments.stream()
+                .mapToDouble(t -> (t.operation == Additive.MINUS) ?
+                            - t.term.eval(variables).doubleValue()
+                        :   + t.term.eval(variables).doubleValue())
+                .sum();
+            return sum;
+        }
+
+    }
+
+    class Product implements NumericExpression {
+
+        List<Term<Multiplicative>> arguments = new ArrayList<>();
+
+        public Product(List<Term<Multiplicative>> arguments) {
+            this.arguments = arguments;
+        }
+
+        @Override
+        public Number eval(Map<String, Number> variables) {
+            double product = this.arguments.stream()
+                .reduce(1d,
+                    (val, term) -> term.operation == Multiplicative.DIV ?
+                            val / term.term.eval(variables).doubleValue()
+                        :   val * term.term.eval(variables).doubleValue(),
+                    (t1, t2) -> t1 * t2);
+            return product;
+        }
+
+    }
+```
+
+#### The node builder
+
+As mentionned previously, a node builder can be designed from our `Calc` grammar instance.
+
+We just need to map every token to the relevant class, and every rule to the relevant class. For that purpose, we will use [`TokenMapper<T>`](apidocs/ml/alternet/parser/ast/TokenMapper.html) and [`RuleMapper<T>`](apidocs/ml/alternet/parser/ast/RuleMapper.html) where T is our `NumericExpression`. The simplest way to create such
+mappers is to enumerate the mappings :
+
+```java
+    enum Tokens implements TokenMapper<NumericExpression> {
+        FUNCTION,    // implementation code supplied later
+        RAISED,
+        ADDITIVE,
+        MULTIPLICATIVE,
+        NUMBER,
+        VARIABLE
+    }
+
+    enum Rules implements RuleMapper<NumericExpression> {
+        Sum,    // implementation code supplied later
+        Product,
+        Factor
+    }
+```
+
+You might notice that the name of the tokens as well as the name of the rules
+are the same than those defined in the `Calc` grammar, this is why the mapping
+will work. You also might notice that some rules in the grammar are not defined here,
+which means that their tokens will be simply pass to the enclosing rule.
+
+From this base, we are able to build our node builder :
+
+```java
+public class ExpressionBuilder extends NodeBuilder<NumericExpression> {
+
+    public ExpressionBuilder() {
+        super(Calc.$);
+        setTokenMapper(Tokens.class);
+        setRuleMapper(Rules.class);
+    }
+
+}
+```
+
+And run the result :
+
+```java
+    Map<String, Number > variables = new HashMap<>();
+    variables.put("x", 1.0);
+    variables.put("var_12", 10.0);
+
+    Optional<NumericExpression> exp = new ExpressionBuilder().build("sin( x )* (1 + var_12)", true);
+    Number result = exp.get().eval(variables);
+```
+
+#### Token mappers and rule mappers
+
+What is missing is the implementation of each mapper. The signature of a token mapper is :
+
+```java
+    Node transform(
+            ValueStack<Value<Node>> stack,
+            TokenValue<?> token,
+            Deque<Value<Node>> next);
+```
+
+The signature of a rule mapper is :
+
+```java
+    Node transform(
+            ValueStack<Value<Node>> stack,
+            Rule rule,
+            Deque<Value<Node>> args);
+```
+
+They are both very similar, and apply to the `<Node>` type, which is in our builder the `<NumericExpression>` type :
+
+* The first parameter contains the stack of raw items encountered so far. "Raw" means that they are not yet transformed since the production is performed bottom up.
+The more often the stack doesn't serve the transformation but
+sometimes it may help to peek the last previous item.
+* The second parameter is the current token / rule.
+* The last parameter contains all the values that are either the arguments of the rule to transform, of all the values coming next from the token to transform in the context of the nested rule. That values can be raw values or transformed values, according to
+how you process them individually. In fact `Value<NumericExpression>` is a wrapper around an object that can be either the raw token or a `NumericExpression`. You are free to supply tokens left as-is or transformed one, and to get the raw value with `.getSource()` or the transformed one with `.getTarget()`.
+
+Now we can write the mappers, starting with the simplest ones :
+
+* the `VARIABLE` token is just a sequence of characters, we write the `VARIABLE` mapper that
+create a `Variable` instance from our data model with that token :
+
+```java
+    VARIABLE {
+        @Override
+        public NumericExpression transform(
+                ValueStack<Value<NumericExpression>> stack,
+                TokenValue<?> token,
+                Deque<Value<NumericExpression>> next)
+        {
+            String name = token.getValue();
+            return new Variable(name);
+        }
+    };
+```
+
+* the `NUMBER` token is produced in the grammar with `.asNumber()`, we write the `NUMBER` mapper that create a `Constant` instance from our data model with that number token :
+
+```java
+    NUMBER {
+        @Override
+        public NumericExpression transform(
+                ValueStack<Value<NumericExpression>> stack,
+                TokenValue<?> token,
+                Deque<Value<NumericExpression>> next)
+        {
+            Number n = token.getValue();
+            return new Constant(n);
+        }
+    },
+```
+
+* the `FUNCTION` token is produced in the grammar with the `Calc.Function` enum class, we write the `FUNCTION` mapper that create a `Function` instance from our data model with that enum value token. In our grammar, functions are taking a single argument, we can retrieve it as the next following value :
+
+```java
+    FUNCTION {
+        @Override
+        public NumericExpression transform(
+                ValueStack<Value<NumericExpression>> stack,
+                TokenValue<?> token,
+                Deque<Value<NumericExpression>> next)
+        {
+            // e.g.   sin  x
+            //   function  argument
+            Calc.Function function = token.getValue();   // e.g.   Calc.Function.sin
+            NumericExpression argument = next.pollFirst().getTarget(); // e.g.   Variable("x")
+            return new Function(function, argument);
+        }
+    },
+```
+
+* the `RAISED` token is a little special because it uses the previous item and the next one.
+Unfortunately, the previous item is not yet transformed to a `NumericExpression`, therefore
+we can't do something useful in that mapper : we must delegate the mapping to the counterpart
+rule mapper `Factor` :
+
+```java
+    RAISED {
+        @Override
+        public NumericExpression transform(
+                ValueStack<Value<NumericExpression>> stack,
+                TokenValue<?> token,
+                Deque<Value<NumericExpression>> next)
+        {
+            // e.g. a ^ b
+            return null; // we don't know how to process it here => keep the source value
+        }
+    },
+```
+
+* the 2 last tokens `ADDITIVE` and `MULTIPLICATIVE` look similar, and produced in the grammar with the `Calc.Additive` and `Calc.Multiplicative` enum classes. They are transformed to
+either `Term<Calc.Additive>` or `Term<Calc.Multiplicative>` ; the grammar say that the token is always followed by an argument :
+
+```java
+    ADDITIVE {
+        @Override
+        public NumericExpression transform(
+                ValueStack<Value<NumericExpression>> stack,
+                TokenValue<?> token,
+                Deque<Value<NumericExpression>> next)
+        {
+            // e.g. a + b
+            Additive op = token.getValue(); // + | -
+            // + is always followed by an argument
+            NumericExpression arg = next.pollFirst().getTarget(); // b argument
+            Term<Additive> term = new Term<>(op, arg);
+            return term;
+        }
+    },
+    MULTIPLICATIVE {
+        @Override
+        public NumericExpression transform(
+                ValueStack<Value<NumericExpression>> stack,
+                TokenValue<?> token,
+                Deque<Value<NumericExpression>> next)
+        {
+            // e.g. a * b
+            Multiplicative op = token.getValue(); // * | /
+            // * is always followed by an argument
+            NumericExpression arg = next.pollFirst().getTarget(); // b argument
+            Term<Multiplicative> term = new Term<>(op, arg);
+            return term;
+        }
+    },
+```
+
+The last but not the least is to map the rules.
+
+* let's start with the `Factor` rule, that handles the `RAISED` token. But this time, all
+values are available within the arguments :
+
+```java
+    Factor {
+        @Override
+        public NumericExpression transform(
+                ValueStack<Value<NumericExpression>> stack,
+                Rule rule,
+                Deque<Value<NumericExpression>> args)
+        {
+            // Factor ::= Argument ('^' SignedFactor)?
+            NumericExpression base = args.pollFirst().getTarget();
+            Value<NumericExpression> raised = args.peekFirst();
+            if (raised != null && raised.isSource() && raised.getSource().getRule() == Calc.RAISED) {
+                args.pollFirst(); // ^
+                NumericExpression exponent = args.pollFirst().getTarget();
+                return new Exponent(base, exponent);
+            } else {
+                // a single term is not a factor
+                return base;
+            }
+        }
+    };
+```
+
+Note that the `Factor` mapper doesn't necessary give an `Exponent` instance. Sometimes it
+is traversed because it doesn't contain the `^` token.
+
+Similarly, for the `Sum` and `Product` mappers, the semantic of the grammar allow to traverse
+the counterpart rules without producing the target instances.
+
+* for the `Sum` rule, when we do have several arguments, we must check whether the first
+term had a sign, or was just an argument, and transform it to conform with the signature
+of the target constructor :
+
+```java
+    Sum {
+        @SuppressWarnings("unchecked")
+        @Override
+        public NumericExpression transform(
+                ValueStack<Value<NumericExpression>> stack,
+                Rule rule,
+                Deque<Value<NumericExpression>> args)
+        {
+            // Sum ::= SignedTerm (ADDITIVE Product)*
+            if (args.size() == 1) {
+                // a single term is not a sum
+                return args.pollFirst().getTarget();
+            } else {
+                NumericExpression signedTerm = args.removeFirst().getTarget();
+                if (! (signedTerm instanceof Term<?>)
+                    || ! (((Term<?>) signedTerm).operation instanceof Additive)) {
+                    // force "x" to be "+x"
+                    signedTerm = new Term<>(Additive.PLUS, signedTerm);
+                }
+                List<Term<Additive>> arguments = new LinkedList<>();
+                arguments.add((Term<Additive>) signedTerm);
+                args.stream()
+                    // next arguments are all Term<Additive>
+                    .map(v -> (Term<Additive>) v.getTarget())
+                    .forEachOrdered(arguments::add);
+                return new Sum(arguments);
+            }
+        }
+    },
+```
+
+* the `Product` mapper is more simpler :
+
+```java
+    Product {
+        @SuppressWarnings("unchecked")
+        @Override
+        public NumericExpression transform(
+                ValueStack<Value<NumericExpression>> stack,
+                Rule rule,
+                Deque<Value<NumericExpression>> args)
+        {
+            // Product ::= Factor (MULTIPLICATIVE SignedFactor)*
+            if (args.size() == 1) {
+                // a single term is not a product
+                return args.pollFirst().getTarget();
+            } else {
+                // assume x to be *x, because the product will start by 1*x
+                Term<Multiplicative> factor = new Term<>(Multiplicative.MULT, args.removeFirst().getTarget());
+                List<Term<Multiplicative>> arguments = new LinkedList<>();
+                arguments.add(factor);
+                args.stream()
+                    // next arguments are all Term<Multiplicative>
+                    .map(v -> (Term<Multiplicative>) v.getTarget())
+                    .forEachOrdered(arguments::add);
+                return new Product(arguments);
+            }
+        }
+    },
+```
+
+### Tree handler
+
+<div class="alert alert-error" role="alert">
+TODO : check and fix TreeHandler DOC below
+</div>
 
 ```java
     TreeHandler handler = new TreeHandler();
@@ -1110,8 +1588,4 @@ mark it as fragment.
     String input = "sin(x)*(1+var_12)";
     CalcGrammar.Calc.parse(Scanner.of(input), handler);
 ```
-
-
-TODO
-Bridge between the grammar and the data model => producing instances (or not) when the rule matched
 

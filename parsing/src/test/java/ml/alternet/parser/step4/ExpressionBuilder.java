@@ -16,6 +16,7 @@ import ml.alternet.parser.step4.NumericExpression.Product;
 import ml.alternet.parser.step4.NumericExpression.Sum;
 import ml.alternet.parser.step4.NumericExpression.Term;
 import ml.alternet.parser.step4.NumericExpression.Variable;
+import ml.alternet.parser.step4.NumericExpression.Function;
 import ml.alternet.parser.util.ValueStack;
 
 /**
@@ -131,9 +132,9 @@ public class ExpressionBuilder extends NodeBuilder<NumericExpression> {
             {
                 // e.g.   sin  x
                 //   function  argument
-                Calc.Function function = token.getValue();   // e.g.   CalcGrammar.Function.sin
+                Calc.Function function = token.getValue();   // e.g.   Calc.Function.sin
                 NumericExpression argument = next.pollFirst().getTarget(); // e.g.   Expression.Variable("x")
-                return new NumericExpression.Function(function, argument);
+                return new Function(function, argument);
             }
         },
         RAISED {
