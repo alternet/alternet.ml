@@ -1016,6 +1016,11 @@ if the parsing succeeds, actually our POJO `Challenge`. The boolean parameter
 indicates when set to `true` to consume all the characters from the input
 (it would be a failure if some characters remain at the end).
 
+
+<a name="parsing-tutorial"></a>
+
+## Parsing tutorial
+
 ### Parsing an input
 
 An input can be parsed :
@@ -1025,12 +1030,12 @@ An input can be parsed :
 * on a given rule
 
 We have a grammar interface, and a field which is an instance of that grammar.
-From that instance, we can parse an input on a given rule, actually the `Expression` rule :
+From that instance, we can parse an input on a given rule, actually the `Calc.Expression` rule :
 
 ```java
     Handler handler = ...;
     String input = "sin(x)*(1+var_12)";
-    CalcGrammar.Calc.parse(Scanner.of(input), handler, CalcGrammar.Expression);
+    Calc.$.parse(Scanner.of(input), handler, Calc.Expression);
 ```
 
 The handler is the component that accept the parsing result (more about that on see next section).
@@ -1046,7 +1051,7 @@ If the `parse()` method is invoked without specifying any rule, the main rule wi
 ```java
     Handler handler = ...;
     String input = "sin(x)*(1+var_12)";
-    CalcGrammar.Calc.parse(Scanner.of(input), handler);
+    Calc.$.parse(Scanner.of(input), handler);
 ```
 
 #### The "tokenizer" rule
@@ -1056,15 +1061,13 @@ A special rule is available in every grammar, it is the rule that takes all the 
 ```java
     Handler handler = ...;
     String input = "sin(x)*(1+var_12)";
-    CalcGrammar.Calc.parse(Scanner.of(input), handler, CalcGrammar.tokenizer());
+    Calc.$.parse(Scanner.of(input), handler, Calc.tokenizer());
 ```
 
 The tokenizer will match tokens regardlesss the structure, therefore inputs badly structured can be parsed,
 but you will be sure that the input is made of valid tokens.
 
-<a name="parsing-tutorial"></a>
-
-## Parsing tutorial
+### Handlers
 
 Alternet Parsing comes with out-of-the-box [`Handler`s](apidocs/ml/alternet/parser/Handler.html)
 that can receive the result of the parsing, that will be handy for processing that result :
@@ -1072,19 +1075,17 @@ that can receive the result of the parsing, that will be handy for processing th
 * [`TreeHandler`](apidocs/ml/alternet/parser/handlers/TreeHandler.html) : low-level API
 * [`NodeBuilder`](apidocs/ml/alternet/parser/ast/NodeBuilder.html) : high-level API
 
-### AST builder
-
 The [AST package](apidocs/ml/alternet/parser/ast/package-summary.html) contains helper classes to build
-an AST while parsing.
+an abstract syntax tree while parsing.
 
-#### Target data model
+### Target data model
 
 Let's go back to our `Calc` grammar. We intend to compute expressions, and therefore build a target data
 model with the help of the [`Expression<T,C>`](apidocs/ml/alternet/parser/ast/Expression.html) class :
 
-* where T is the type of the result of the computation, it will be a `Number`
-* and C the context of the evaluation ; according to the grammar, it may hold all the necessary for an expression, for example supply
-built-in and custom functions, namespace mappers, bound variables to their name, etc. In our example we just need
+* where `T` is the type of the result of the computation, in our case it will be a `Number`
+* and `C` the context of the evaluation ; according to the grammar, it may hold all the necessary for computing an expression,
+for example supply built-in and custom functions, namespace mappers, bound variables to their name, etc. In our example we just need
 to resolve variable name, and the context will be as simple as a `Map<String,Number>`.
 
 ```java
@@ -1177,14 +1178,51 @@ From this base, we are defining every kind of `NumericExpression` expected :
         }
 
     }
+```
 
+```java
     public interface EvaluableFunction {
 
         Number eval(Number value);
     }
 ```
 
-* A term is an expression bound with an operation that appears in sums or factors expressions :
+In the `Calc` grammar, we enhance the enum class accordingly :
+
+```java
+    // FUNCTION ::= 'sin' | 'cos' | 'exp' | 'ln' | 'sqrt'
+    enum Function implements EvaluableFunction {
+        sin {
+            @Override
+            public java.lang.Number eval(java.lang.Number value) {
+                return Math.sin(value.doubleValue());
+            }
+        }, cos {
+            @Override
+            public java.lang.Number  eval(java.lang.Number  value) {
+                return Math.cos(value.doubleValue());
+            }
+        }, exp {
+            @Override
+            public java.lang.Number  eval(java.lang.Number  value) {
+                return Math.exp(value.doubleValue());
+            }
+        }, ln {
+            @Override
+            public java.lang.Number  eval(java.lang.Number  value) {
+                return Math.log(value.doubleValue());
+            }
+        }, sqrt {
+            @Override
+            public java.lang.Number  eval(java.lang.Number  value) {
+                return Math.sqrt(value.doubleValue());
+            }
+        };
+    }
+    Token FUNCTION = is(Function.class);
+```
+
+* A term is an expression bound with an operation that appears in sums or products :
 
 ```java
     class Term<T> implements NumericExpression {
@@ -1204,7 +1242,9 @@ From this base, we are defining every kind of `NumericExpression` expected :
             // can have +a or -a but can't have *a or /a
         }
     }
+```
 
+```java
     class Sum implements NumericExpression {
 
         List<Term<Additive>> arguments = new ArrayList<>();
@@ -1224,7 +1264,9 @@ From this base, we are defining every kind of `NumericExpression` expected :
         }
 
     }
+```
 
+```java
     class Product implements NumericExpression {
 
         List<Term<Multiplicative>> arguments = new ArrayList<>();
@@ -1247,11 +1289,13 @@ From this base, we are defining every kind of `NumericExpression` expected :
     }
 ```
 
-#### The node builder
+Here is the complete code of [`NumericExpression`](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/step4/NumericExpression.java)
+
+### AST builder
 
 As mentionned previously, a node builder can be designed from our `Calc` grammar instance.
 
-We just need to map every token to the relevant class, and every rule to the relevant class. For that purpose, we will use [`TokenMapper<T>`](apidocs/ml/alternet/parser/ast/TokenMapper.html) and [`RuleMapper<T>`](apidocs/ml/alternet/parser/ast/RuleMapper.html) where T is our `NumericExpression`. The simplest way to create such
+We just need to map every token to the relevant class, and every rule to the relevant class. For that purpose, we will use [`TokenMapper<T>`](apidocs/ml/alternet/parser/ast/TokenMapper.html) and [`RuleMapper<T>`](apidocs/ml/alternet/parser/ast/RuleMapper.html) where `T` is our `NumericExpression`. The simplest way to create such
 mappers is to enumerate the mappings :
 
 ```java
@@ -1271,10 +1315,14 @@ mappers is to enumerate the mappings :
     }
 ```
 
-You might notice that the name of the tokens as well as the name of the rules
+You might notice that the name of the token mappers as well as the name of the rule mappers
 are the same than those defined in the `Calc` grammar, this is why the mapping
 will work. You also might notice that some rules in the grammar are not defined here,
-which means that their tokens will be simply pass to the enclosing rule.
+which means that their tokens will be simply pass to the enclosing rule. Tokens marked as `@Fragment`
+as well as tokens that are aggregated (enclosed in a rule exposed as a token with `.asToken(...)`) are
+not present either in the mappings.
+
+#### Node builder
 
 From this base, we are able to build our node builder :
 
@@ -1323,16 +1371,17 @@ The signature of a rule mapper is :
 
 They are both very similar, and apply to the `<Node>` type, which is in our builder the `<NumericExpression>` type :
 
-* The first parameter contains the stack of raw items encountered so far. "Raw" means that they are not yet transformed since the production is performed bottom up.
-The more often the stack doesn't serve the transformation but
-sometimes it may help to peek the last previous item.
-* The second parameter is the current token / rule.
-* The last parameter contains all the values that are either the arguments of the rule to transform, of all the values coming next from the token to transform in the context of the nested rule. That values can be raw values or transformed values, according to
-how you process them individually. In fact `Value<NumericExpression>` is a wrapper around an object that can be either the raw token or a `NumericExpression`. You are free to supply tokens left as-is or transformed one, and to get the raw value with `.getSource()` or the transformed one with `.getTarget()`.
+* The first parameter contains the **stack** of raw items encountered so far. "Raw" means that they are not yet transformed since the production is performed bottom up.
+The more often the stack doesn't serve the transformation but sometimes it may help to peek the last previous item.
+* The second parameter is the current **token** / **rule***.
+* The last parameter contains all the values that are either the **arguments** of the rule to transform, or all the values coming **next** from the token to transform in the context of its enclosed rule. That values can be raw values or transformed values, according to how you process them individually.
+In fact `Value<NumericExpression>` is a wrapper around an object that can be either the raw token or a `NumericExpression`. You are free to supply tokens left as-is or transformed ones, and to get the raw value with `.getSource()` or the transformed one with `.getTarget()`.
+
+For example, if a rule defines a comma-separated list of digits, that the input is `"1,2,3,4"`, and that the current **token** is `"2"`, then the **next** elements are `",3,4"` and the stack is `"1,"`. Some elements may be consumed during the production of the target node.
 
 Now we can write the mappers, starting with the simplest ones :
 
-* the `VARIABLE` token is just a sequence of characters, we write the `VARIABLE` mapper that
+* the `VARIABLE` token is just a sequence of characters, we write the `VARIABLE` mapper (with the same name as the token) that
 create a `Variable` instance from our data model with that token :
 
 ```java
@@ -1442,7 +1491,7 @@ either `Term<Calc.Additive>` or `Term<Calc.Multiplicative>` ; the grammar say th
 The last but not the least is to map the rules.
 
 * let's start with the `Factor` rule, that handles the `RAISED` token. But this time, all
-values are available within the arguments :
+values are available within the **arguments** :
 
 ```java
     Factor {
@@ -1539,53 +1588,5 @@ of the target constructor :
     },
 ```
 
-### Tree handler
-
-<div class="alert alert-error" role="alert">
-TODO : check and fix TreeHandler DOC below
-</div>
-
-```java
-    TreeHandler handler = new TreeHandler();
-```
-
-In that tree, we will store items that we want to process, and ignore others.
-
-If we look at the formal grammar at the beginning, we should notice that some other tokens are also
-not useful after parsing. The left/right brackets are useful during parsing, but since the grammar
-ensure that pairs of left/right brackets are well-balanced, we can ignore them in the result tree
-because we don't need them anymore.
-
-Like previously, we can mark them as `@Fragment`, the consequence is they won't be reported to the
-tree handler :
-
-```java
-    @Fragment Token LBRACKET = is('(');
-    @Fragment Token RBRACKET = is(')');
-```
-
-Similarly, some rules are used during parsing, but not so useful after parsing. We can also mark them
-as `@Fragment`, they won't be reported to the handler, they'll just be involved during parsing.
-
-The following rules have been identified as being fragments :
-
-```java
-    // we just need to know whether we have a number or a variable
-    @Fragment Rule Value = NUMBER.or(VARIABLE);
-    
-    // we are interested in the components of the arguments, not on the rule itself
-    @Fragment Rule Argument = Value.or( FUNCTION.seq($self) ).or( LBRACKET.seq( $("Expression"), RBRACKET ) );
-```
-
-To help you decide whether a rule has to be a fragment, just consider that if you intend
-to make some processing on a Rule or Token, keep it in the result tree, otherwise,
-mark it as fragment.
-
-
-
-```java
-    TreeHandler handler = new TreeHandler();
-    String input = "sin(x)*(1+var_12)";
-    CalcGrammar.Calc.parse(Scanner.of(input), handler);
-```
+Here is the complete code of [`ExpressionBuilder`](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/step4/ExpressionBuilder.java)
 

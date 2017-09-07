@@ -38,7 +38,23 @@ the parent project).
 (run test before site since some reports are aggregated)
 
 ```
-mvn clean test site
+cd [workspace]/ml.alternet/tools-generator/
+mvn clean install site
+cd [workspace]/ml.alternet/tools/
+mvn clean install site
+```
+
+If one fails but you want to publish anyway, rinse and repeat :
+
+```
+mvn -DskipTests install site
+```
+
+Finally, run the aggregation :
+
+```
+cd [workspace]/ml.alternet/alternet-libs
+mvn clean install site
 ```
 
 * Step 2 : check the site in the staging directory
