@@ -38,7 +38,23 @@ the parent project).
 (run test before site since some reports are aggregated)
 
 ```
-mvn clean test site
+cd [workspace]/ml.alternet/tools-generator/
+mvn clean install site
+cd [workspace]/ml.alternet/tools/
+mvn clean install site
+```
+
+If one fails but you want to publish anyway, rinse and repeat :
+
+```
+mvn -DskipTests install site
+```
+
+Finally, run the aggregation :
+
+```
+cd [workspace]/ml.alternet/alternet-libs
+mvn clean install site
 ```
 
 * Step 2 : check the site in the staging directory
@@ -61,13 +77,8 @@ then push it to the Github server.
 From `[workspace]/alternet/alternet.github.io/`
 
 ```
-cp -R ../../ml.alternet/tools/target/site/apidocs alternet-libs/tools/
-cp -R ../../ml.alternet/tools-generator/target/site/apidocs alternet-libs/tools-generator/
-cp -R ../../ml.alternet/scanner/target/site/apidocs alternet-libs/scanner/
-cp -R ../../ml.alternet/parsing/target/site/apidocs alternet-libs/parsing/
-cp -R ../../ml.alternet/security/target/site/apidocs alternet-libs/security/
-cp -R ../../ml.alternet/security-jetty-9.1/target/site/apidocs alternet-libs/security-jetty-9.1/
-cp -R ../../ml.alternet/security-tomcat-8.0/target/site/apidocs alternet-libs/security-tomcat-8.0/
+rm -R alternet-libs/
+cp -R ../../ml.alternet/alternet-libs/target/staging/ alternet-libs
 
 git add --all
 git commit -m "Update Website"
