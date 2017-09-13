@@ -227,13 +227,18 @@ public enum BytesEncoder implements BytesEncoding {
         char[] encodeMap;
         byte[] decodeMap;
         PaddingMode padding;
-        char padChar = '=';
+        char padChar;
 
         private static final byte PADDING = 127;
 
         Base64(char[] encodeMap, PaddingMode withPadding) {
+            this(encodeMap, withPadding, '=');
+        }
+
+        Base64(char[] encodeMap, PaddingMode withPadding, char padChar) {
             this.encodeMap = encodeMap;
             this.padding = withPadding;
+            this.padChar = padChar;
 
             // prepare reverse map
             this.decodeMap = new byte[128];
@@ -244,7 +249,7 @@ public enum BytesEncoder implements BytesEncoding {
                 this.decodeMap[encodeMap[i]] = i;
             }
             if (this.padding == PaddingMode.PADDING) {
-                this.decodeMap['='] = PADDING;
+                this.decodeMap[this.padChar] = PADDING;
             }
         }
 
@@ -480,8 +485,7 @@ public enum BytesEncoder implements BytesEncoding {
             throw new IllegalArgumentException("Illegal value space length \"" + new String(valueSpace, 0, valueSpace.length) + "\"");
         }
         PaddingMode pm = PaddingMode.PADDING;
-        Base64 b64 = new Base64(valueSpace, pm);
-        b64.padChar = padding;
+        Base64 b64 = new Base64(valueSpace, pm, padding);
         return b64;
     }
 
