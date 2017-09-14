@@ -18,8 +18,16 @@ import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.Consumer;
+import java.util.function.IntConsumer;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import ml.alternet.misc.OmgException;
+import ml.alternet.misc.Thrower;
 import ml.alternet.util.Util;
 
 /**
@@ -317,6 +325,64 @@ public class IOUtil {
      */
     public static Writer asWriter(OutputStream output, Charset charset) {
         return new OutputStreamWriter(output, charset);
+    }
+
+    /**
+     * Convert a reader to a stream of characters.
+     *
+     * @param data The reader.
+     *
+     * @return A stream of characters.
+     */
+    public static Stream<Character> asStream(Reader data) {
+        return StreamSupport.stream(
+                new Spliterators.AbstractSpliterator<Character>(Long.MAX_VALUE,
+                        Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL) {
+                    @Override
+                    public boolean tryAdvance(Consumer<? super Character> action) {
+                        try {
+                            int c = data.read();
+                            if (c == EOF) {
+                                return false;
+                            } else {
+                                action.accept((char) c);
+                                return true;
+                            }
+                        } catch (IOException e) {
+                            return Thrower.doThrow(e);
+                        }
+                    }
+                },
+            false);
+    }
+
+    /**
+     * Convert an input stream to a stream of ints.
+     *
+     * @param data The input stream.
+     *
+     * @return A stream of ints.
+     */
+    public static IntStream asStream(InputStream data) {
+        return StreamSupport.intStream(
+            new Spliterators.AbstractIntSpliterator(Long.MAX_VALUE,
+                    Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL) {
+                @Override
+                public boolean tryAdvance(IntConsumer action) {
+                    try {
+                        int i = data.read();
+                        if (i == EOF) {
+                            return false;
+                        } else {
+                            action.accept(i);
+                            return true;
+                        }
+                    } catch (IOException e) {
+                        return Thrower.doThrow(e);
+                    }
+                }
+            },
+        false);
     }
 
 }
