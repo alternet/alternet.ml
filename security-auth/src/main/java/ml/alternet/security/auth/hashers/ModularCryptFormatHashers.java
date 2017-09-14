@@ -124,7 +124,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher.Builder> {
                 .setClass(MessageHasher.class)
                 .setAlgorithm("MD4")
                 .setVariant("3")
-                .setEncoding(BytesEncoder.hexaLower)
+                .setEncoding(BytesEncoder.hexa)
                 .setCharset(StandardCharsets.UTF_16LE)
                 .setFormatter(SaltlessModularCryptFormatter.INSTANCE);
         }
@@ -191,10 +191,11 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher.Builder> {
                 .setAlgorithm("Blake2b") // because it is its name
                 .setHashByteSize(32)
                 .setSaltByteSize(16)
-                .setEncoding(BytesEncoder.base64(ValueSpace.base64.get(), false))
+                .setEncoding(BytesEncoder.base64_no_padding)
                 .setFormatter(Argon2Hasher.ARGON2_FORMATTER);
         }
     },
+
     $argon2d$ {
         @Override
         public Hasher.Builder get() {
@@ -202,6 +203,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher.Builder> {
                     .setVariant("argon2d");
         }
     },
+
     $argon2id$ {
         @Override
         public Hasher.Builder get() {

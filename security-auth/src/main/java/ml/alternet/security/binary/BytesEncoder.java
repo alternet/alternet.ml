@@ -1,12 +1,17 @@
 package ml.alternet.security.binary;
 
+import java.util.Iterator;
+import java.util.PrimitiveIterator.OfInt;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
-
-import javax.xml.bind.DatatypeConverter;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import ml.alternet.misc.CharRange;
-import ml.alternet.util.BytesUtil;
-import ml.alternet.util.StringUtil;
 
 /**
  * Out-of-the-box bytes encoders.
@@ -16,216 +21,210 @@ import ml.alternet.util.StringUtil;
 public enum BytesEncoder implements BytesEncoding {
 
     /** Represent bytes in base 64 string. */
-    base64 {
+    base64(new Base64(ValueSpace.base64.get(), Base64.PaddingMode.PADDING)),
 
-        BytesEncoder.Base64 B64 = new Base64(ValueSpace.base64.get(), PaddingMode.PADDING);
-
-        @Override
-        public String encode(byte[] data, int offset, int len) {
-            return B64.encode(data, offset, len);
-        }
-
-        @Override
-        public byte[] decode(String data) {
-            return B64.decode(data);
-        }
-
-        @Override
-        public CharRange valueSpace() {
-            return B64.valueSpace();
-        }
-    },
+    /** Represent bytes in base 64 string, without padding. */
+    base64_no_padding(new Base64(ValueSpace.base64.get(), Base64.PaddingMode.NO_PADDING)),
 
     /** Adapted base 64 represent bytes in base 64 string, except that it uses . instead of +, and omits trailing padding = and whitespace. */
-    abase64 {
-
-        BytesEncoder.Base64 B64 = new Base64(ValueSpace.abase64.get(), PaddingMode.PADDING);
-
-        @Override
-        public String encode(byte[] data, int offset, int len) {
-            return B64.encode(data, offset, len);
-        }
-
-        @Override
-        public byte[] decode(String data) {
-            return B64.decode(data);
-        }
-
-        @Override
-        public CharRange valueSpace() {
-            return B64.valueSpace();
-        }
-    },
+    abase64(new Base64(ValueSpace.abase64.get(), Base64.PaddingMode.PADDING)),
 
     /** Represent bytes in BCrypt's base 64 string. */
-    bcrypt64 {
-
-        BytesEncoder.Base64 B64 = new Base64(ValueSpace.bcrypt64.get(), PaddingMode.NO_PADDING);
-
-        @Override
-        public String encode(byte[] data, int offset, int len) {
-            return B64.encode(data, offset, len);
-        }
-
-        @Override
-        public byte[] decode(String data) {
-            return B64.decode(data);
-        }
-
-        @Override
-        public CharRange valueSpace() {
-            return B64.valueSpace();
-        }
-    },
+    bcrypt64(new Base64(ValueSpace.bcrypt64.get(), Base64.PaddingMode.NO_PADDING)),
 
     /** Represent bytes in base 64 string, but mapped to the alphabet : [./0-9A-Za-z] */
-    h64 {
-
-        BytesEncoder.Base64 B64 = new Base64(Base64.H64, PaddingMode.NO_PADDING);
-
-        @Override
-        public String encode(byte[] data, int offset, int len) {
-            return B64.encode(data, offset, len);
-        }
-
-        @Override
-        public byte[] decode(String data) {
-            return B64.decode(data);
-        }
-
-        @Override
-        public CharRange valueSpace() {
-            return B64.valueSpace();
-        }
-    },
+    h64(new Base64(ValueSpace.h64.get(), Base64.PaddingMode.NO_PADDING)),
 
     /**
      * Represent bytes in base 64 string, but mapped to the alphabet : [./0-9A-Za-z],
      * high bits of last sextets/bytes are skipped.
      */
-    h64be {
+    h64be(new Base64(ValueSpace.h64.get(), Base64.PaddingMode.NO_PADDING_SKIP_HIGH_BITS)),
 
-        BytesEncoder.Base64 B64 = new Base64(Base64.H64, PaddingMode.NO_PADDING_SKIP_HIGH_BITS);
+    /** Represent bytes in uppercase hexa string. */
+    HEXA(new Hexa(true)),
 
-        @Override
-        public String encode(byte[] data, int offset, int len) {
-            return B64.encode(data, offset, len);
-        }
-
-        @Override
-        public byte[] decode(String data) {
-            return B64.decode(data);
-        }
-
-        @Override
-        public CharRange valueSpace() {
-            return B64.valueSpace();
-        }
-    },
-
-    /** Represent bytes in hexa string. */
-    hexa {
-        @Override
-        public String encode(byte[] data, int offset, int len) {
-            return StringUtil.getHex(data, offset, len, true);
-        }
-
-        @Override
-        public byte[] decode(String data) {
-            return DatatypeConverter.parseHexBinary(data);
-        }
-
-        @Override
-        public CharRange valueSpace() {
-            // "0123456789ABCDEF"
-            return CharRange.range('0', '9').union(CharRange.range('A', 'F'));
-        }
-    },
-
-    /** Represent bytes in hexa string. */
-    hexaLower {
-        @Override
-        public String encode(byte[] data, int offset, int len) {
-            return StringUtil.getHex(data, offset, len, false);
-        }
-
-        @Override
-        public byte[] decode(String data) {
-            return DatatypeConverter.parseHexBinary(data);
-        }
-
-        @Override
-        public CharRange valueSpace() {
-            // 0123456789abcdef
-            return CharRange.range('0', '9').union(CharRange.range('a', 'f'));
-        }
-    },
+    /** Represent bytes in lowercase hexa string. */
+    hexa(new Hexa(false)),
 
     /**
-     * Auto detect the encoding (hexa, base64 or none) ;
-     * encode in base64.
+     * Bytes are left as-is (without conversion), a char contains 2 bytes.
      */
-    auto {
-        @Override
-        public String encode(byte[] data, int offset, int len) {
-            return base64.encode(data, offset, len);
-        }
-
-        @Override
-        public byte[] decode(String data) {
-            try {
-                return hexa.decode(data);
-            } catch (IllegalArgumentException e1) {
-                try {
-                    return base64.decode(data);
-                } catch (IllegalArgumentException e2) {
-                    return none.decode(data);
-                }
-            }
-        }
-
-        @Override
-        public CharRange valueSpace() {
-            return base64.valueSpace();
-        }
-    },
-
-    /**
-     * Bytes are left as-is.
-     *
-     * @see BytesUtil#cast(byte[])
-     * @see BytesUtil#cast(char[])
-     */
-    none {
-        @Override
-        public String encode(byte[] data, int offset, int len) {
-            return new String(BytesUtil.cast(data, offset, len));
-        }
-
-        @Override
-        public byte[] decode(String data) {
-            return BytesUtil.cast(data.toCharArray());
-        }
+    none(new BytesEncoding() {
 
         @Override
         public CharRange valueSpace() {
             return CharRange.ANY;
         }
-    };
 
-    private static enum PaddingMode {
-        PADDING, // ends incomplete sequences with '='
-        NO_PADDING, // shift the bits like with padding
-        NO_PADDING_SKIP_HIGH_BITS; // left as-is
+        @Override
+        public String name() {
+            return "none";
+        }
+
+        @Override
+        public Stream<Character> encode(IntStream bytes) {
+            OfInt it = bytes.iterator();
+            return StreamSupport.stream(
+                new Spliterators.AbstractSpliterator<Character>(Long.MAX_VALUE,
+                    Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL) {
+                        @Override
+                        public boolean tryAdvance(Consumer<? super Character> action) {
+                            if (it.hasNext()) {
+                                int i1 = it.nextInt();
+                                int i2 = it.nextInt();
+                                char c = (char) (((i1 & 0x00FF) << 8) + (i2 & 0x00FF));
+                                action.accept(c);
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        }
+                }, false
+            );
+        }
+
+        @Override
+        public IntStream decode(Stream<Character> data) {
+            Iterator<Character> it = data.iterator();
+            return StreamSupport.intStream(
+                new Spliterators.AbstractIntSpliterator(Long.MAX_VALUE,
+                        Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL) {
+
+                    byte[] b = new byte[2];
+                    int n = 0;
+                    int i = 0;
+
+                    @Override
+                    public boolean tryAdvance(IntConsumer action) {
+                        if (n == 0) {
+                            if (it.hasNext()) {
+                                char c = it.next();
+                                b[n++] = (byte) ((c & 0xFF00) >> 8);
+                                b[n++] = (byte) (c & 0x00FF);
+                            } else {
+                                return false;
+                            }
+                        }
+                        action.accept(b[i++]);
+                        if (i == n) {
+                            n = 0;
+                            i = 0;
+                        }
+                        return true;
+                    }
+                }, false
+            );
+        }
+    });
+
+    private static class Hexa implements BytesEncoding {
+
+        boolean uppercase;
+
+        Hexa(boolean uppercase) {
+            this.uppercase = uppercase;
+        }
+
+        @Override
+        public String name() {
+            return this.uppercase ? "HEXA" : "hexa";
+        }
+
+        @Override
+        public CharRange valueSpace() {
+            // "0123456789ABCDEF"
+            // "0123456789abcdef"
+            return CharRange.range('0', '9').union(
+                    CharRange.range(this.uppercase ? 'A' : 'a', this.uppercase ? 'F' : 'f')
+            );
+        }
+
+        @Override
+        public Stream<Character> encode(IntStream bytes) {
+            OfInt it = bytes.iterator();
+            char[] h = this.uppercase ? ValueSpace.HEXA.get() : ValueSpace.hexa.get();
+            return StreamSupport.stream(
+                new Spliterators.AbstractSpliterator<Character>(Long.MAX_VALUE,
+                    Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL) {
+
+                        char[] c = new char[2];
+                        int n = 0;
+                        int i = 0;
+
+                        @Override
+                        public boolean tryAdvance(Consumer<? super Character> action) {
+                            if (n == 0) {
+                                if (it.hasNext()) {
+                                    int v = it.nextInt() & 0xFF;
+                                    c[n++] = h[v >>> 4];
+                                    c[n++] = h[v & 0x0F];
+                                } else {
+                                    return false;
+                                }
+                            }
+                            action.accept(c[i++]);
+                            if (i == n) {
+                                n = 0;
+                                i = 0;
+                            }
+                            return true;
+                        }
+                }, false
+            );
+        }
+
+        @Override
+        public IntStream decode(Stream<Character> data) {
+            Iterator<Character> it = data.iterator();
+            return StreamSupport.intStream(
+                new Spliterators.AbstractIntSpliterator(Long.MAX_VALUE,
+                        Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL) {
+
+                    private int hexToBin(char ch) {
+                        if ('0' <= ch && ch <= '9') {
+                            return ch - '0';
+                        }
+                        if ('A' <= ch && ch <= 'F') {
+                            return ch - 'A' + 10;
+                        }
+                        if ('a' <= ch && ch <= 'f') {
+                            return ch - 'a' + 10;
+                        }
+                        return -1;
+                    }
+
+                    @Override
+                    public boolean tryAdvance(IntConsumer action) {
+                        if (it.hasNext()) {
+                            int h = hexToBin(it.next());
+                            int l = hexToBin(it.next());
+                            if (h == -1 || l == -1) {
+                                throw new IllegalArgumentException("contains illegal character for hexBinary: " + (h == -1 ? h:l) );
+                            }
+                            action.accept(h * 16 + l);
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                }, false
+            );
+        }
+
     }
 
     private static class Base64 implements BytesEncoding {
 
-        final static char[] H64 = ValueSpace.h64.get();
+        private static enum PaddingMode {
+            PADDING, // ends incomplete sequences with '='
+            NO_PADDING, // shift the bits like with padding
+            NO_PADDING_SKIP_HIGH_BITS; // left as-is
+        }
 
         CharRange encodeChars;
         char[] encodeMap;
-        byte[] decodeMap;
+        byte[] decodeMap = new byte[128];
         PaddingMode padding;
         char padChar;
 
@@ -241,7 +240,6 @@ public enum BytesEncoder implements BytesEncoding {
             this.padChar = padChar;
 
             // prepare reverse map
-            this.decodeMap = new byte[128];
             for (int i = 0; i < 128; i++) {
                 this.decodeMap[i] = -1;
             }
@@ -251,161 +249,6 @@ public enum BytesEncoder implements BytesEncoding {
             if (this.padding == PaddingMode.PADDING) {
                 this.decodeMap[this.padChar] = PADDING;
             }
-        }
-
-        char encode(int i) {
-            return encodeMap[i & 0x3F];
-        }
-
-        @Override
-        public String encode(byte[] data, int offset, int len) {
-            char[] buf = new char[((len + 2) / 3) * 4];
-            int ptr = 0;
-            // encode elements until only 1 or 2 elements are left to encode
-            int remaining = len;
-            int i;
-            for (i = offset;remaining >= 3; remaining -= 3, i += 3) {
-                buf[ptr++] = encode(data[i] >> 2);
-                buf[ptr++] = encode(
-                        ((data[i] & 0x3) << 4)
-                        | ((data[i + 1] >> 4) & 0xF));
-                buf[ptr++] = encode(
-                        ((data[i + 1] & 0xF) << 2)
-                        | ((data[i + 2] >> 6) & 0x3));
-                buf[ptr++] = encode(data[i + 2] & 0x3F);
-            }
-            // encode when exactly 1 element (left) to encode
-            if (remaining == 1) {
-                buf[ptr++] = encode(data[i] >> 2);
-                if (this.padding == PaddingMode.NO_PADDING_SKIP_HIGH_BITS) {
-                    // mode for $6$
-                    buf[ptr++] = encode(((data[i]) & 0x3));
-                } else {
-                    buf[ptr++] = encode(((data[i]) & 0x3) << 4);
-                }
-                if (this.padding == PaddingMode.PADDING) {
-                    buf[ptr++] = this.padChar;
-                    buf[ptr++] = this.padChar;
-                }
-            }
-            // encode when exactly 2 elements (left) to encode
-            if (remaining == 2) {
-                buf[ptr++] = encode(data[i] >> 2);
-                buf[ptr++] = encode(((data[i] & 0x3) << 4)
-                        | ((data[i + 1] >> 4) & 0xF));
-                if (this.padding == PaddingMode.NO_PADDING_SKIP_HIGH_BITS) {
-                    // mode for $5$
-                    buf[ptr++] = encode((data[i + 1] & 0xF) );
-                } else {
-                    buf[ptr++] = encode((data[i + 1] & 0xF) << 2);
-                }
-                if (this.padding == PaddingMode.PADDING) {
-                    buf[ptr++] = this.padChar;
-                }
-            }
-            return new String(buf, 0, ptr);
-        }
-
-        @Override
-        public byte[] decode(String text) {
-            final int buflen = guessLength(text);
-            final byte[] out = new byte[buflen];
-            int o = 0;
-
-            final int len = text.length();
-            int i;
-
-            final byte[] quadruplet = new byte[4];
-            int q = 0;
-
-            // convert each quadruplet to three bytes.
-            for (i = 0; i < len; i++) {
-                char ch = text.charAt(i);
-                byte v = decodeMap[ch];
-
-                if (v != -1) {
-                    quadruplet[q++] = v;
-                }
-
-                if (q == 4) {
-                    // quadruplet is now filled.
-                    out[o++] = (byte) ((quadruplet[0] << 2) | (quadruplet[1] >> 4));
-                    if (quadruplet[2] != PADDING) {
-                        out[o++] = (byte) ((quadruplet[1] << 4) | (quadruplet[2] >> 2));
-                    }
-                    if (quadruplet[3] != PADDING) {
-                        out[o++] = (byte) ((quadruplet[2] << 6) | (quadruplet[3]));
-                    }
-                    q = 0;
-                }
-            }
-
-            // when no padding :
-
-            // if (q==1) {
-                // incomplete, should not occur
-                // out[o++] = (byte) (quadruplet[0] << 2);
-            if (q==2) {
-                if (this.padding == PaddingMode.NO_PADDING_SKIP_HIGH_BITS) {
-                    // mode for $6$
-                    out[o++] = (byte) ((quadruplet[0] << 2) | (quadruplet[1]));
-                } else {
-                    out[o++] = (byte) ((quadruplet[0] << 2) | (quadruplet[1] >> 4));
-                }
-                // next byte incomplete, this is why it is skipped
-                // out[o++] = (byte) (quadruplet[1] << 4);
-            } else if (q==3) {
-                out[o++] = (byte) ((quadruplet[0] << 2) | (quadruplet[1] >> 4));
-                if (this.padding == PaddingMode.NO_PADDING_SKIP_HIGH_BITS) {
-                    // mode for $5$
-                    out[o++] = (byte) ((quadruplet[1] << 4) | (quadruplet[2] ));
-                } else {
-                    out[o++] = (byte) ((quadruplet[1] << 4) | (quadruplet[2] >> 2));
-                }
-                // next byte incomplete, this is why it is skipped
-                // out[o++] = (byte) (quadruplet[2] << 6);
-            }
-
-            if (buflen == o) {// speculation worked out to be OK
-                return out;
-            }
-
-            // we overestimated, so need to create a new buffer
-            byte[] nb = new byte[o];
-            System.arraycopy(out, 0, nb, 0, o);
-            return nb;
-        }
-
-        int guessLength(String text) {
-            final int len = text.length();
-
-            // compute the tail '=' chars
-            int j = len - 1;
-            for (; j >= 0; j--) {
-                byte code = decodeMap[text.charAt(j)];
-                if (code == PADDING) {
-                    continue;
-                }
-                if (code == -1) // most likely this base64 text is indented. go with the upper bound
-                {
-                    return 3 * len / 4;
-                }
-                break;
-            }
-
-            j++;    // text.charAt(j) is now at some base64 char, so +1 to make it the size
-            int padSize = len - j;
-            if (padSize > 2) // something is wrong with base64. be safe and go with the upper bound
-            {
-                return 3 * len / 4;
-            }
-
-            // so far this base64 looks like it's unindented tightly packed base64.
-            // take a chance and create an array with the expected size
-            return 3 * len / 4 - padSize;
-            // NOTE : padding may be omitted, don't use : "len / 4 * 3 - padSize"
-            //        otherwise the size won't be large enough and some characters
-            //        won't be processed
         }
 
         @Override
@@ -419,6 +262,159 @@ public enum BytesEncoder implements BytesEncoding {
                 this.encodeChars = CharRange.isOneOf(new String(this.encodeMap));
             }
             return this.encodeChars;
+        }
+
+        @Override
+        public IntStream decode(Stream<Character> data) {
+            Iterator<Character> it = data.iterator();
+            return StreamSupport.intStream(
+                    new Spliterators.AbstractIntSpliterator(Long.MAX_VALUE,
+                            Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL) {
+
+                        byte[] b = new byte[3];
+                        int n = 0;
+                        int i = 0;
+                        int q = 0;
+                        byte[] quadruplet = new byte[4];
+
+                        void decode(int d) {
+                            char c = it.next();
+                            byte v = decodeMap[c];
+                            if (v != -1) {
+                                quadruplet[q++] = v;
+                            }
+                            if (--d > 0 && it.hasNext()) {
+                                decode(d);
+                            }
+                        }
+
+                        @Override
+                        public boolean tryAdvance(IntConsumer action) {
+                            if (n == 0) {
+                                if (it.hasNext()) {
+                                    decode(4); // decode up to 4
+                                    if (q == 4) {
+                                        // quadruplet is now filled.
+                                        b[n++] = (byte) ((quadruplet[0] << 2) | (quadruplet[1] >> 4));
+                                        if (quadruplet[2] != PADDING) {
+                                            b[n++] = (byte) ((quadruplet[1] << 4) | (quadruplet[2] >> 2));
+                                        }
+                                        if (quadruplet[3] != PADDING) {
+                                            b[n++] = (byte) ((quadruplet[2] << 6) | (quadruplet[3]));
+                                        }
+                                        q = 0;
+                                    } else
+                                        // when no padding :
+                                        // if (q==1) {
+                                                // incomplete, should not occur
+                                                // b[n++] = (byte) (quadruplet[0] << 2);
+                                    if (q == 2) {
+                                        if (padding == PaddingMode.NO_PADDING_SKIP_HIGH_BITS) {
+                                            // mode for $6$
+                                            b[n++] = (byte) ((quadruplet[0] << 2) | (quadruplet[1]));
+                                        } else {
+                                            b[n++] = (byte) ((quadruplet[0] << 2) | (quadruplet[1] >> 4));
+                                        }
+                                        // next byte incomplete, this is why it is skipped
+                                        // b[n++] = (byte) (quadruplet[1] << 4);
+                                    } else if ( q==3 ) {
+                                        b[n++] = (byte) ((quadruplet[0] << 2) | (quadruplet[1] >> 4));
+                                        if (padding == PaddingMode.NO_PADDING_SKIP_HIGH_BITS) {
+                                            // mode for $5$
+                                            b[n++] = (byte) ((quadruplet[1] << 4) | (quadruplet[2] ));
+                                        } else {
+                                            b[n++] = (byte) ((quadruplet[1] << 4) | (quadruplet[2] >> 2));
+                                        }
+                                        // next byte incomplete, this is why it is skipped
+                                        // b[n++] = (byte) (quadruplet[2] << 6);
+                                    }
+                                } else {
+                                    return false;
+                                }
+                            }
+                            action.accept(b[i++]);
+                            if (i == n) {
+                                n = 0;
+                                i = 0;
+                            }
+                            return true;
+                        }
+            }, false);
+        }
+
+        @Override
+        public Stream<Character> encode(IntStream bytes) {
+            OfInt it = bytes.iterator();
+            return StreamSupport.stream(
+                new Spliterators.AbstractSpliterator<Character>(Long.MAX_VALUE,
+                    Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL) {
+
+                        char[] c = new char[4];
+                        int n = 0;
+                        int i = 0;
+
+                        char encode(int i) {
+                            return encodeMap[i & 0x3F];
+                        }
+
+                        @Override
+                        public boolean tryAdvance(Consumer<? super Character> action) {
+                            if (n == 0) {
+                                if (it.hasNext()) {
+                                    int i1 = it.nextInt();
+                                    if (it.hasNext()) {
+                                        int i2 = it.nextInt();
+                                        if (it.hasNext()) {
+                                            int i3 = it.nextInt();
+                                            c[n++] = encode(i1 >> 2);
+                                            c[n++] = encode(
+                                                    ((i1 & 0x3) << 4)
+                                                    | ((i2 >> 4) & 0xF));
+                                            c[n++] = encode(
+                                                    ((i2 & 0xF) << 2)
+                                                    | (i3 >> 6) & 0x3);
+                                            c[n++] = encode(i3 & 0x3F);
+                                        } else {
+                                            // encode when exactly 2 bytes (left) to encode
+                                            c[n++] = encode(i1 >> 2);
+                                            c[n++] = encode(((i1 & 0x3) << 4)
+                                                    | (i2 >> 4) & 0xF);
+                                            if (padding == PaddingMode.NO_PADDING_SKIP_HIGH_BITS) {
+                                                // mode for $5$
+                                                c[n++] = encode(i2 & 0xF);
+                                            } else {
+                                                c[n++] = encode((i2 & 0xF) << 2);
+                                            }
+                                            if (padding == PaddingMode.PADDING) {
+                                                c[n++] = padChar;
+                                            }
+                                        }
+                                    } else {
+                                        // encode when exactly 1 byte (left) to encode
+                                        c[n++] = encode(i1 >> 2);
+                                        if (padding == PaddingMode.NO_PADDING_SKIP_HIGH_BITS) {
+                                            // mode for $6$
+                                            c[n++] = encode(i1 & 0x3);
+                                        } else {
+                                            c[n++] = encode((i1 & 0x3) << 4);
+                                        }
+                                        if (padding == PaddingMode.PADDING) {
+                                            c[n++] = padChar;
+                                            c[n++] = padChar;
+                                        }
+                                    }
+                                } else {
+                                    return false;
+                                }
+                            }
+                            action.accept(c[i++]);
+                            if (i == n) {
+                                n = 0;
+                                i = 0;
+                            }
+                            return true;
+                        }
+                }, false);
         }
 
     }
@@ -438,7 +434,11 @@ public enum BytesEncoder implements BytesEncoding {
         /** Represent bytes in base 64 string, but mapped to the alphabet : [./0-9A-Za-z] */
         h64(     "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"),
         /** Represent bytes in base 64 string, but mapped to the alphabet : [./0-9A-Za-z] */
-        h64be(h64.chars);
+        h64be(h64.chars),
+        /** Represent bytes in hexa lowercase */
+        hexa("0123456789abcdef"),
+        /** Represent bytes in hexa uppercase */
+        HEXA("0123456789ABCDEF");
 
         String chars;
 
@@ -480,21 +480,70 @@ public enum BytesEncoder implements BytesEncoding {
 
     };
 
+    /**
+     * Create a custom Base64 encoding.
+     *
+     * @param valueSpace The characters of the value space in order.
+     * @param padding Usually, the padding char is '='
+     *
+     * @return That encoder.
+     */
     public static BytesEncoding base64(char[] valueSpace, char padding) {
         if (valueSpace.length != ValueSpace.base64.chars.length()) {
             throw new IllegalArgumentException("Illegal value space length \"" + new String(valueSpace, 0, valueSpace.length) + "\"");
         }
-        PaddingMode pm = PaddingMode.PADDING;
+        Base64.PaddingMode pm = Base64.PaddingMode.PADDING;
         Base64 b64 = new Base64(valueSpace, pm, padding);
         return b64;
     }
 
+    /**
+     * Create a custom Base64 encoding without padding.
+     *
+     * @param valueSpace The characters of the value space in order.
+     * @param skipHighBits Indicates how to process the last bits :
+     *          <code>false</code> to shift the bits like with padding,
+     *          <code>true</code> to left as-is.
+     *
+     * @return That encoder.
+     */
     public static BytesEncoding base64(char[] valueSpace, boolean skipHighBits) {
         if (valueSpace.length != ValueSpace.base64.chars.length()) {
             throw new IllegalArgumentException("Illegal value space length \"" + new String(valueSpace, 0, valueSpace.length) + "\"");
         }
-        PaddingMode pm = skipHighBits ? PaddingMode.NO_PADDING_SKIP_HIGH_BITS : PaddingMode.NO_PADDING;
+        Base64.PaddingMode pm = skipHighBits ? Base64.PaddingMode.NO_PADDING_SKIP_HIGH_BITS : Base64.PaddingMode.NO_PADDING;
         return new Base64(valueSpace, pm);
+    }
+
+    private BytesEncoding bytesEncoding;
+
+    BytesEncoder(BytesEncoding encoder) {
+        this.bytesEncoding = encoder;
+    }
+
+    @Override
+    public String encode(byte[] data, int offset, int len) {
+        return this.bytesEncoding.encode(data, offset, len);
+    }
+
+    @Override
+    public byte[] decode(String data) {
+        return this.bytesEncoding.decode(data);
+    }
+
+    @Override
+    public CharRange valueSpace() {
+        return this.bytesEncoding.valueSpace();
+    }
+
+    @Override
+    public Stream<Character> encode(IntStream bytes) {
+        return this.bytesEncoding.encode(bytes);
+    }
+
+    @Override
+    public IntStream decode(Stream<Character> data) {
+        return this.bytesEncoding.decode(data);
     }
 
 }
