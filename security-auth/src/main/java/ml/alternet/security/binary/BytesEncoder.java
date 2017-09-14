@@ -21,25 +21,25 @@ import ml.alternet.misc.CharRange;
 public enum BytesEncoder implements BytesEncoding {
 
     /** Represent bytes in base 64 string. */
-    base64(new Base64(ValueSpace.base64.get(), Base64.PaddingMode.PADDING)),
+    base64(new Base64(ValueSpace.base64, Base64.PaddingMode.PADDING)),
 
     /** Represent bytes in base 64 string, without padding. */
-    base64_no_padding(new Base64(ValueSpace.base64.get(), Base64.PaddingMode.NO_PADDING)),
+    base64_no_padding(new Base64(ValueSpace.base64, Base64.PaddingMode.NO_PADDING)),
 
     /** Adapted base 64 represent bytes in base 64 string, except that it uses . instead of +, and omits trailing padding = and whitespace. */
-    abase64(new Base64(ValueSpace.abase64.get(), Base64.PaddingMode.PADDING)),
+    abase64(new Base64(ValueSpace.abase64, Base64.PaddingMode.PADDING)),
 
     /** Represent bytes in BCrypt's base 64 string. */
-    bcrypt64(new Base64(ValueSpace.bcrypt64.get(), Base64.PaddingMode.NO_PADDING)),
+    bcrypt64(new Base64(ValueSpace.bcrypt64, Base64.PaddingMode.NO_PADDING)),
 
     /** Represent bytes in base 64 string, but mapped to the alphabet : [./0-9A-Za-z] */
-    h64(new Base64(ValueSpace.h64.get(), Base64.PaddingMode.NO_PADDING)),
+    h64(new Base64(ValueSpace.h64, Base64.PaddingMode.NO_PADDING)),
 
     /**
      * Represent bytes in base 64 string, but mapped to the alphabet : [./0-9A-Za-z],
      * high bits of last sextets/bytes are skipped.
      */
-    h64be(new Base64(ValueSpace.h64.get(), Base64.PaddingMode.NO_PADDING_SKIP_HIGH_BITS)),
+    h64be(new Base64(ValueSpace.h64, Base64.PaddingMode.NO_PADDING_SKIP_HIGH_BITS)),
 
     /** Represent bytes in uppercase hexa string. */
     HEXA(new Hexa(true)),
@@ -227,8 +227,15 @@ public enum BytesEncoder implements BytesEncoding {
         byte[] decodeMap = new byte[128];
         PaddingMode padding;
         char padChar;
+        String name = "base64";
+        ValueSpace vs;
 
         private static final byte PADDING = 127;
+
+        Base64(ValueSpace valueSpace, PaddingMode withPadding) {
+            this(valueSpace.get(), withPadding);
+            this.vs = valueSpace;
+        }
 
         Base64(char[] encodeMap, PaddingMode withPadding) {
             this(encodeMap, withPadding, '=');
@@ -253,7 +260,7 @@ public enum BytesEncoder implements BytesEncoding {
 
         @Override
         public String name() {
-            return "base64";
+            return this.name;
         }
 
         @Override
@@ -425,19 +432,17 @@ public enum BytesEncoder implements BytesEncoding {
      * @author Philippe Poulard
      */
     public enum ValueSpace {
-        /** Represent bytes in base 64 string. */
+        /** Represent bytes in base 64 string : [A-Za-z0-9+/] */
         base64(  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"),
-        /** Adapted base 64 represent bytes in base 64 string, except that it uses '.' instead of '+'. */
+        /** Adapted base 64 represent bytes in base 64 string, except that it uses '.' instead of '+' : [A-Za-z0-9./] */
         abase64( "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789./"),
-        /** Represent bytes in BCrypt's base 64 string. */
+        /** Represent bytes in BCrypt's base 64 string : [./A-Za-z0-9]  */
         bcrypt64("./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"),
         /** Represent bytes in base 64 string, but mapped to the alphabet : [./0-9A-Za-z] */
         h64(     "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"),
-        /** Represent bytes in base 64 string, but mapped to the alphabet : [./0-9A-Za-z] */
-        h64be(h64.chars),
-        /** Represent bytes in hexa lowercase */
+        /** Represent bytes in hexa lowercase : [0-9a-f] */
         hexa("0123456789abcdef"),
-        /** Represent bytes in hexa uppercase */
+        /** Represent bytes in hexa uppercase : [0-9A-F]  */
         HEXA("0123456789ABCDEF");
 
         String chars;
@@ -467,6 +472,12 @@ public enum BytesEncoder implements BytesEncoding {
          * @see BytesEncoding#valueSpace()
          */
         public static char[] valueSpace(BytesEncoding byteEncoding) {
+            if (byteEncoding instanceof Base64) {
+                Base64 b64 = (Base64) byteEncoding;
+                if (b64.vs != null) {
+                    return b64.vs.get();
+                }
+            }
             try {
                 return ValueSpace.valueOf(byteEncoding.name()).get();
             } catch (IllegalArgumentException e) {
@@ -483,6 +494,20 @@ public enum BytesEncoder implements BytesEncoding {
     /**
      * Create a custom Base64 encoding.
      *
+     * @param valueSpace The value space.
+     * @param padding Usually, the padding char is '='
+     *
+     * @return That encoder.
+     */
+    public static BytesEncoding base64(ValueSpace valueSpace, char padding) {
+        Base64 b64 = (Base64) base64(valueSpace.get(), padding);
+        b64.vs = valueSpace;
+        return b64;
+    }
+
+    /**
+     * Create a custom Base64 encoding.
+     *
      * @param valueSpace The characters of the value space in order.
      * @param padding Usually, the padding char is '='
      *
@@ -494,6 +519,22 @@ public enum BytesEncoder implements BytesEncoding {
         }
         Base64.PaddingMode pm = Base64.PaddingMode.PADDING;
         Base64 b64 = new Base64(valueSpace, pm, padding);
+        return b64;
+    }
+
+    /**
+     * Create a custom Base64 encoding without padding.
+     *
+     * @param valueSpace The value space in order.
+     * @param skipHighBits Indicates how to process the last bits :
+     *          <code>false</code> to shift the bits like with padding,
+     *          <code>true</code> to left as-is.
+     *
+     * @return That encoder.
+     */
+    public static BytesEncoding base64(ValueSpace valueSpace, boolean skipHighBits) {
+        Base64 b64 = (Base64) base64(valueSpace.get(), skipHighBits);
+        b64.vs = valueSpace;
         return b64;
     }
 
@@ -519,6 +560,9 @@ public enum BytesEncoder implements BytesEncoding {
 
     BytesEncoder(BytesEncoding encoder) {
         this.bytesEncoding = encoder;
+        if (encoder instanceof Base64) {
+            ((Base64) encoder).name = name();
+        }
     }
 
     @Override
