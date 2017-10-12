@@ -214,9 +214,9 @@ public enum BytesEncoder implements BytesEncoding {
 
     }
 
-    private static class Base64 implements BytesEncoding {
+    static class Base64 implements BytesEncoding {
 
-        private static enum PaddingMode {
+        static enum PaddingMode {
             PADDING, // ends incomplete sequences with '='
             NO_PADDING, // shift the bits like with padding
             NO_PADDING_SKIP_HIGH_BITS; // left as-is
@@ -490,71 +490,6 @@ public enum BytesEncoder implements BytesEncoding {
         }
 
     };
-
-    /**
-     * Create a custom Base64 encoding.
-     *
-     * @param valueSpace The value space.
-     * @param padding Usually, the padding char is '='
-     *
-     * @return That encoder.
-     */
-    public static BytesEncoding base64(ValueSpace valueSpace, char padding) {
-        Base64 b64 = (Base64) base64(valueSpace.get(), padding);
-        b64.vs = valueSpace;
-        return b64;
-    }
-
-    /**
-     * Create a custom Base64 encoding.
-     *
-     * @param valueSpace The characters of the value space in order.
-     * @param padding Usually, the padding char is '='
-     *
-     * @return That encoder.
-     */
-    public static BytesEncoding base64(char[] valueSpace, char padding) {
-        if (valueSpace.length != ValueSpace.base64.chars.length()) {
-            throw new IllegalArgumentException("Illegal value space length \"" + new String(valueSpace, 0, valueSpace.length) + "\"");
-        }
-        Base64.PaddingMode pm = Base64.PaddingMode.PADDING;
-        Base64 b64 = new Base64(valueSpace, pm, padding);
-        return b64;
-    }
-
-    /**
-     * Create a custom Base64 encoding without padding.
-     *
-     * @param valueSpace The value space in order.
-     * @param skipHighBits Indicates how to process the last bits :
-     *          <code>false</code> to shift the bits like with padding,
-     *          <code>true</code> to left as-is.
-     *
-     * @return That encoder.
-     */
-    public static BytesEncoding base64(ValueSpace valueSpace, boolean skipHighBits) {
-        Base64 b64 = (Base64) base64(valueSpace.get(), skipHighBits);
-        b64.vs = valueSpace;
-        return b64;
-    }
-
-    /**
-     * Create a custom Base64 encoding without padding.
-     *
-     * @param valueSpace The characters of the value space in order.
-     * @param skipHighBits Indicates how to process the last bits :
-     *          <code>false</code> to shift the bits like with padding,
-     *          <code>true</code> to left as-is.
-     *
-     * @return That encoder.
-     */
-    public static BytesEncoding base64(char[] valueSpace, boolean skipHighBits) {
-        if (valueSpace.length != ValueSpace.base64.chars.length()) {
-            throw new IllegalArgumentException("Illegal value space length \"" + new String(valueSpace, 0, valueSpace.length) + "\"");
-        }
-        Base64.PaddingMode pm = skipHighBits ? Base64.PaddingMode.NO_PADDING_SKIP_HIGH_BITS : Base64.PaddingMode.NO_PADDING;
-        return new Base64(valueSpace, pm);
-    }
 
     private BytesEncoding bytesEncoding;
 
