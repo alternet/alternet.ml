@@ -13,7 +13,6 @@ import ml.alternet.security.auth.hashers.impl.MD5BasedHasher;
 import ml.alternet.security.auth.hashers.impl.MessageHasher;
 import ml.alternet.security.auth.hashers.impl.SHA2Hasher;
 import ml.alternet.security.binary.BytesEncoder;
-import ml.alternet.security.binary.BytesEncoder.ValueSpace;
 import ml.alternet.util.EnumUtil;
 
 /**
