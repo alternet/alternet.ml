@@ -11,7 +11,9 @@ their parameters, charsets, encodings, formattings, and crypt format families. I
 at will, and you'll have the same base code when, for example, you want to encode some bytes in a specific format. Everything work in
 the same way. Moreover, for checking a password, the parameters are extracted from the crypt stored in the database, the binary
 hash is isolated, and it is the value that will be compared to the password after hashing it, without formatting it.
-It sounds more natural to me.
+It sounds more natural to me. Conversely, most passwords checker libraries (not only in Java), will compare the
+result hash after encoding them : with an hexadecimal encoding, you certainly have to compare regardless the case,
+but with a base64 encoding, the case matters. This is why this framework only compare bytes.
 
 Most of the description of the popular hash formats was largely inspired from the
 outstanding [Passlib library for Python](http://passlib.readthedocs.io/en/stable/index.html).
@@ -40,8 +42,10 @@ crypt-MD5    $1$ magic in hash, 34 characters total               admin:$1$3iuE5
  * Apache MD5 crypt format : `$apr1$jgwedrkq$jzeetEHMGal5H0SUFDMEl1`
  * Crypt MD5 : `$1$3iuE5z/b$JHyXMzQOIq3cl6WlEMoZC.`
 
+
  * Contains the password encoded to base64 (just like {SSHA}) : `{SSHA.b64}986H5cS9JcDYQeJd6wKaITMho4M9CrXM`
  * Contains the password encoded to hexa : `{SSHA.HEX}3f5ca6203f8cdaa44d9160575c1ee1d77abcf59ca5f852d1`
+
 
  * SSHA : Salted SHA
 
@@ -116,7 +120,7 @@ For DES the string only contains the salt and actual hash. It's total length is 
 
 ### MD5 Variants
 
- * MD5Crypt ($1$ and $arp1$)
+ * MD5Crypt (`$1$` and `$apr1$`)
  * MD5Plain (MD5 w/o salt)
 
 ### BCrypt
@@ -133,7 +137,9 @@ We just need to parse the scheme :
  * Some `ssp` must know whether there is a salt or an iterator in order to call the suitable hasher family
  * The Hasher can configure itself (e.g. BCrypt always use the base64 encoding and supply its own implementation
 
+
  * ModularCryptFormat must not process "_" or "" : we need a unix crypt format for "" (I don't know what for "_") that may be passed as the very last CryptFormat
+
 
  * Crypt formats must be able to check the data size (SALT) in order to guess the rights parameters.
 
