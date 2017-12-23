@@ -10,68 +10,64 @@ import org.testng.annotations.Test;
 
 import ml.alternet.misc.CharRange;
 import ml.alternet.misc.CharRange.BoundRange;
-import ml.alternet.misc.CharRange.Char;
-import ml.alternet.misc.CharRange.Chars;
-import ml.alternet.misc.CharRange.Range;
-import ml.alternet.misc.CharRange.Ranges;
 
 @Test
 public class CharRangesTest {
 
     public void unionOfOrderedChar_Should_giveOrderedRanges() {
-        CharRange c = new Range('A', 'Z').union(new Char(true, 'a'));
+        CharRange c = CharRange.range('A', 'Z').union(CharRange.is('a'));
 
-        assertThat(c.getClass()).isAssignableFrom(Ranges.class);
+        assertThat(c.getClass()).isAssignableFrom(ml.alternet.misc.CharRange$.Ranges.class);
 
         List<BoundRange> charRanges = c.asIntervals().collect(Collectors.toList());
         assertThat(charRanges).containsExactly(
-            new Range('A', 'Z'),
-            new Char(true, 'a')
+            CharRange.range('A', 'Z'),
+            CharRange.is('a')
         );
     }
 
     public void unionOfUnorderedChar_Should_giveOrderedRanges() {
         // check order too
-        CharRange c = new Range('A', 'Z').union(new Chars(true, "9287315")).union(new Char(true, 'a'));
+        CharRange c = CharRange.range('A', 'Z').union(CharRange.isOneOf("9287315")).union(CharRange.is('a'));
 
-        assertThat(c.getClass()).isAssignableFrom(Ranges.class);
+        assertThat(c.getClass()).isAssignableFrom(ml.alternet.misc.CharRange$.Ranges.class);
 
         List<BoundRange> charRanges = c.asIntervals().collect(Collectors.toList());
         assertThat(charRanges).containsExactly(
-            new Range('1', '3'),
-            new Char(true, '5'),
-            new Range('7', '9'),
-            new Range('A', 'Z'),
-            new Char(true, 'a'));
+            CharRange.range('1', '3'),
+            CharRange.is('5'),
+            CharRange.range('7', '9'),
+            CharRange.range('A', 'Z'),
+            CharRange.is('a'));
     }
 
     public void alphaChar_ShouldBe_orderedAfterNumericRange() {
-        BoundRange a = new Char(true, 'a');
-        BoundRange oneToThree = new Range('1', '3');
+        BoundRange a = CharRange.is('a');
+        BoundRange oneToThree = CharRange.range('1', '3');
         assertThat(a).isGreaterThan(oneToThree);
     }
 
     public void alphaRange_ShouldBe_orderedAfterNumericChar() {
-        BoundRange one = new Char(true, '1');
-        BoundRange aTof = new Range('a', 'f');
+        BoundRange one = CharRange.is('1');
+        BoundRange aTof = CharRange.range('a', 'f');
         assertThat(aTof).isGreaterThan(one);
     }
 
     public void variousRanges_ShouldBe_sortedByStartChar() {
         List<BoundRange> list = Arrays.asList(
-            new Char(true, 'a'),
-            new Char(true, '5'),
-            new Range('1', '3'),
-            new Range('A', 'Z'),
-            new Range('7', '9')
+            CharRange.is('a'),
+            CharRange.is('5'),
+            CharRange.range('1', '3'),
+            CharRange.range('A', 'Z'),
+            CharRange.range('7', '9')
         );
         list = list.stream().sorted().collect(Collectors.toList());
         assertThat(list).containsExactly(
-            new Range('1', '3'),
-            new Char(true, '5'),
-            new Range('7', '9'),
-            new Range('A', 'Z'),
-            new Char(true, 'a')
+            CharRange.range('1', '3'),
+            CharRange.is('5'),
+            CharRange.range('7', '9'),
+            CharRange.range('A', 'Z'),
+            CharRange.is('a')
         );
     }
 

@@ -7,82 +7,79 @@ import java.util.stream.Collectors;
 
 import org.testng.annotations.Test;
 
-import ml.alternet.misc.CharRange.BoundRange;
-import ml.alternet.misc.CharRange.Char;
-import ml.alternet.misc.CharRange.Chars;
-import ml.alternet.misc.CharRange.Range;
+import ml.alternet.misc.CharRange;
 
 @Test
 public class CharRangeIntervalTest {
 
     public void intervalOfChar_ShouldBe_itself() {
-        Char c = new Char(true, 'a');
-        List<BoundRange> interval = c.asIntervals().collect(Collectors.toList());
+        CharRange.BoundRange c = CharRange.is('a');
+        List<CharRange.BoundRange> interval = c.asIntervals().collect(Collectors.toList());
         assertThat(interval).containsExactly(c);
-        interval.get(0).getClass().isAssignableFrom(Char.class);
+        interval.get(0).getClass().isAssignableFrom(ml.alternet.misc.CharRange$.Char.class);
     }
 
     public void intervalOfRangeOfSingleChar_ShouldBe_aChar() {
-        Range r = new Range('a', 'a');
-        List<BoundRange> interval = r.asIntervals().collect(Collectors.toList());
-        Char c = new Char(true, 'a');
+        CharRange r = CharRange.range('a', 'a');
+        List<CharRange.BoundRange> interval = r.asIntervals().collect(Collectors.toList());
+        CharRange.BoundRange c = CharRange.is('a');
         assertThat(interval).containsExactly(c);
-        interval.get(0).getClass().isAssignableFrom(Char.class);
+        interval.get(0).getClass().isAssignableFrom(ml.alternet.misc.CharRange$.Char.class);
     }
 
     public void intervalOfRange_ShouldBe_itself() {
-        Range r = new Range('a', 'z');
-        List<BoundRange> interval = r.asIntervals().collect(Collectors.toList());
+        CharRange.BoundRange r = CharRange.range('a', 'z');
+        List<CharRange.BoundRange> interval = r.asIntervals().collect(Collectors.toList());
         assertThat(interval).containsExactly(r);
-        interval.get(0).getClass().isAssignableFrom(Range.class);
+        interval.get(0).getClass().isAssignableFrom(ml.alternet.misc.CharRange$.Range.class);
     }
 
     public void intervalOfCharsOfSingleChar_ShouldBe_aChar() {
-        Chars c = new Chars(true, "a");
-        List<BoundRange> interval = c.asIntervals().collect(Collectors.toList());
-        Char expected = new Char(true, 'a');
+        CharRange c = CharRange.isOneOf("a");
+        List<CharRange.BoundRange> interval = c.asIntervals().collect(Collectors.toList());
+        CharRange.BoundRange expected = CharRange.is('a');
         assertThat(interval).containsExactly(expected);
-        interval.get(0).getClass().isAssignableFrom(Char.class);
+        interval.get(0).getClass().isAssignableFrom(ml.alternet.misc.CharRange$.Char.class);
     }
 
     public void intervalOfTwoConsecutiveChars_ShouldBe_aRange() {
-        Chars c = new Chars(true, "ab");
-        List<BoundRange> interval = c.asIntervals().collect(Collectors.toList());
-        Range expected = new Range('a', 'b');
+        CharRange c = CharRange.isOneOf("ab");
+        List<CharRange.BoundRange> interval = c.asIntervals().collect(Collectors.toList());
+        CharRange.BoundRange expected = CharRange.range('a', 'b');
         assertThat(interval).containsExactly(expected);
-        interval.get(0).getClass().isAssignableFrom(Range.class);
+        interval.get(0).getClass().isAssignableFrom(ml.alternet.misc.CharRange$.Range.class);
     }
 
     public void intervalOfConsecutiveChars_ShouldBe_aRange() {
-        Chars c = new Chars(true, "abcde");
-        List<BoundRange> interval = c.asIntervals().collect(Collectors.toList());
-        Range expected = new Range('a', 'e');
+        CharRange c = CharRange.isOneOf("abcde");
+        List<CharRange.BoundRange> interval = c.asIntervals().collect(Collectors.toList());
+        CharRange.BoundRange expected = CharRange.range('a', 'e');
         assertThat(interval).containsExactly(expected);
-        interval.get(0).getClass().isAssignableFrom(Range.class);
+        interval.get(0).getClass().isAssignableFrom(ml.alternet.misc.CharRange$.Range.class);
     }
 
     public void intervalOfCharsWithConsecutiveChars_Should_containRangesAndChars() {
-        Chars c = new Chars(true, "abcz");
-        List<BoundRange> intervals = c.asIntervals().collect(Collectors.toList());
-        assertThat(intervals).containsExactly(new Range('a', 'c'), new Char(true, 'z'));
+        CharRange c = CharRange.isOneOf("abcz");
+        List<CharRange.BoundRange> intervals = c.asIntervals().collect(Collectors.toList());
+        assertThat(intervals).containsExactly(CharRange.range('a', 'c'), CharRange.is('z'));
     }
 
     public void intervalOfConsecutiveCharsWithChars_Should_containRangesAndChars() {
-        Chars c = new Chars(true, "axyz");
-        List<BoundRange> intervals = c.asIntervals().collect(Collectors.toList());
-        assertThat(intervals).containsExactly(new Char(true, 'a'), new Range('x', 'z') );
+        CharRange c = CharRange.isOneOf("axyz");
+        List<CharRange.BoundRange> intervals = c.asIntervals().collect(Collectors.toList());
+        assertThat(intervals).containsExactly(CharRange.is('a'), CharRange.range('x', 'z') );
     }
 
     public void intervalsOfConsecutiveChars_Should_containRanges() {
-        Chars c = new Chars(true, "abcxyz");
-        List<BoundRange> intervals = c.asIntervals().collect(Collectors.toList());
-        assertThat(intervals).containsExactly(new Range('a', 'c'), new Range('x', 'z'));
+        CharRange c = CharRange.isOneOf("abcxyz");
+        List<CharRange.BoundRange> intervals = c.asIntervals().collect(Collectors.toList());
+        assertThat(intervals).containsExactly(CharRange.range('a', 'c'), CharRange.range('x', 'z'));
     }
 
     public void intervalsOfChars_Should_containChars() {
-        Chars c = new Chars(true, "az");
-        List<BoundRange> intervals = c.asIntervals().collect(Collectors.toList());
-        assertThat(intervals).containsExactly(new Char(true, 'a'), new Char(true, 'z'));
+        CharRange c = CharRange.isOneOf("az");
+        List<CharRange.BoundRange> intervals = c.asIntervals().collect(Collectors.toList());
+        assertThat(intervals).containsExactly(CharRange.is('a'), CharRange.is('z'));
     }
 
 }

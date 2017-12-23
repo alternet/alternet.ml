@@ -10,31 +10,28 @@ import org.testng.annotations.Test;
 
 import ml.alternet.misc.CharRange;
 import ml.alternet.misc.CharRange.BoundRange;
-import ml.alternet.misc.CharRange.Char;
-import ml.alternet.misc.CharRange.Chars;
-import ml.alternet.misc.CharRange.Range;
-import ml.alternet.misc.CharRange.Ranges;
+import ml.alternet.misc.CharRange$.Ranges;
 
 @Test
 public class CharRangeCombine {
 
     public void anyCharsExceptAChar_Shoud_haveTheSameIntervalsThanNotAChar() {
-        Char a = CharRange.is('a');
+        CharRange a = CharRange.is('a');
         CharRange anyExceptA = ANY.except(a);
-        Char notA = CharRange.isNot('a');
+        CharRange notA = CharRange.isNot('a');
         assertThat(anyExceptA.asIntervals().findFirst().get()).isEqualTo(notA.asIntervals().findFirst().get());
         assertThat(notA).usingComparator(CHAR_RANGE_COMPARATOR).isEqualTo(anyExceptA);
     }
 
     public void doubleNegateForChar_Shoud_giveTheSame() {
-        Char a = CharRange.is('a');
+        CharRange a = CharRange.is('a');
         CharRange anyExceptA = ANY.except(a);
         CharRange aAgain = ANY.except(anyExceptA);
         assertThat(a).isEqualTo(aAgain);
     }
 
     public void doubleNegateForNotChar_Shoud_giveTheSame() {
-        Char a = CharRange.isNot('a');
+        CharRange a = CharRange.isNot('a');
         CharRange anyExceptA = ANY.except(a);
         CharRange aAgain = ANY.except(anyExceptA);
         assertThat(CHAR_RANGE_COMPARATOR.compare(a, aAgain)).isEqualTo(0);
@@ -42,46 +39,46 @@ public class CharRangeCombine {
     }
 
     public void rangesWithExclusions_Shoud_beCut() {
-        CharRange range = new Range('A', 'Z')
-                .union(new Chars(true, "9287315"))
-                .union(new Char(true, 'a'))
-                .union(new Char(true, 'h'))
-                .union(new Range('m', 'x'))
-                .except(new Char(true, 'M'))
-                .except(new Range('w', 'z'))
-                .except(new Range('f', 'p'))
-                .except(new Char(true, '0'));
+        CharRange range = CharRange.range('A', 'Z')
+                .union(CharRange.isOneOf("9287315"))
+                .union(CharRange.is('a'))
+                .union(CharRange.is('h'))
+                .union(CharRange.range('m', 'x'))
+                .except(CharRange.is('M'))
+                .except(CharRange.range('w', 'z'))
+                .except(CharRange.range('f', 'p'))
+                .except(CharRange.is('0'));
 
         assertThat(range.getClass()).isAssignableFrom(Ranges.class);
 
         List<BoundRange> charRanges = range.asIntervals().collect(Collectors.toList());
         assertThat(charRanges).containsExactly(
-            new Range('1', '3'),
-            new Char(true, '5'),
-            new Range('7', '9'),
-            new Range('A', 'L'),
-            new Range('N', 'Z'),
-            new Char(true, 'a'),
-            new Range('q', 'v')
+            CharRange.range('1', '3'),
+            CharRange.is('5'),
+            CharRange.range('7', '9'),
+            CharRange.range('A', 'L'),
+            CharRange.range('N', 'Z'),
+            CharRange.is('a'),
+            CharRange.range('q', 'v')
         );
     }
 
     public void rangesWithExclusionsAtOnce_Shoud_beCut() {
-        CharRange range = new Range('A', 'Z')
-                .union(new Chars(true, "9287315"), new Char(true, 'a'), new Char(true, 'h'), new Range('m', 'x'))
-                .except(new Char(true, 'M'), new Range('w', 'z'), new Range('f', 'p'), new Char(true, '0'));
+        CharRange range = CharRange.range('A', 'Z')
+                .union(CharRange.isOneOf("9287315"), CharRange.is('a'), CharRange.is('h'), CharRange.range('m', 'x'))
+                .except(CharRange.is('M'), CharRange.range('w', 'z'), CharRange.range('f', 'p'), CharRange.is('0'));
 
         assertThat(range.getClass()).isAssignableFrom(Ranges.class);
 
         List<BoundRange> charRanges = range.asIntervals().collect(Collectors.toList());
         assertThat(charRanges).containsExactly(
-            new Range('1', '3'),
-            new Char(true, '5'),
-            new Range('7', '9'),
-            new Range('A', 'L'),
-            new Range('N', 'Z'),
-            new Char(true, 'a'),
-            new Range('q', 'v')
+            CharRange.range('1', '3'),
+            CharRange.is('5'),
+            CharRange.range('7', '9'),
+            CharRange.range('A', 'L'),
+            CharRange.range('N', 'Z'),
+            CharRange.is('a'),
+            CharRange.range('q', 'v')
         );
     }
 
