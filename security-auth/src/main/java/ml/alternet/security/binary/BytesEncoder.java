@@ -433,13 +433,15 @@ public enum BytesEncoder implements BytesEncoding {
      */
     public enum ValueSpace {
         /** Represent bytes in base 64 string : [A-Za-z0-9+/] */
-        base64(  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"),
+        base64(   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"),
+        /** Represent bytes in base 64 string : [A-Za-z0-9-_], see RFC 4648 Table 2. */
+        base64url("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"),
         /** Adapted base 64 represent bytes in base 64 string, except that it uses '.' instead of '+' : [A-Za-z0-9./] */
-        abase64( "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789./"),
+        abase64(  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789./"),
         /** Represent bytes in BCrypt's base 64 string : [./A-Za-z0-9]  */
-        bcrypt64("./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"),
+        bcrypt64( "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"),
         /** Represent bytes in base 64 string, but mapped to the alphabet : [./0-9A-Za-z] */
-        h64(     "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"),
+        h64(      "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"),
         /** Represent bytes in hexa lowercase : [0-9a-f] */
         hexa("0123456789abcdef"),
         /** Represent bytes in hexa uppercase : [0-9A-F]  */
