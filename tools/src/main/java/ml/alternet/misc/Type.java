@@ -1,9 +1,11 @@
 package ml.alternet.misc;
 
 import java.lang.reflect.GenericArrayType;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -99,6 +101,188 @@ public interface Type extends java.lang.reflect.Type {
     }
 
     /**
+     * Parse a type definition ; may be an array, or a type parameter
+     * with optionally wildcard types with upper/lower bounds.
+     *
+     * @param typeDefinition The actual type definition, e.g
+     * "<code>org.acme.Foo&lt;java.util.Map&lt;?, ? super java.lang.Integer&gt;,com.example.Bar[],java.lang.Appendable&gt;</code>"
+     *
+     * @return A type that can be a composed type.
+     *
+     * @throws IllegalArgumentException When the type definition is malformed.
+     */
+    static Type parseTypeDefinition(String typeDefinition) {
+        return new Parsed(typeDefinition).get();
+    }
+
+    /**
+     * Parse a type definition ; may be an array, or a type parameter
+     * with optionally wildcard types with upper/lower bounds.
+     *
+     * Not reusable and not thread-safe.
+     *
+     * After getting the type with {@link #get()}, the remainder string
+     * (the part not used by the parser), is available with {@link #toString()}.
+     */
+    static class Parsed implements Supplier<Type> {
+
+        String typeDef;
+        Type type;
+        boolean parsed = false;
+
+        /**
+         * Create a type parser.
+         *
+         * @param typeDef The type definition, e.g
+         * "<code>org.acme.Foo&lt;java.util.Map&lt;?, ? super java.lang.Integer&gt;,com.example.Bar[],java.lang.Appendable&gt;</code>".
+         */
+        public Parsed(String typeDef) {
+            this.typeDef = typeDef;
+        }
+
+        @Override
+        public String toString() {
+            if (! parsed) {
+                type = parse();
+            }
+            return this.typeDef;
+        }
+
+        @Override
+        public Type get() {
+            if (! parsed) {
+                type = parse();
+            }
+            return type;
+        }
+
+        Type parse() {
+            parsed = true;
+            // parse parameterized types and arrays e.g.    Map<String, ? extends Number>[]
+            String mainType = Type$.extractJavaTypeName(typeDef);
+            if (mainType.length() == 0) {
+                throw new IllegalArgumentException(typeDef + " is not a type name.");
+            } else {
+                Type t = Type.of(mainType);
+                typeDef = typeDef.substring(mainType.length()).trim();
+                if (typeDef.length() == 0) {
+                    return t;
+                } else {
+                    if (typeDef.startsWith("<")) {
+                        typeDef = typeDef.substring(1).trim();
+                        List<Type> pTypes = new ArrayList<>();
+                        do {
+                            if (typeDef.startsWith("?")) {
+                                Type lbt = null;
+                                Type ubt = null;
+                                typeDef = typeDef.substring(1);
+                                int ws = 0;
+                                for ( ; Character.isWhitespace(typeDef.charAt(ws)) ; ws++) { }
+                                if (ws > 0) {
+                                    typeDef = typeDef.trim();
+                                    if (typeDef.startsWith("super ")) {
+                                        typeDef = typeDef.substring("super ".length()).trim();
+                                        String lowerBoundedType = Type$.extractJavaTypeName(typeDef);
+                                        if (lowerBoundedType.length() == 0) {
+                                            throw new IllegalArgumentException(typeDef + " is not a type name.");
+                                        } else {
+                                            lbt = Type.of(lowerBoundedType);
+                                            typeDef = typeDef.substring(lowerBoundedType.length()).trim();
+                                        }
+                                    } else if (typeDef.startsWith("extends ")) {
+                                        typeDef = typeDef.substring("extends ".length());
+                                        String upperBoundedType = Type$.extractJavaTypeName(typeDef);
+                                        if (upperBoundedType.length() == 0) {
+                                            throw new IllegalArgumentException(typeDef + " is not a type name.");
+                                        } else {
+                                            ubt = Type.of(upperBoundedType);
+                                            typeDef = typeDef.substring(upperBoundedType.length());
+                                        }
+                                    }
+                                }
+                                typeDef = typeDef.trim();
+                                pTypes.add(new WildcardType(lbt, ubt));
+                            } else {
+                                Parsed pType = new Parsed(typeDef);
+                                pTypes.add(pType.get());
+                                typeDef = pType.toString().trim();
+                            }
+                            if (typeDef.startsWith(",")) {
+                                typeDef = typeDef.substring(1).trim();
+                            } else if (typeDef.startsWith(">")) {
+                                typeDef = typeDef.substring(1).trim();
+                                break;
+                            } else {
+                                throw new IllegalArgumentException("\",\" or \">\" expected, but get " + typeDef);
+                            }
+                        } while(true);
+                        t = t.withTypeParameters(pTypes.toArray(new Type[pTypes.size()]));
+                    }
+                    while (typeDef.startsWith("[")) {
+                        typeDef = typeDef.substring(1).trim();
+                        if (typeDef.startsWith("]")) {
+                            t = t.asArrayType();
+                            typeDef = typeDef.substring(1).trim();
+                        } else {
+                            throw new IllegalArgumentException("Missing \"]\" in type " + typeDef);
+                        }
+                    }
+                }
+                return t;
+            }
+        }
+
+        static class WildcardType extends Type$ implements java.lang.reflect.WildcardType {
+
+            Type lbt, ubt;
+
+            public WildcardType(Type lbt, Type ubt) {
+                super(null, "?");
+                this.lbt = lbt;
+                this.ubt = ubt;
+                this.kind = Kind.DEFAULT_PACKAGE;
+            }
+            @Override
+            public java.lang.reflect.Type[] getUpperBounds() {
+                if (ubt == null) {
+                    return new java.lang.reflect.Type[0];
+                } else {
+                    return new java.lang.reflect.Type[] { ubt };
+                }
+            }
+            @Override
+            public java.lang.reflect.Type[] getLowerBounds() {
+                if (lbt == null) {
+                    return new java.lang.reflect.Type[0];
+                } else {
+                    return new java.lang.reflect.Type[] { lbt };
+                }
+            }
+            @Override
+            public String toString() {
+                if (lbt != null) {
+                    return "? super " + lbt;
+                } else if (ubt != null) {
+                    return "? extends " + ubt;
+                } else {
+                    return "?";
+                }
+            }
+            @Override
+            public String toString(Predicate<Type> omitPackage) {
+                if (lbt != null) {
+                    return "? super " + lbt.toString(omitPackage);
+                } else if (ubt != null) {
+                    return "? extends " + ubt.toString(omitPackage);
+                } else {
+                    return "?";
+                }
+            }
+        }
+
+    }
+
+    /**
      * Return the kind of this type.
      *
      * @return The kind of this type.
@@ -159,7 +343,7 @@ public interface Type extends java.lang.reflect.Type {
     Type box();
 
     /**
-     * Return the counterpart unboxed type of this type.
+     * Return the counterpart unboxed type (a primitive) of this type.
      *
      * @return The unboxed type if this type is a boxed type,
      *      this otherwise.
@@ -190,7 +374,8 @@ public interface Type extends java.lang.reflect.Type {
     /**
      * Return the package name of this Java class name.
      *
-     * @return This package name, or <code>null</code>.
+     * @return This package name, or <code>null</code>
+     *      if this type is not in a package.
      */
     String getPackageName();
 

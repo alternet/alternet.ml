@@ -229,12 +229,16 @@ class Type$ implements Type {
     // called after each creation to return primitive or Primitive, or String
     Type$ checkNative() {
         if (getKind() == Kind.DEFAULT_PACKAGE) {
-            try {
-                Type$ primitive = Type$.Native.valueOf(getSimpleName()).type;
-                if (primitive.getKind() == Kind.PRIMITIVE) {
-                    return primitive;
-                }
-            } catch (IllegalArgumentException e) { }
+            if ("?" .equals(this.cl)) {
+                return new Parsed.WildcardType(null, null);
+            } else {
+                try {
+                    Type$ primitive = Type$.Native.valueOf(getSimpleName()).type;
+                    if (primitive.getKind() == Kind.PRIMITIVE) {
+                        return primitive;
+                    }
+                } catch (IllegalArgumentException e) { }
+            }
         } else if (getKind() == Kind.JAVA_LANG_PACKAGE) {
             try {
                 Type$ primitive = Type$.Native.valueOf(getSimpleName()).type;
@@ -295,6 +299,41 @@ class Type$ implements Type {
     @Override
     public int hashCode() {
         return getQualifiedName().hashCode();
+    }
+
+    static String extractJavaTypeName(String type) {
+        StringBuffer buf = new StringBuffer(type.length());
+        boolean[] isFirst = { true };
+        boolean[] wasDot = { false };
+        if (type.codePoints()
+            .peek(buf::appendCodePoint)
+            .filter(c -> {
+                if (isFirst[0]) {
+                    isFirst[0] = false;
+                    return ! Character.isJavaIdentifierStart(c);
+                }
+                if (c == '.') {
+                    if (wasDot[0]) {
+                        return true;
+                    } else {
+                        wasDot[0] = true;
+                        return false;
+                    }
+                }
+                wasDot[0] = false;
+                return ! Character.isJavaIdentifierPart(c);
+            }).findFirst()
+            .isPresent()
+        ) {
+            if (buf.length() > 0) {
+                //                           lenOfLastCodepoint
+                buf.setLength(buf.length() - Character.charCount(buf.codePointBefore(buf.length())));
+            }
+        }
+        if (buf.codePointBefore(buf.length()) == '.') {
+            buf.setLength(buf.length() - 1);
+        }
+        return buf.toString();
     }
 
 }
