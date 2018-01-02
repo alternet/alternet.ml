@@ -164,6 +164,17 @@ public class TypeTest {
             Type.of("java.lang.Appendable"));
 
         assertThat(p1.toString(t -> t.getKind() == Type.Kind.JAVA_LANG_PACKAGE)).isEqualTo("org.acme.Foo<Integer,com.example.Bar,Appendable>");
+        assertThat(p1.toString(t -> true)).isEqualTo("Foo<Integer,Bar,Appendable>");
+    }
+
+    public void parsedTypeWithTypesParameter_Shoud_beBoxed() {
+        Type p1 = Type.parseTypeDefinition("org.acme.Foo<java.util.Map<?, ? super java.lang.Integer>,com.example.Bar[],java.lang.Appendable>");
+        String s1 = p1.toString(t -> t.getKind() == Type.Kind.JAVA_LANG_PACKAGE);
+        assertThat(s1).isEqualTo("org.acme.Foo<java.util.Map<?,? super Integer>,com.example.Bar[],Appendable>");
+        String s2 = p1.toString(t -> t.getKind() == Type.Kind.JAVA_LANG_PACKAGE || "com.example".equals(t.getPackageName()));
+        assertThat(s2).isEqualTo("org.acme.Foo<java.util.Map<?,? super Integer>,Bar[],Appendable>");
+        String s3 = p1.toString(t -> true);
+        assertThat(s3).isEqualTo("Foo<Map<?,? super Integer>,Bar[],Appendable>");
     }
 
 }
