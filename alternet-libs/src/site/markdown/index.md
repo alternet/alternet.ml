@@ -22,7 +22,7 @@ Pages :
 
 
 * [Alternet Tools Generator](tools-generator/generator.html)
-
+* [Properties Binder Maven Plugin](prop-bind-maven-plugin/index.html)
 
 [JavaDoc API documentation](apidocs/index.html)
 
@@ -39,5 +39,4 @@ Alternet Libs are distributed mainly via Maven.
 ## ![Blogs](images/blog2.png) Developer Blogs
 
 * [Semantic Mismatch blog](http://semantic-mismatch.blogspot.fr/)
-
 

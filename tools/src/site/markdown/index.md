@@ -6,8 +6,12 @@ Alternet Tools include discovery service tools, concurrent and locking tools, by
 
 ## ![documentation](../images/docs.png) Documentation
 
-* [Alternet Tools](tools.html)
-* [Generator](../tools-generator/generator.html)
+Alternet Tools contains mainly :
+
+* [Properties binder and classes generator](properties.html) : you have Java properties files, you want to populate a class with the properties ; you also want to generate the class to populate ; you want a Maven plugin for that
+* [Discovery Service](discovery.html) : you have an interface and various implementations that you want to bind by name.
+* [Generator](../tools-generator/generator.html) : you have an interface, you want to generate an instance of it.
+* [Alternet Tools](tools.html) : you want other tools and utilities (concurrent and locking tools, char range, type handling, etc)
 
 Other Alternet guides :
 

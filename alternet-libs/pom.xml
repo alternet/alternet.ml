@@ -106,11 +106,11 @@
         <module>../scanner</module>
         <module>../security</module>
         <module>../security-auth</module>
-        <!-- >module>../security-auth-impl</module-->
         <module>../security-jetty-9.1</module>
         <module>../security-tomcat-8.0</module>
         <module>../tools</module>
         <module>../tools-generator</module>
+        <module>../prop-bind-maven-plugin</module>
     </modules>
 
     <build>

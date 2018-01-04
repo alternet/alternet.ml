@@ -7,7 +7,7 @@
 
     <module name="BeforeExecutionExclusionFileFilter">
       <!--  >property name="fileNamePattern" value="module\-info\.java$"/-->
-      <property name="fileNamePattern" value="ml/alternet/security/((algorithms/[a-zA-Z0-9]*)|(web/server/Utf8Appendable))\.java$"/>
+      <property name="fileNamePattern" value="((ml/alternet/security/((algorithms/[a-zA-Z0-9]*))|(ml/alternet/properties/\\$)|(web/server/Utf8Appendable)))\.java$"/>
     </module>
 
     <module name="FileLength" />
@@ -68,7 +68,7 @@
             <property name="format" value="^[A-Z][_A-Z0-9]*$"/>
         </module>
         <module name="TypeName">
-            <property name="format" value="^[A-Za-z][A-Za-z0-9]*(_[A-Za-z0-9]+)*\$?$"/>
+            <property name="format" value="^[A-Za-z$][A-Za-z0-9]*(_[A-Za-z0-9]+)*\$?$"/>
         </module>
 
         <!-- Checks for imports -->
@@ -106,7 +106,7 @@
 
         <!-- Checks for blocks. You know, those {}'s -->
         <!-- See http://checkstyle.sf.net/config_blocks.html -->
-        <module name="AvoidNestedBlocks" />
+        <!-- module name="AvoidNestedBlocks" /-->
         <module name="EmptyBlock">
             <property name="option" value="text" />
         </module>
