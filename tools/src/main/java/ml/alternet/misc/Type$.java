@@ -46,7 +46,7 @@ class Type$ implements Type {
             @SuppressWarnings("unchecked")
             @Override
             Character parse(String value) {
-                return (value == null || value.length() == 0) ? null : value.charAt(0);
+                return value == null || value.length() == 0 ? null : value.charAt(0);
             }
         },
         _void(void.class) {
@@ -121,7 +121,7 @@ class Type$ implements Type {
             @SuppressWarnings("unchecked")
             @Override
             Character parse(String value) {
-                return (value == null || value.length() == 0) ? null : value.charAt(0);
+                return value == null || value.length() == 0 ? null : value.charAt(0);
             }
         },
         Void(java.lang.Void.class) {
@@ -211,7 +211,7 @@ class Type$ implements Type {
             this.pkg = qualifiedName.substring(0,  dot);
             if ("java.lang".equals(this.pkg)) {
                 this.kind = Kind.JAVA_LANG_PACKAGE;
-            };
+            }
         }
     }
 
@@ -223,7 +223,7 @@ class Type$ implements Type {
             this.kind = Kind.DEFAULT_PACKAGE;
         } else if ("java.lang".equals(this.pkg)) {
             this.kind = Kind.JAVA_LANG_PACKAGE;
-        };
+        }
     }
 
     // called after each creation to return primitive or Primitive, or String
@@ -324,11 +324,10 @@ class Type$ implements Type {
                 return ! Character.isJavaIdentifierPart(c);
             }).findFirst()
             .isPresent()
-        ) {
-            if (buf.length() > 0) {
-                //                           lenOfLastCodepoint
-                buf.setLength(buf.length() - Character.charCount(buf.codePointBefore(buf.length())));
-            }
+            && buf.length() > 0)
+        {
+            //                           lenOfLastCodepoint
+            buf.setLength(buf.length() - Character.charCount(buf.codePointBefore(buf.length())));
         }
         if (buf.codePointBefore(buf.length()) == '.') {
             buf.setLength(buf.length() - 1);

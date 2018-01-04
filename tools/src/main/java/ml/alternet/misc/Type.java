@@ -124,7 +124,7 @@ public interface Type extends java.lang.reflect.Type {
      * After getting the type with {@link #get()}, the remainder string
      * (the part not used by the parser), is available with {@link #toString()}.
      */
-    static class Parsed implements Supplier<Type> {
+    class Parsed implements Supplier<Type> {
 
         String typeDef;
         Type type;
@@ -215,7 +215,7 @@ public interface Type extends java.lang.reflect.Type {
                             } else {
                                 throw new IllegalArgumentException("\",\" or \">\" expected, but get " + typeDef);
                             }
-                        } while(true);
+                        } while (true);
                         t = t.withTypeParameters(pTypes.toArray(new Type[pTypes.size()]));
                     }
                     while (typeDef.startsWith("[")) {
@@ -236,7 +236,7 @@ public interface Type extends java.lang.reflect.Type {
 
             Type lbt, ubt;
 
-            public WildcardType(Type lbt, Type ubt) {
+            WildcardType(Type lbt, Type ubt) {
                 super(null, "?");
                 this.lbt = lbt;
                 this.ubt = ubt;
@@ -394,7 +394,7 @@ public interface Type extends java.lang.reflect.Type {
     default Type withTypeParameters(Type... type) {
         class ParameterizedType extends Type$ implements java.lang.reflect.ParameterizedType {
 
-            public ParameterizedType() {
+            ParameterizedType() {
                 super(Type.this.getPackageName(), Type.this.getSimpleName());
             }
 
@@ -442,7 +442,7 @@ public interface Type extends java.lang.reflect.Type {
     default Type asArrayType() {
         class GenericArrayType extends Type$ implements java.lang.reflect.GenericArrayType {
 
-            public GenericArrayType() {
+            GenericArrayType() {
                 super(Type.this.getPackageName(), Type.this.getSimpleName());
             }
 

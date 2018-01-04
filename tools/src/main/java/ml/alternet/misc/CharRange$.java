@@ -54,7 +54,7 @@ class CharRange$ {
          *
          * @see Reversible#includes()
          */
-        public Char(boolean equal, int car) {
+        Char(boolean equal, int car) {
             this.car = car;
             this.equal = equal;
         }
@@ -191,7 +191,7 @@ class CharRange$ {
          *
          * @see Reversible#includes()
          */
-        public Chars(boolean equal, CharSequence chars) {
+        Chars(boolean equal, CharSequence chars) {
             this(equal, chars.codePoints());
         }
 
@@ -202,7 +202,7 @@ class CharRange$ {
          *      <code>false</code> to indicate exclusion.
          * @param codepoints The actual codepoints.
          */
-        public Chars(boolean equal, int... codepoints) {
+        Chars(boolean equal, int... codepoints) {
             this(equal, IntStream.of(codepoints));
         }
 
@@ -213,7 +213,7 @@ class CharRange$ {
          *      <code>false</code> to indicate exclusion.
          * @param codepoints The actual codepoints.
          */
-        public Chars(boolean equal, IntStream codepoints) {
+        Chars(boolean equal, IntStream codepoints) {
               int[] cp = codepoints.sorted().distinct().toArray();
               this.chars = new String(cp, 0, cp.length);
               this.equal = equal;
@@ -390,7 +390,7 @@ class CharRange$ {
          * @param start The start codepoint (included)
          * @param end The end codepoint (included)
          */
-        public Range(int start, int end) {
+        Range(int start, int end) {
             this.start = start;
             this.end = end;
         }
@@ -490,7 +490,7 @@ class CharRange$ {
          *
          * @param ranges The ranges that compose this set may overlap themselves.
          */
-        public Ranges(CharRange... ranges) {
+        Ranges(CharRange... ranges) {
             this(Stream.of(ranges));
         }
 
@@ -499,7 +499,7 @@ class CharRange$ {
          *
          * @param ranges The ranges that compose this set may overlap themselves.
          */
-        public Ranges(Stream<CharRange> ranges) {
+        Ranges(Stream<CharRange> ranges) {
             ranges.flatMap(c -> c.asIntervals())
                 .filter(r -> ! r.isEmpty())
                 .sorted()
