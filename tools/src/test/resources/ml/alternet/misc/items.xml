@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<list xmlns="http://example.com/items">
+    <item value="42"/>
+    <item value="0"/>
+    <item value="-24"/>
+</list>
