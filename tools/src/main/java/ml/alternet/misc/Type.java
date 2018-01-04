@@ -95,8 +95,12 @@ public interface Type extends java.lang.reflect.Type {
                 .map(p -> Type.of(p))
                 .toArray();
             return t.withTypeParameters(param);
-        } else {
-            return of(type.getTypeName());
+        } else if (type instanceof java.lang.reflect.AnnotatedArrayType) {
+            java.lang.reflect.GenericArrayType aType = (java.lang.reflect.GenericArrayType ) type;
+            Type t = of(aType.getGenericComponentType());
+            return t.asArrayType();
+        } else { // ???
+            return parseTypeDefinition(type.getTypeName());
         }
     }
 
