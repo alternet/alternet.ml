@@ -8,7 +8,7 @@ Alternet Security for Web applications allow handling safe passwords inside Web 
 
 ## ![documentation](../images/docs.png) Documentation
 
-* [Alternet Security](security.html)
+* [Alternet Security](../security/security.html)
 
 JavaDoc API :
 
