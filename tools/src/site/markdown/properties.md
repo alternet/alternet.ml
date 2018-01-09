@@ -1,5 +1,8 @@
 # Properties binder and class generator
 
+<div class="commit-tease">
+<a href="http://alternet.ml/alternet-libs/tools/properties.html">
+Published version of this page available HERE</a></div>
 Given a Java property file, allow to populate a counterpart class with typed values.
 
 Also allow to generate the target class, and run that generator as a Maven plugin.
@@ -514,7 +517,7 @@ gui.window.height = 300
 
 Except for renaming, always write classes with their fully qualified name. The Java source generated will take care of classes to import or not.
 
-The directives `. = @Adapter.map()` are strings that may refer to other types ; those other types have to be explicitly imported with the `. = !org.acme.Foo` directive.
+The directives `. = @Adapter.map()` are strings that may refer to other types ; those other types have to be explicitly imported with the `. = !org.acme.Foo` directive. Even when a type is explicitly imported, its name must be fully qualified in `$` references.
 
 <a name="generator"></a>
 

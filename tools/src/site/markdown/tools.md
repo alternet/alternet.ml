@@ -1,5 +1,9 @@
 # Alternet Tools
 
+<div class="commit-tease">
+<a href="http://alternet.ml/alternet-libs/tools/tools.html">
+Published version of this page available HERE</a></div>
+
 Alternet Tools include discovery service tools, properties binder and classes generator, concurrent and locking tools, and more.
 
 ## Maven import

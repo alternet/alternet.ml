@@ -1,4 +1,4 @@
-  .navbar.affix {
+.navbar.affix {
     top: 50px;
   }
 
@@ -13,4 +13,8 @@ a[name]:before {
     content:""; 
     height:9px; 
     margin:-9px 0 0; 
+}
+
+.commit-tease {
+    display: none
 }
