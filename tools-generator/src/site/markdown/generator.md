@@ -1,3 +1,7 @@
+<div class="nopub">
+<a href="http://alternet.ml/alternet-libs/tools-generator/generator.html">
+Published version of this page available HERE</a></div>
+
 # Alternet Tools - Generator
 
 This generator serves to create an instance of an interface. Its methods won't be implemented.

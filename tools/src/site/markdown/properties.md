@@ -238,6 +238,22 @@ The password should not be left as-is in that template, replace the value by `**
 db.account.password = *****
 </pre></div>
 
+<div class="alert alert-info" role="alert">
+Instead of getting a <code>char[]</code> field, it is possible to get a <code><a href="../apidocs/ml/alternet/security/Password.html">ml.alternet.security.Password</a></code>.
+To achieve this, simply add the Maven declaration in your build :
+
+<pre>
+&lt;dependency&gt;
+    &lt;groupId&gt;ml.alternet&lt;/groupId&gt;
+    &lt;artifactId&gt;alternet-security&lt;/artifactId&gt;
+    &lt;version>1.0&lt;/version&gt;
+&lt;/dependency&gt;
+</pre>
+
+You also have to write your own adapter (see below). Note that since such password live aside the application in a configuration file, using that secure password has not so much advantages. Note also that they will be built from a <code>java.lang.String</code>, not from a <code>char[]</code>.
+
+</div>
+
 <a name="adapters"></a>
 
 #### Other types, adapters, and other directives
@@ -652,7 +668,7 @@ account.password = thePassword
 Accessing a property in your Java program remains unchanged :
 
 ```java
-    if ("admin".equals(conf.db.account.login) {
+    if ("admin".equals(conf.db.account.login)) {
         // TODO
     }
 ```

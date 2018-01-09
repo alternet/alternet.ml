@@ -50,6 +50,7 @@
             <item name="Alternet Security" href="security/index.html" />
             <item name="Alternet Tools" href="tools/index.html" />
             <item name="Alternet Tools - Generator" href="tools-generator/index.html" />
+            <item name="Properties Binder Maven Plugin" href="prop-bind-maven-plugin/index.html" />
         </menu>
         <menu name="Maven reports" ref="reports" inherit="bottom" />
     </body>

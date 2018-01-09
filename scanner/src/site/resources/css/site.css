@@ -14,3 +14,7 @@ a[name]:before {
     height:9px; 
     margin:-9px 0 0; 
 }
+
+.nopub {
+    display: none
+}

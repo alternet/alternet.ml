@@ -1,3 +1,7 @@
+<div class="nopub">
+<a href="http://alternet.ml/alternet-libs/security-tomcat-8.0/index.html">
+Published version of this page available HERE</a></div>
+
 # Alternet Security Tomcat
 
 Alternet Security Tomcat is a patch that allow to handle

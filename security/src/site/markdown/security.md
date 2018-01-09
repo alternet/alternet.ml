@@ -1,3 +1,7 @@
+<div class="nopub">
+<a href="http://alternet.ml/alternet-libs/security/security.html">
+Published version of this page available HERE</a></div>
+
 ## Passwords in Java
 
 The [Crypto Specification](http://docs.oracle.com/javase/8/docs/technotes/guides/security/crypto/CryptoSpec.html#PBEEx)

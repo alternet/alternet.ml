@@ -1,3 +1,7 @@
+<div class="nopub">
+<a href="http://alternet.ml/alternet-libs/parsing/parsing.html">
+Published version of this page available HERE</a></div>
+
 # Alternet Parsing
 
 Alternet Parsing is a nice Parsing Expression Grammar framework
@@ -425,7 +429,7 @@ We have all the material to write rules like this :
 
 ```java
     // Expression ::= Sum
-    Rule Expression = is(Sum); // ⛔ you can't write that in Java
+    Rule Expression = is(Sum); // ⛔ you can't write that in Java because Sum is not yet defined
 
     //   Argument ::= FUNCTION     Argument  |   Value   |   LBRACKET      Expression  RBRACKET
     Rule Argument =   FUNCTION.seq(Argument).or( Value ).or( LBRACKET.seq( Expression, RBRACKET ) );
@@ -554,6 +558,7 @@ interchangeable with `$("foo")` with a normal definition.
 
 Now you should be able to write yourself the remaining rules. 
 The complete code of `Calc` grammar is available on Github.
+[`Calc`](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/step1/Calc.java)
 
 #### Direct reference
 
@@ -654,7 +659,7 @@ Here are the changes :
 [14] Argument       ::= FUNCTION '(' Argument ')' | Value | '(' Expression ')'
 </pre></div>
 
-To achieve this, the new grammar have just to extend the previous one :
+To achieve this, the new grammar has just to extend the previous one :
 
 ```java
 public interface Math extends Calc { // 👈 look here, we extend Calc
@@ -683,21 +688,22 @@ it is replacing it :
     Token MULTIPLICATIVE = is(MathMultiplicative.class);
 ```
 
-If the new field has another name, we have to specify which one it is replacing.
+If the new field has another name, we have to specify with the
+[`@Replace`](apidocs/ml/alternet/parser/Grammar.Replace.html) annotation which one it is replacing.
 Below, everywhere `UPPERCASE` appears in the `Calc` grammar, it will
 be replaced by `UPPERCASE_VARIABLE` in the `Math` grammar (and stay unchanged
 in the `Calc` grammar) :
 
 ```java
     // VARIABLE ::= [A-Z] ([A-Z] | DIGIT | '_')*
-    @Replace(field="VARIABLE")
+    @Replace(field="VARIABLE") // because the field below has another name
     Token UPPERCASE_VARIABLE = UPPERCASE.seq(
             UPPERCASE.or(DIGIT, UNDERSCORE).zeroOrMore() )
             .asToken();
 ```
 
 Sometimes, you have to extend several grammars that may have fields with the same name ;
-in this case, you also have to specify the appropriate grammar :
+in this case, you also have to specify the appropriate grammar in the annotation :
 
 ```java
     // FUNCTION ::= 'sin' | 'cos' | 'exp' | 'ln' | 'sqrt' | 'asin' | 'acos'
@@ -767,7 +773,7 @@ public interface ValueTemplate extends Grammar {
 ```
 
 We will learn later about `ExpressionBuilder()`, it is just the handler that we
-create in order to built an AST.
+create in order to build an AST.
 
 This approach is preferable than extending a grammar when the target result
 type differs from the other grammar. In our case, an expression is evaluated
@@ -937,8 +943,8 @@ turn the tokens of a rule to a custom object. Actually, we expect our
 argument the `List` of tokens parsed by the rule and that returns a
 value that can be consumed by the enclosing rule.
 
-Below, the rule will match `aName = aValue` in 3 tokens, and we produced
-a `Parameter` object with the **first** and the **last** tokens ; the `=` token is
+Below, the rule will match `aName = aValue` in 3 tokens (`aName`, `=`, and `aValue`),
+and we produce a `Parameter` object with the **first** and the **last** tokens ; the `=` token is
 ignored, no need to use `.skip()` on it (but you could, it wouldn't change anything).
 
 ```java
@@ -956,7 +962,7 @@ how many tokens will be available, we are streaming the list of tokens.
 Since the `Parameters` rule is made of `Parameter` rules that create new instances
 of our `Parameter` POJO (yes, we have the same name for a rule and our POJO),
 we can safely cast the token value.
-Below, instead of skipping the `COMMA` token, as an alternative we filtered it while
+Below, instead of skipping the `COMMA` token, as an alternative we filter it while
 processing the stream :
 
 ```java
@@ -966,12 +972,10 @@ processing the stream :
     //                          Parameters ::= Parameter    (COMMA     Parameter?)*
     TypedToken<List<Parameter>> Parameters =   Parameter.seq(COMMA.seq(Parameter.optional()).zeroOrMore())
         .asToken(tokens ->
-                tokens.stream()
-                    // drop ","
-                    .filter(t -> t.getRule() != COMMA)
-                    // extract the value as a Parameter object
-                    .map(t -> (Parameter) t.getValue())
-                    .collect(toList())
+              tokens.stream()
+                  .filter(t -> t.getRule() != COMMA)   // drop ","
+                  .map(t -> (Parameter) t.getValue())  // extract the value as a Parameter object
+                  .collect(toList())                   // collect to List<Parameter>
         );
 ```
 
@@ -981,8 +985,8 @@ from which you can extract the rule/token that matched the input
 (`.getRule()`) and the actual value (`.getValue()`). You can aslo
 retrieve the type of the value or set a new value.
 
-Finally, the production of the `Challenge` is obvious.
-It is marked as the main rule of our grammar :
+Finally, the production of the `Challenge` is obvious,
+and it is marked as the main rule of our grammar :
 
 ```java
     //                    Challenge ::= TOKEN     Parameters
@@ -1197,22 +1201,26 @@ In the `Calc` grammar, we enhance the enum class accordingly :
             public java.lang.Number eval(java.lang.Number value) {
                 return Math.sin(value.doubleValue());
             }
-        }, cos {
+        },
+        cos {
             @Override
             public java.lang.Number  eval(java.lang.Number  value) {
                 return Math.cos(value.doubleValue());
             }
-        }, exp {
+        },
+        exp {
             @Override
             public java.lang.Number  eval(java.lang.Number  value) {
                 return Math.exp(value.doubleValue());
             }
-        }, ln {
+        },
+        ln {
             @Override
             public java.lang.Number  eval(java.lang.Number  value) {
                 return Math.log(value.doubleValue());
             }
-        }, sqrt {
+        },
+        sqrt {
             @Override
             public java.lang.Number  eval(java.lang.Number  value) {
                 return Math.sqrt(value.doubleValue());
@@ -1299,7 +1307,7 @@ We just need to map every token to the relevant class, and every rule to the rel
 mappers is to enumerate the mappings :
 
 ```java
-    enum Tokens implements TokenMapper<NumericExpression> {
+    enum CalcTokens implements TokenMapper<NumericExpression> {
         FUNCTION,    // implementation code supplied later
         RAISED,
         ADDITIVE,
@@ -1308,7 +1316,7 @@ mappers is to enumerate the mappings :
         VARIABLE
     }
 
-    enum Rules implements RuleMapper<NumericExpression> {
+    enum CalcRules implements RuleMapper<NumericExpression> {
         Sum,    // implementation code supplied later
         Product,
         Factor
@@ -1331,8 +1339,8 @@ public class ExpressionBuilder extends NodeBuilder<NumericExpression> {
 
     public ExpressionBuilder() {
         super(Calc.$);
-        setTokenMapper(Tokens.class);
-        setRuleMapper(Rules.class);
+        setTokenMapper(CalcTokens.class);
+        setRuleMapper(CalcRules.class);
     }
 
 }
@@ -1351,7 +1359,8 @@ And run the result :
 
 #### Token mappers and rule mappers
 
-What is missing is the implementation of each mapper. The signature of a token mapper is :
+What is missing is the implementation of each mapper `CalcTokens` and `CalcRules`.
+The signature of a token mapper is :
 
 ```java
     Node transform(
@@ -1373,7 +1382,7 @@ They are both very similar, and apply to the `<Node>` type, which is in our buil
 
 * The first parameter contains the **stack** of raw items encountered so far. "Raw" means that they are not yet transformed since the production is performed bottom up.
 The more often the stack doesn't serve the transformation but sometimes it may help to peek the last previous item.
-* The second parameter is the current **token** / **rule***.
+* The second parameter is the current **token** / **rule**.
 * The last parameter contains all the values that are either the **arguments** of the rule to transform, or all the values coming **next** from the token to transform in the context of its enclosed rule. That values can be raw values or transformed values, according to how you process them individually.
 In fact `Value<NumericExpression>` is a wrapper around an object that can be either the raw token or a `NumericExpression`. You are free to supply tokens left as-is or transformed ones, and to get the raw value with `.getSource()` or the transformed one with `.getTarget()`.
 
@@ -1381,11 +1390,11 @@ For example, if a rule defines a comma-separated list of digits, that the input 
 
 Now we can write the mappers, starting with the simplest ones :
 
-* the `VARIABLE` token is just a sequence of characters, we write the `VARIABLE` mapper (with the same name as the token) that
-create a `Variable` instance from our data model with that token :
+* the `VARIABLE` **token** is just a sequence of characters, we write the `VARIABLE` **mapper**
+(with the same name as the token) that create a `Variable` **instance** from our data model with that token :
 
 ```java
-    VARIABLE {
+    VARIABLE { // mapper for : Token VARIABLE = ( (LOWERCASE).or( <etc...> ) .asToken()
         @Override
         public NumericExpression transform(
                 ValueStack<Value<NumericExpression>> stack,
@@ -1401,7 +1410,7 @@ create a `Variable` instance from our data model with that token :
 * the `NUMBER` token is produced in the grammar with `.asNumber()`, we write the `NUMBER` mapper that create a `Constant` instance from our data model with that number token :
 
 ```java
-    NUMBER {
+    NUMBER { // mapper for : Token NUMBER = DIGIT.oneOrMore().asNumber();
         @Override
         public NumericExpression transform(
                 ValueStack<Value<NumericExpression>> stack,
@@ -1417,7 +1426,7 @@ create a `Variable` instance from our data model with that token :
 * the `FUNCTION` token is produced in the grammar with the `Calc.Function` enum class, we write the `FUNCTION` mapper that create a `Function` instance from our data model with that enum value token. In our grammar, functions are taking a single argument, we can retrieve it as the next following value :
 
 ```java
-    FUNCTION {
+    FUNCTION { // mapper for : Token FUNCTION = is(Calc.Function.class);
         @Override
         public NumericExpression transform(
                 ValueStack<Value<NumericExpression>> stack,
@@ -1439,7 +1448,7 @@ we can't do something useful in that mapper : we must delegate the mapping to th
 rule mapper `Factor` :
 
 ```java
-    RAISED {
+    RAISED { // mapper for : Token RAISED = is('^');
         @Override
         public NumericExpression transform(
                 ValueStack<Value<NumericExpression>> stack,
@@ -1452,11 +1461,13 @@ rule mapper `Factor` :
     },
 ```
 
-* the 2 last tokens `ADDITIVE` and `MULTIPLICATIVE` look similar, and produced in the grammar with the `Calc.Additive` and `Calc.Multiplicative` enum classes. They are transformed to
-either `Term<Calc.Additive>` or `Term<Calc.Multiplicative>` ; the grammar say that the token is always followed by an argument :
+* the 2 last tokens `ADDITIVE` and `MULTIPLICATIVE` look similar, and produced
+in the grammar with the `Calc.Additive` and `Calc.Multiplicative` enum classes.
+They are transformed to either `Term<Calc.Additive>` or `Term<Calc.Multiplicative>` ;
+the grammar say that the token is **always** followed by an argument :
 
 ```java
-    ADDITIVE {
+    ADDITIVE { // mapper for : Token ADDITIVE = is(Additive.class);
         @Override
         public NumericExpression transform(
                 ValueStack<Value<NumericExpression>> stack,
@@ -1471,7 +1482,7 @@ either `Term<Calc.Additive>` or `Term<Calc.Multiplicative>` ; the grammar say th
             return term;
         }
     },
-    MULTIPLICATIVE {
+    MULTIPLICATIVE { // mapper for : Token MULTIPLICATIVE = is(Multiplicative.class);
         @Override
         public NumericExpression transform(
                 ValueStack<Value<NumericExpression>> stack,
@@ -1494,7 +1505,7 @@ The last but not the least is to map the rules.
 values are available within the **arguments** :
 
 ```java
-    Factor {
+    Factor { // mapper for : Rule Factor = ...
         @Override
         public NumericExpression transform(
                 ValueStack<Value<NumericExpression>> stack,
@@ -1502,6 +1513,7 @@ values are available within the **arguments** :
                 Deque<Value<NumericExpression>> args)
         {
             // Factor ::= Argument ('^' SignedFactor)?
+            //              base         exponent
             NumericExpression base = args.pollFirst().getTarget();
             Value<NumericExpression> raised = args.peekFirst();
             if (raised != null && raised.isSource() && raised.getSource().getRule() == Calc.RAISED) {
@@ -1517,7 +1529,8 @@ values are available within the **arguments** :
 ```
 
 Note that the `Factor` mapper doesn't necessary give an `Exponent` instance. Sometimes it
-is traversed because it doesn't contain the `^` token.
+is traversed because it doesn't contain the `^` token. In that case we return the
+argument as-is.
 
 Similarly, for the `Sum` and `Product` mappers, the semantic of the grammar allow to traverse
 the counterpart rules without producing the target instances.
@@ -1527,7 +1540,7 @@ term had a sign, or was just an argument, and transform it to conform with the s
 of the target constructor :
 
 ```java
-    Sum {
+    Sum { // mapper for : Rule Sum = ...
         @SuppressWarnings("unchecked")
         @Override
         public NumericExpression transform(
@@ -1561,7 +1574,7 @@ of the target constructor :
 * the `Product` mapper is more simpler :
 
 ```java
-    Product {
+    Product { // mapper for : Rule Product = ...
         @SuppressWarnings("unchecked")
         @Override
         public NumericExpression transform(

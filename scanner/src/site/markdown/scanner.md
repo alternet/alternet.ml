@@ -1,3 +1,7 @@
+<div class="nopub">
+<a href="http://alternet.ml/alternet-libs/scanner/scanner.html">
+Published version of this page available HERE</a></div>
+
 # Alternet Scanner
 
 Alternet Scanner supply means to scan character streams.

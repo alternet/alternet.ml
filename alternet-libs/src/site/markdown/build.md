@@ -34,28 +34,17 @@ The required Maven commands can't be performed at once, since every module will 
 parent project (alternet-libs), whereas publishing the site MUST be done at the very end (and is also driven by
 the parent project).
 
-* Step 1 : build a local site :
+* Step 1 : build the local sites and run the aggregation :
 (run test before site since some reports are aggregated)
 
 ```
-cd [workspace]/ml.alternet/tools-generator/
-mvn clean install site
-cd [workspace]/ml.alternet/tools/
-mvn clean install site
+cd [workspace]/ml.alternet/
+./mvn-site.sh
 ```
 
-If one fails but you want to publish anyway, rinse and repeat :
+(clean alternet-libs, clean install site all subprojects, install site alternet-libs)
 
-```
-mvn -DskipTests install site
-```
-
-Finally, run the aggregation :
-
-```
-cd [workspace]/ml.alternet/alternet-libs
-mvn clean install site
-```
+Tests failures are ignored.
 
 * Step 2 : check the site in the staging directory
 

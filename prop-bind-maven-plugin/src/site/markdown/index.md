@@ -1,3 +1,7 @@
+<div class="nopub">
+<a href="http://alternet.ml/alternet-libs/prop-bind-maven-plugin/index.html">
+Published version of this page available HERE</a></div>
+
 # Alternet Tools - Properties Binder Maven Plugin
 
 This Maven Plugin aims to create a bunch of classes that can be populated by `.properties` files.
