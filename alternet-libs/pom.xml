@@ -30,6 +30,8 @@
         <version.maven-invoker-plugin>3.0.0</version.maven-invoker-plugin>
         <version.maven-jar-plugin>3.0.2</version.maven-jar-plugin>
         <version.maven-javadoc-plugin>2.10.4</version.maven-javadoc-plugin>
+        <version.maven-source-plugin>3.0.1</version.maven-source-plugin>
+        <version.maven-gpg-plugin>1.6</version.maven-gpg-plugin>
         <version.maven-jxr-plugin>2.5</version.maven-jxr-plugin>
         <version.maven-pmd-plugin>3.8</version.maven-pmd-plugin>
         <version.maven-project-info-reports-plugin>2.9</version.maven-project-info-reports-plugin>
@@ -47,6 +49,14 @@
             <id>${project.artifactId}-site</id>
             <url>http://alternet.ml/alternet-libs/</url>
         </site>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
     </distributionManagement>
 
     <scm>
@@ -184,6 +194,33 @@
                             <exclude>${project.basedir}/../tools-generator/download/pjba/jvm_hardcore-p22/03_projects/pjba/01_src/main/**/*.*</exclude>
                         </sourceFileExcludes>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>${version.maven-source-plugin}</version>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>${version.maven-gpg-plugin}</version>
+                    <executions>
+                        <execution>
+                            <id>sign-artifacts</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>sign</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
                 <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
                 <plugin>

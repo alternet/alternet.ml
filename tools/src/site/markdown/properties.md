@@ -334,7 +334,7 @@ gui.colors.foreground = $java.awt.Color #000080
 service.url = https://some-services.example.org/someService
 service.uuid = $java.util.UUID 5da66c77-7062-4b30-97fc-e747eb64570a
 
-db.driver = java:com.fakesql.jdbc.Driver
+db.driver = java:java.sql.Driver
 db.url = "jdbc:fakesql://localhost:3306/localdb?autoReconnect=true"
 db.account.login = theLogin
 db.account.password = *****
@@ -394,6 +394,22 @@ service.status = PENDING | ACTIVE | INACTIVE | DELETED
 
 This will generate the enum `org.example.Conf.Service.Status`.
 
+When the same enum is used several time, we can refer to it with its name, just like other properties that refer to an existing type :
+
+<div class="source"><pre class="prettyprint">
+plugin.status = $org.example.Conf.Service.Status PENDING | ACTIVE | INACTIVE | DELETED
+</pre></div>
+
+(in the last example, the enum has been generated once, next we are referring that existing class with `$`; of course you are not compelled to repeat the values since the type is already define elsewhere, they are here just for documenting the template)
+
+A comma after the enumeration gives a list, e.g :
+
+<div class="source"><pre class="prettyprint">
+plugin.multipleStatus = $org.example.Conf.Service.Status PENDING | ACTIVE | INACTIVE | DELETED, ACTIVE
+</pre></div>
+
+gives a `java.util.List<org.example.Conf.Service.Status>`. That comma can also be set on the enum definition.
+
 Sometimes we expect the enum class to be generated with a different name than the name of the field; below, we don't want an enum named `org.example.Conf.Service.StartState`, we prefer having `org.example.Conf.Service.Status` :
 
 <div class="source"><pre class="prettyprint">
@@ -405,22 +421,6 @@ Sometimes we expect the enum class to be generated in its own file. To achieve t
 <div class="source"><pre class="prettyprint">
 service.status = #org.example.Status PENDING | ACTIVE | INACTIVE | DELETED
 </pre></div>
-
-When the same enum is used several time, we can refer to it with its name, just like other properties that refer to an existing type :
-
-<div class="source"><pre class="prettyprint">
-plugin.status = $org.example.Conf.Service.Status PENDING | ACTIVE | INACTIVE | DELETED
-</pre></div>
-
-`#` means to generate a class, `$` means that we are referring an existing class (in the last example, the enum has been generated once, next we are referring that existing class ; of course you are not compelled to repeat the values since the type is already define elsewhere, they are here just for documenting the template).
-
-A comma after the enumeration gives a list, e.g :
-
-<div class="source"><pre class="prettyprint">
-plugin.multipleStatus = $org.example.Conf.Service.Status PENDING | ACTIVE | INACTIVE | DELETED, ACTIVE
-</pre></div>
-
-gives a `java.util.List<org.example.Conf.Service.Status>`.
 
 <a name="unknownKeys"></a>
 
@@ -509,12 +509,12 @@ gui.window.height = 300
 #### Rules for types
 
 * `#org.example.Gui` means that we want to create a type that will hold all child properties.
-* `$java.awt.Color` means that we refer to an existing type.
+* `$java.awt.Color` means that want a field that refers to an **existing type**.
 * `#Application` means that we want to create a type with that name instead of the name of the property.
 
 Except for renaming, always write classes with their fully qualified name. The Java source generated will take care of classes to import or not.
 
-The directive `. = @Adapter...` is a string that may refer to other types ; those other types have to be explicitely imported with the `. = !` directive.
+The directives `. = @Adapter.map()` are strings that may refer to other types ; those other types have to be explicitly imported with the `. = !org.acme.Foo` directive.
 
 <a name="generator"></a>
 
@@ -586,6 +586,13 @@ It will scan recursively the input directory and generate the Java source code i
 
 Before loading the property file, all the fields are empty (default value for primitives and null for objects), except for booleans that takes as a default value the one present in the template.
 
+If you don't like default values for primitives, use the counterpart boxed type instead :
+
+<div class="source"><pre class="prettyprint">
+# the property will be null if the value is missing in the properties file
+gui.window.width = $java.lang.Integer 500
+</pre></div>
+
 It is possible to use an existing object with default values, and load on it the property file. A typical usage would to use system properties as default values, which allow to pass default values when launching Java : `-Dgui.window.height = 500` :
 
 ```
@@ -641,7 +648,7 @@ account.password = thePassword
 Accessing a property in your Java program remains unchanged :
 
 ```java
-    if (conf.db.account.login.equals("admin") {
+    if ("admin".equals(conf.db.account.login) {
         // TODO
     }
 ```

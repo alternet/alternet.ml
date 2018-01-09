@@ -50,7 +50,7 @@ org.acme.protocols.HttpProtocol
 which can be generated for you with a simple annotation :
 
 ```java
-@LookupKey(forClass=org.acme.protocols.Protocol.class, variant="http")
+@LookupKey(forClass=org.acme.Protocol.class, variant="http")
 public class HttpProtocol implements Protocol {
     // ...
 }

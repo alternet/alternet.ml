@@ -13,10 +13,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Generated;
+import javax.naming.spi.InitialContextFactory;
 import ml.alternet.properties.$;
 import ml.alternet.properties.Binder;
 import ml.alternet.properties.Binder.Adapter;
 import org.example.conf.generated.test.usecases.Conf.SubConf.SubConf_.Status;
+import org.example.conf.generated.test.usecases.ExtEnum;
 import org.example.conf.generated.test.usecases.status.ExtStatus;
 import org.example.conf.handmade.test.Stuff;
 
@@ -25,9 +27,17 @@ import org.example.conf.handmade.test.Stuff;
  *
  * DO NOT EDIT : this class has been generated !
  */
-@Generated(value="ml.alternet.properties.Generator", date="2017-12-29")
+@Generated(value="ml.alternet.properties.Generator", date="2018-01-07")
 public class Conf {
 
+    public Ldap ldap;
+
+    public static class Ldap {
+
+        public Class<InitialContextFactory> initialContextFactory;
+    }
+
+    public List<ExtEnum> listOfExtEnums;
     public String string;
 
     public static class String {
@@ -247,6 +257,7 @@ public class Conf {
 
     }
 
+    public Integer expectedNull;
 
     public static Conf unmarshall(InputStream properties) throws IOException {
         return Binder.unmarshall(

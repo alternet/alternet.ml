@@ -1,5 +1,6 @@
 package ml.alternet.io;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -383,6 +384,49 @@ public class IOUtil {
                 }
             },
         false);
+    }
+
+    /**
+     * Read a resource line by line using UTF-8.
+     *
+     * @param resource The input source.
+     * @return A stream of lines.
+     */
+    public static Stream<String> readLines(InputStream resource) {
+        return readLines(new InputStreamReader(resource, StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Read a resource line by line.
+     *
+     * @param resource The input source.
+     * @return A stream of lines.
+     */
+    public static Stream<String> readLines(Reader resource) {
+        BufferedReader lines = new BufferedReader(resource);
+        return StreamSupport.stream(new Spliterators.AbstractSpliterator<String>(Long.MAX_VALUE,
+                Spliterator.DISTINCT | Spliterator.IMMUTABLE | Spliterator.NONNULL) {
+            @SuppressWarnings("finally")
+            @Override
+            public boolean tryAdvance(Consumer<? super String> action) {
+                try {
+                    String line = lines.readLine();
+                    if (line == null) {
+                        lines.close();
+                        return false;
+                    } else {
+                        action.accept(line);
+                        return true;
+                    }
+                } catch (IOException e) {
+                    try {
+                        lines.close();
+                    } finally {
+                        return Thrower.doThrow(e);
+                    }
+                }
+            }
+        }, false);
     }
 
 }
