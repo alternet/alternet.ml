@@ -1,8 +1,8 @@
-# Alternet Tools
-
-<div class="nopub" style="padding: 10px; color: #586069; background-color: #f1f8ff; border: 1px solid #c8e1ff;">
+<div class="nopub">
 <a href="http://alternet.ml/alternet-libs/tools/index.html">
 Published version of this page available HERE</a></div>
+
+# Alternet Tools
 
 Alternet Tools include discovery service tools, concurrent and locking tools, byte code generator and more.
 

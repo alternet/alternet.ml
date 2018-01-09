@@ -1,8 +1,9 @@
-# Properties binder and class generator
-
-<div class="nopub" style="padding: 10px; color: #586069; background-color: #f1f8ff; border: 1px solid #c8e1ff;">
+<div class="nopub">
 <a href="http://alternet.ml/alternet-libs/tools/properties.html">
 Published version of this page available HERE</a></div>
+
+# Properties binder and class generator
+
 Given a Java property file, allow to populate a counterpart class with typed values.
 
 Also allow to generate the target class, and run that generator as a Maven plugin.
