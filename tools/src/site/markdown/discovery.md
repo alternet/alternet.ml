@@ -1,6 +1,6 @@
 # Discovery Service
 
-<div class="commit-tease">
+<div class="nopub" style="padding: 10px; color: #586069; background-color: #f1f8ff; border: 1px solid #c8e1ff;">
 <a href="http://alternet.ml/alternet-libs/tools/discovery.html">
 Published version of this page available HERE</a></div>
 
