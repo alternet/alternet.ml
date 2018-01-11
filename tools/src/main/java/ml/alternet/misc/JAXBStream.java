@@ -24,6 +24,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.namespace.QName;
+import javax.xml.stream.EventFilter;
 import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
@@ -71,6 +72,7 @@ public class JAXBStream<T> {
     CacheStrategy cacheStrategy;
     Supplier<JAXBStream<T>> rebuilder; // after clearing the cache, the same init parameters have to be rebuilt
     BooleanSupplier cleaner = () -> false; // no cache to clear so far
+    Optional<EventFilter> useFilter = Optional.empty();
 
     /**
      * Initialize a JAXB stream.
@@ -148,6 +150,18 @@ public class JAXBStream<T> {
     }
 
     /**
+     * Set an optional XML filter.
+     *
+     * @param xmlEventFilter To filter the XML input before unmarshalling.
+     *
+     * @return <code>this</code>, for chaining.
+     */
+    public JAXBStream<T> useFilter(EventFilter xmlEventFilter) {
+        this.useFilter = Optional.of(xmlEventFilter);
+        return this;
+    }
+
+    /**
      * Clear the cache, if any. Don't use during reading
      * the stream.
      */
@@ -157,6 +171,7 @@ public class JAXBStream<T> {
             // it's a bit ugly, but it works
             JAXBStream<T> copy = this.rebuilder.get();
             this.cacheStrategy = copy.cacheStrategy;
+            this.useFilter = copy.useFilter;
             // in the copy we lost the reference of the source to "this", let's repair :
             this.source = new StreamSource(((StreamSource) copy.source).input);
             ((StreamSource) this.source).url = ((StreamSource) copy.source).url;
@@ -223,10 +238,19 @@ public class JAXBStream<T> {
                     // useful when the interceptor is a tee that save the XML document to a TMP file
                     InputSource is = interceptor.intercept(input.get());
                     XMLInputFactory xif = XMLInputFactory.newFactory();
-                    XMLEventReader xml = is.getCharacterStream() == null
+                    XMLEventReader xmlSource = is.getCharacterStream() == null
                         ? xif.createXMLEventReader(is.getByteStream())
                         : xif.createXMLEventReader(is.getCharacterStream());
                     Unmarshaller unmarshaller = JAXBContext.newInstance(clazz).createUnmarshaller();
+                    XMLEventReader xml = JAXBStream.this.useFilter.map(
+                            filter -> {
+                                try {
+                                    return xif.createFilteredReader(xmlSource, filter);
+                                } catch (XMLStreamException e) {
+                                    return Thrower.doThrow(e);
+                                }
+                            })
+                            .orElse(xmlSource);
 
                     @Override
                     public boolean tryAdvance(Consumer<? super T> action) {
