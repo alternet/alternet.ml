@@ -17,6 +17,7 @@
         <site.deploy.dir>${project.build.directory}/staging/</site.deploy.dir>
         <github.global.server>alternet.github.io</github.global.server><!-- ref to settings.xml -->
         <github.local.dir>${basedir}/../../alternet/alternet.github.io</github.local.dir>
+        <gpg.executable>gpg2</gpg.executable>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
@@ -41,6 +42,8 @@
         <version.maven-site-plugin>3.6</version.maven-site-plugin>
         <version.maven-surefire-report-plugin>2.20</version.maven-surefire-report-plugin>
         <version.maven-failsafe-plugin>2.20</version.maven-failsafe-plugin>
+        <version.build-helper-maven-plugin>3.0.0</version.build-helper-maven-plugin>
+        <version.maven-deploy-plugin>2.8.2</version.maven-deploy-plugin>
         <version.testng>6.10</version.testng>
     </properties>
 
@@ -246,6 +249,16 @@
                             </goals>
                         </execution>
                     </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>${version.build-helper-maven-plugin}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>${version.maven-deploy-plugin}</version>
                 </plugin>
                 <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
                 <plugin>
@@ -477,17 +490,7 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts-for-release</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
                     </plugin>
                 </plugins>
             </build>
