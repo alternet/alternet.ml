@@ -3,6 +3,7 @@ package ml.alternet.parser.util;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -218,7 +219,7 @@ public abstract class Grammar$ implements Grammar, Initializable {
      * @return The main rule if one has been set
      *      on the grammar or one of its interfaces.
      *
-     * @see MainRule
+     * @see Grammar.MainRule
      */
     @Override
     public java.util.Optional<Rule> mainRule() {
@@ -240,7 +241,7 @@ public abstract class Grammar$ implements Grammar, Initializable {
      *
      * @return The rule <code>(T1 | T2 | T3 ...)*</code>
      *
-     * @see Fragment
+     * @see Grammar.Fragment
      * @see Grammar#tokenizer()
      */
     @Override
@@ -315,12 +316,31 @@ public abstract class Grammar$ implements Grammar, Initializable {
 
     private static class RuleField {
 
-        Rule  rule;
         Field field;
+        Class<? extends Grammar> grammar;
 
-        RuleField(Field field, Rule rule) {
+        public RuleField(Class<? extends Grammar> grammar, Field field) {
             this.field = field;
-            this.rule = rule;
+            this.grammar = grammar;
+        }
+
+        Rule rule() {
+            try {
+                Rule rule = (Rule) field.get(null);
+                if (rule == null) {
+                    // case when Rule r = null;
+                    //        or TheGrammar $ = $(); is not the last field
+                    // -> abort
+                    throw new NullPointerException("A Rule or Token is 'null' in "
+                            + this.grammar + "\n or NOT initialized because the field " + field.getName()
+                            + " is declared AFTER getting the instance of the grammar with $() :"
+                            + "\n all Rule/Token fields MUST be declared before the Grammar field");
+                } else {
+                    return rule;
+                }
+            } catch (IllegalArgumentException | IllegalAccessException e) {
+                return Thrower.doThrow(e);
+            }
         }
 
     }
@@ -329,22 +349,7 @@ public abstract class Grammar$ implements Grammar, Initializable {
         return Arrays.stream(this.grammar.getDeclaredFields())
             .map(field -> {
                 if (Rule.class.isAssignableFrom(field.getType())) {
-                    try {
-                        Rule rule = (Rule) field.get(null);
-                        if (rule == null) {
-                            // case when Rule r = null;
-                            //        or TheGrammar $ = $(); is not the last field
-                            // -> abort
-                            throw new NullPointerException("A Rule or Token is 'null' in "
-                                    + this.grammar + "\n or NOT initialized because the field " + field.getName()
-                                    + " is declared AFTER getting the instance of the grammar with $() :"
-                                    + "\n all Rule/Token fields MUST be declared before the Grammar field");
-                        } else {
-                            return new RuleField(field, rule);
-                        }
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
-                        Thrower.doThrow(e);
-                    }
+                    return new RuleField(this.grammar, field);
                 }
                 return null;
             })
@@ -365,26 +370,26 @@ public abstract class Grammar$ implements Grammar, Initializable {
 
     private void processFields() throws IllegalArgumentException, IllegalAccessException {
         getRuleFields().forEach(rf -> {
-            if (rf.rule.isGrammarField()) {
+            if (rf.rule().isGrammarField()) {
                 throw new IllegalArgumentException("The field \"" + rf.field.getName()
                         + "\" is a direct reference of an existing named rule."
                         + "\nPlease correct your grammar by defining your field as a proxy :"
-                        + "\nRule " + rf.field.getName() + " = is(" + rf.rule.getName() + ");");
+                        + "\nRule " + rf.field.getName() + " = is(" + rf.rule().getName() + ");");
             }
             // set the name of the rule with the name it has in the interface
             String name = rf.field.getName();
-            rf.rule.setName(name);
+            rf.rule().setName(name);
             if (rf.field.getAnnotation(Fragment.class) == null) {
-                rf.rule.setFragment(false);
+                rf.rule().setFragment(false);
             } else { // assume true by default
-                rf.rule.setFragment(true);
+                rf.rule().setFragment(true);
             }
 
             // set fields declaration that are proxies
-            if (rf.rule instanceof Proxy) {
+            if (rf.rule() instanceof Proxy) {
                 // lookup for a method that has the same name as the field
                 // Proxy foo = proxy();
-                Proxy proxy = ((Proxy) rf.rule);
+                Proxy proxy = ((Proxy) rf.rule());
                 try {
                     // static Rule foo() {
                     //     return SomeRule.zeroOrMore();
@@ -418,8 +423,8 @@ public abstract class Grammar$ implements Grammar, Initializable {
                     }
                 }
             }
-            if (rf.rule instanceof Initializable) {
-                ((Initializable) rf.rule).init();
+            if (rf.rule() instanceof Initializable) {
+                ((Initializable) rf.rule()).init();
             }
         });
     }
@@ -446,7 +451,7 @@ public abstract class Grammar$ implements Grammar, Initializable {
                 }
                 return rule;
             };
-            rf.rule.traverse(rf.rule,
+            rf.rule().traverse(rf.rule(),
                     new HashSet<Rule>(),
                     placeholderResolver,
                     r -> r); // apply the changes directly
@@ -457,11 +462,11 @@ public abstract class Grammar$ implements Grammar, Initializable {
                 // find a rule with the same name in the inherited interfaces
                 Arrays.asList(this.grammar.getInterfaces()).stream()
                     .flatMap(c -> Arrays.asList(c.getDeclaredFields()).stream())
-                    .filter(f -> rf.rule.isGrammarField()
-                            && f.getName().equals(rf.rule.getName())
+                    .filter(f -> rf.rule().isGrammarField()
+                            && f.getName().equals(rf.rule().getName())
                             && f.getType().isAssignableFrom(Rule.class))
                     .findFirst()
-                    .ifPresent(f -> addSubstitution(substitutions, f, rf.rule));
+                    .ifPresent(f -> addSubstitution(substitutions, f, rf.rule()));
                     // else it is not a replacement... go on
             } else {
                 // @Replace was set
@@ -480,28 +485,43 @@ public abstract class Grammar$ implements Grammar, Initializable {
                     .findFirst() // with @Replace, we MUST find one
                     .orElseThrow(() -> new NoSuchFieldError("Substitution not found "
                                     + replace + " in " + this.grammar.getClass()));
-                addSubstitution(substitutions, source, rf.rule);
+                addSubstitution(substitutions, source, rf.rule());
             }
         });
 
         // apply the substitutions to all fields
-                        if (! substitutions.isEmpty()) {
-                            BiFunction<Rule, Rule, Rule> substitutionsResolver = (h, r) -> {
-throw new TodoException();
-//                                return r;
-// TODO
+        if (! substitutions.isEmpty()) {
+            BiFunction<Rule, Rule, Rule> substitutionsResolver = (h, from) -> {
+                Rule to = substitutions.get(from);
+// TODO ????????? how to deal with mutal refs ????
+                if (to == null || h == to) { // don't loop to the host !!!
+                    return from; // unchanged
+                } else {
+                    return to; // from -> to
+                }
             };
             Set<Rule> substituted = new HashSet<>();
             getRuleFields().forEach(rf -> {
-                Rule replace = rf.rule.traverse(
-                    rf.rule,
+                Rule replace = rf.rule().traverse(
+                    rf.rule(),
                     substituted,
                     substitutionsResolver,
-                        r -> cloneRule(r)); // keep intact the original rule
-                if (rf.rule != replace) {
+//                    r -> cloneRule(r)); // keep intact the original rule
+                        r -> { if (r == rf.rule()) {
+                                    return  r;
+                                } else { // keep intact the original rule
+                                    return cloneRule(r); } }
+                );
+                if (rf.rule() != replace) {
                     try {
+                        Field modifField = Field.class.getDeclaredField("modifiers");
+                        modifField.setAccessible(true);
+                        final int modifiers = rf.field.getModifiers();
+                        modifField.setInt(rf.field, modifiers & ~Modifier.FINAL);
+                        rf.field.setAccessible(true);
                         rf.field.set(this.grammar, replace);
-                    } catch (IllegalArgumentException | IllegalAccessException e) {
+                        modifField.setInt(rf.field,modifiers);
+                    } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
                         Thrower.doThrow(e);
                     }
                 }
@@ -528,8 +548,8 @@ throw new TodoException();
         );
         // set whitespace policy on each field
         getRuleFields().forEach(rf -> {
-            if (rf.rule instanceof HasWhitespacePolicy) {
-                HasWhitespacePolicy token = (HasWhitespacePolicy) rf.rule;
+            if (rf.rule() instanceof HasWhitespacePolicy) {
+                HasWhitespacePolicy token = (HasWhitespacePolicy) rf.rule();
                 java.util.Optional<Predicate<Integer>> whitespacePolicy = getWhitespacePolicy(
                         rf.field.getAnnotation(Grammar.WhitespacePolicy.class),
                         () -> globalWhitespacePolicy // by default, inherit the default of the grammar
@@ -564,7 +584,7 @@ throw new TodoException();
 //        });
         // don't try to mix this loop with the one above
         HashSet<Rule> traversed = new HashSet<>();
-        getRuleFields().map(rf -> rf.rule).forEach(rule -> {
+        getRuleFields().map(rf -> rf.rule()).forEach(rule -> {
             // optimize for Choice : if all items have the same WSP, remove it and apply it on the choice
             rule.traverse(rule,
                 traversed,

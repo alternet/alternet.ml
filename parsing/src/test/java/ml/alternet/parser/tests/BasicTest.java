@@ -171,7 +171,7 @@ public class BasicTest {
     }
 
     @Test
-    public void escapedBackslasg_Should_matchBackslash() throws IOException {
+    public void escapedBackslash_Should_matchBackslash() throws IOException {
         List<String> list = parseToList("\\\\abc", BasicGrammar.$, BasicGrammar.CHAR);
         assertThat(list).containsExactly("String:\\");
     }

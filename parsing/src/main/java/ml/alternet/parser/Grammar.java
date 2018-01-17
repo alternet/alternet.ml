@@ -1552,22 +1552,15 @@ int n = 0; if (true) {throw new TodoException();} // TODO
          * @throws IllegalArgumentException It this token is
          *      not a char token or doesn't wrap a char token.
          *
-         * @see CharToken#union(CharRange...)
-         * @see CharToken#union(Token...)
-         * @see CharToken#except(CharRange...)
-         * @see CharToken#except(Token...)
+         * @see Grammar.CharToken#union(CharRange...)
+         * @see Grammar.CharToken#union(Token...)
+         * @see Grammar.CharToken#except(CharRange...)
+         * @see Grammar.CharToken#except(Token...)
          * @see TraversableRule.SimpleRule
-         * @see CharToken#unwrap(Token)
+         * @see Grammar.CharToken#unwrap(Token)
          */
         public CharToken unwrap() {
             return CharToken.unwrap(this);
-        }
-
-        @Override
-        public Rule traverse(Rule hostRule, Set<Rule> traversed,
-                BiFunction<Rule, Rule, Rule> transformer, Function<Rule, Rule> targetRule)
-        {
-            return this;
         }
 
     }
@@ -1584,7 +1577,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
      *
      * @author Philippe Poulard
      */
-    class CharToken extends Token {
+    class CharToken extends Token implements TraversableRule.SelfRule {
 
         CharRange charRange;
 
@@ -1803,7 +1796,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
      *
      * @author Philippe Poulard
      */
-    class StringToken extends Token {
+    class StringToken extends Token implements TraversableRule.SelfRule {
 
         String string;
         boolean equal;
@@ -1851,7 +1844,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
      *
      * @see EnumValues
      */
-    class EnumToken<T> extends Token {
+    class EnumToken<T> extends Token implements TraversableRule.SelfRule {
 
         // hierarchy of enum string values by char
         EnumValues<T> values;
@@ -1889,7 +1882,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
      *
      * @author Philippe Poulard
      */
-    class EnumValueToken extends Token {
+    class EnumValueToken extends Token implements TraversableRule.SelfRule {
 
         Enum<?> value;
 
@@ -1920,7 +1913,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
      *
      * @author Philippe Poulard
      */
-    class Number extends Token {
+    class Number extends Token implements TraversableRule.SelfRule {
 
         NumberConstraint constraint;
 
@@ -1969,7 +1962,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
      *
      * @author Philippe Poulard
      */
-    class GrammarToken extends Token {
+    class GrammarToken extends Token implements TraversableRule.SelfRule {
 
         Grammar grammar;
         Supplier<DataHandler<?>> dataHandlerSupplier;

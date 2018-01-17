@@ -30,8 +30,8 @@ public class ExpressionBuilder extends NodeBuilder<NumericExpression> {
 
     public ExpressionBuilder() {
         super(Calc.$);
-        setTokenMapper(Tokens.class);
-        setRuleMapper(Rules.class);
+        setTokenMapper(CalcTokens.class);
+        setRuleMapper(CalcRules.class);
     }
 
     /**
@@ -39,7 +39,7 @@ public class ExpressionBuilder extends NodeBuilder<NumericExpression> {
      *
      * @author Philippe Poulard
      */
-    enum Rules implements RuleMapper<NumericExpression> {
+    enum CalcRules implements RuleMapper<NumericExpression> {
         Sum {
             @SuppressWarnings("unchecked")
             @Override
@@ -122,7 +122,7 @@ public class ExpressionBuilder extends NodeBuilder<NumericExpression> {
      *
      * @author Philippe Poulard
      */
-    enum Tokens implements TokenMapper<NumericExpression> {
+    enum CalcTokens implements TokenMapper<NumericExpression> {
         FUNCTION {
             @Override
             public NumericExpression transform(

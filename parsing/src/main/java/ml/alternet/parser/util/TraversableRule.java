@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -50,7 +51,7 @@ public interface TraversableRule {
      * @param traversed Each time a rule is traversed, it must be stored
      *      in this set to avoid traversing it again during recursion.
      * @param transformer <code>(hostRule, subRule) -&gt; transformedRule</code>
-     *      The function that transform a subrule, must return that argument
+     *      The function that transform a subRule, must return that argument
      *      to keep it unchanged. The hostRule is the nearest enclosing rule
      *      that has a name (that is to say which is a grammar field).
      * @param targetRule <code>(thisRule) -&gt; sameRuleOrClone</code>
@@ -75,13 +76,31 @@ public interface TraversableRule {
     boolean isGrammarField();
 
     /**
+     * Just return this rule when traversing.
+     *
+     * This interface can be used only by subclasses of Rule.
+     *
+     * @author Philippe Poulard
+     */
+    interface SelfRule extends TraversableRule {
+
+        @Override
+        default Rule traverse(Rule hostRule, Set<Rule> traversed,
+                BiFunction<Rule, Rule, Rule> transformer, Function<Rule, Rule> targetRule)
+        {
+            return (Rule) this;
+        }
+
+    }
+
+    /**
      * Algorithm for traversing a single rule : can be used
      * for an out-of-the-box rule as well as for a wrapped rule.
      *
      * This interface can be used only by subclasses of Rule.
      *
      * It supply a default implementation of the
-     * {@link TraversableRule#traverse(Rule, Set, BiFunction, Function)}
+     * {@link #traverse(Rule, Set, BiFunction, Function)}
      * method for such wrappers.
      *
      * @author Philippe Poulard
@@ -107,6 +126,11 @@ public interface TraversableRule {
             return (Rule) target;
         }
 
+        @Override
+        default Stream<Rule> getComposedRules() {
+            return Stream.of(getComponent());
+        }
+
     }
 
     /**
@@ -116,7 +140,7 @@ public interface TraversableRule {
      * This interface can be used only by subclasses of Rule.
      *
      * It supply a default implementation of the
-     * {@link TraversableRule#traverse(Rule, Set, BiFunction, Function)}
+     * {@link #traverse(Rule, Set, BiFunction, Function)}
      * method.
      *
      * @author Philippe Poulard
@@ -152,6 +176,11 @@ public interface TraversableRule {
                 }
             } // else already traversed, then ignored
             return (Rule) target;
+        }
+
+        @Override
+        default Stream<Rule> getComposedRules() {
+            return getComponent().stream();
         }
 
     }

@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collector;
 
-import com.sun.org.apache.xalan.internal.xsltc.runtime.Parameter;
-
 import ml.alternet.parser.EventsHandler.StringValue;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.joining;

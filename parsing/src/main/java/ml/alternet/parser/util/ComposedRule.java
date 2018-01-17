@@ -1,5 +1,9 @@
 package ml.alternet.parser.util;
 
+import java.util.stream.Stream;
+
+import ml.alternet.parser.Grammar;
+
 /**
  * Used for a rule that wraps another rule or that is a
  * combination of several rules.
@@ -23,5 +27,7 @@ public interface ComposedRule<T> {
      * @param component The actual rule(s).
      */
     void setComponent(T component);
+
+    Stream<Grammar.Rule> getComposedRules();
 
 }

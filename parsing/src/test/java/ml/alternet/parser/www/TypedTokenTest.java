@@ -20,7 +20,7 @@ import ml.alternet.parser.tests.BasicTest.BasicGrammar;
 import ml.alternet.parser.www.WAuth.Challenge;
 import org.assertj.core.api.Assertions.*;
 
-public class WAuthTest {
+public class TypedTokenTest {
 
     @Test
     public void wwwChallenge_Should_be_processed() throws IOException {
