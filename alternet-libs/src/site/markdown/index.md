@@ -9,20 +9,20 @@ Alternet Libs provide a bunch of common Java Libraries.
 
 Alternet Libs guides :
 
-* [Alternet Scanner](scanner/scanner.html)
-* [Alternet Security](security/security.html)
-* [Alternet Tools](tools/tools.html)
-* [Alternet Parsing](parsing/parsing.html)
+* [Alternet Tools](tools/index.html) : properties binder, discovery service, misc tools...
+* [Alternet Parsing](parsing/parsing.html) : a nice Parsing Expression Grammar framework
+* [Alternet Scanner](scanner/scanner.html) : a low-level scanner
+* [Alternet Security](security/security.html) : safer passwords handling, authentication framework
 
-Pages :
+Modules :
+
+* [Alternet Tools Generator](tools-generator/generator.html)
+* [Properties Binder Maven Plugin](prop-bind-maven-plugin/index.html)
+
 
 * [Alternet Security Auth](security-auth/index.html)
 * [Alternet Security Jetty](security-jetty-9.1/index.html)
 * [Alternet Security Tomcat](security-tomcat-8.0/index.html)
-
-
-* [Alternet Tools Generator](tools-generator/generator.html)
-* [Properties Binder Maven Plugin](prop-bind-maven-plugin/index.html)
 
 [JavaDoc API documentation](apidocs/index.html)
 

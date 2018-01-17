@@ -1,15 +1,38 @@
+# Grammars and Parsers
+
 <div class="nopub">
 <a href="http://alternet.ml/alternet-libs/parsing/parsing.html">
 Published version of this page available HERE</a></div>
 
-# Alternet Parsing
-
-Alternet Parsing is a nice Parsing Expression Grammar framework
-that includes an Abstract Syntax Tree builder.
+**Alternet Parsing** is a nice [Parsing Expression Grammar](https://en.wikipedia.org/wiki/Parsing_expression_grammar) framework that includes an Abstract Syntax Tree builder.
 
 1. [Overview](#overview)
+    1. [Features](#features)
 2. [Grammar tutorial](#grammar-tutorial)
+    1. [The grammar skeleton](#skeleton)
+    1. [Tokens](#tokens)
+        1. [Enum tokens](#enumTokens)
+        1. [Fragment tokens and composed tokens](#fragments)
+    1. [Rules](#rules)
+        1. [Self rule and deferred rules](#self)
+        1. [Proxy rules](#proxy)
+        1. [Direct reference](#directRef)
+        1. [Handling whitespaces](#whitespaces)
+        1. [Extending grammars and overriding rules](#extending)
+        1. [A grammar as a token](#grammarToken)
+    1. [Grammar with custom token types](#customTypes)
+        1. [The target custom classes](#targetClasses)
+        1. [Skipping tokens](#skip)
+        1. [Mapping tokens](#mapping)
+    1. [Separating the raw grammar and the augmented grammar](#augmented)
 3. [Parsing tutorial](#parsing-tutorial)
+    1. [Parsing an input](#input)
+        1. [The “tokenizer” rule](#tokenizer)
+    1. [Handlers](#handlers)
+    1. [Target data model](#dataModel)
+    1. [AST builder](#ast)
+        1. [Node builder](#nodeBuilder)
+        1. [Token mappers and rule mappers](#mappers)
 
 <a name="overview"></a>
 
@@ -33,20 +56,17 @@ Other Alternet APIs :
 
  * [Alternet Libs](../apidocs/index.html)
 
+<a name="features"></a>
+
 ### Features
 
 Some tools are already existing for designing grammars.
 
-Alternet Parsing takes the bet that you don't want to learn a new DSL (such as with the well-known ANTLR tool),
-and therefore allow you to write your grammar in pure Java code.
+**Alternet Parsing** takes the bet that you don't want to learn a new DSL (such as with the well-known ANTLR tool), and therefore allow you to write your grammar in pure Java code.
 
-A grammar in Alternet Parsing is just an interface, which allow to avoid pollute the code with Java
-modifiers (namely "`public static final`") ; the other benefits with interfaces is that you can have
-multiple inheritence, which allow you to extend by composition new grammars. Overriding a rule is
-as simple as you expect.
+A grammar in **Alternet Parsing** is just an interface, which allow to avoid pollute the code with Java modifiers (namely "`public static final`") ; the other benefits with interfaces is that you can have multiple inheritence, which allow you to extend by composition new grammars. Overriding a rule is as simple as you expect.
 
-A grammar in Alternet Parsing (almost) follows the way rules are written in grammar-formal languages,
-you are not lost by the order rules are written.
+A grammar in **Alternet Parsing** (almost) follows the way rules are written in grammar-formal languages, you are not lost by the order rules are written.
 
 There are 3 main citizens in Alternet Parsing : the [`Grammar`](apidocs/ml/alternet/parser/Grammar.html),
 the [`Rule`](apidocs/ml/alternet/parser/Grammar.Rule.html), and the [`Token`](apidocs/ml/alternet/parser/Grammar.Token.html) (a token is also a rule).
@@ -71,7 +91,7 @@ Alternet Parsing comes with out-of-the-box convenient features such as :
 In this tutorial, we are writing a grammar that allow to parse a simple mathematical expression like this :
 
 <div class="source"><pre class="prettyprint">
-sin(x)*(1+var_12)
+sin( x ) * (1 + var_12)
 </pre></div>
 
 The formal grammar definition looks like this, and we intend to write it in pure Java as close as possible to the original :
@@ -99,10 +119,13 @@ The formal grammar definition looks like this, and we intend to write it in pure
 [19] Sum            ::= SignedTerm (ADDITIVE Product)*
 </pre></div>
 
+Next, we will use our grammar for parsing an expression to our target object tree that can evaluate it.
+
+<a name="skeleton"></a>
+
 ### The grammar skeleton
 
-Let's start with the skeleton of our class. As mentioned earlier, a grammar in Alternet Parsing MUST BE an `interface` ;
-and it has to extend the [`Grammar`](apidocs/ml/alternet/parser/Grammar.html) interface :
+Let's start with the skeleton of our class. As mentioned earlier, a grammar in Alternet Parsing MUST BE an `interface` ; and it has to extend the [`Grammar`](apidocs/ml/alternet/parser/Grammar.html) interface :
 
 ```java
 package org.example.grammar;
@@ -118,12 +141,9 @@ public interface Calc extends Grammar {
 }
 ```
 
-The static import contains all the material useful for building your grammar. If you use an IDE you will have
-it available on autocompletion.
+The static import contains all the material useful for building your grammar. If you use an IDE you will have it available on autocompletion.
 
-As a requirement, the last field of your grammar (actually the only one so far, `$`) must hold an instance of
-your grammar (generated by `$()`), which will allow to parse the input text (we will talk later about that),
-and in some rare cases referring fields through the grammar instance.
+As a requirement, the last field of your grammar (actually the only one so far : `$`) **must** hold an instance of your grammar (generated by [`$()`](apidocs/ml/alternet/parser/Grammar.html#Z:Z:D--)), which will allow to parse the input text (we will talk later about that), and in some rare cases referring fields through the grammar instance.
 
 <div class="alert alert-warning" role="alert">
 <ul>
@@ -132,18 +152,17 @@ and in some rare cases referring fields through the grammar instance.
 </ul>
 </div>
 
+<a name="tokens"></a>
+
 ### Tokens
 
-First, we just need to enumerate the tokens that are part of the grammar. A [`Token`](apidocs/ml/alternet/parser/Grammar.Token.html)
- is just a character, or a sequence of characters, that are terminal values of the grammar, and to which we give a name.
-Therefore, if you look at the mathematical expression, we can identify the left bracket as being the character '(' ;
-in our grammar, we simply add a new field for the left bracket, and a second one for the right bracket :
+First, we just need to enumerate the tokens that are part of the grammar. A [`Token`](apidocs/ml/alternet/parser/Grammar.Token.html) is just a character, or a sequence of characters, that are (the more often) terminal values of the grammar, and to which we give a name. Therefore, if you look at the mathematical expression, we can identify the left bracket as being the character '`(`' ; in our grammar, we simply add a new field for the left bracket, and a second one for the right bracket :
 
 ```java
-    //    LBRACKET   ::= '('
-    Token LBRACKET = is( '(' );
-    //    RBRACKET   ::= ')'
-    Token RBRACKET = is( ')' );
+    //    LBRACKET   ::=  '('
+    Token LBRACKET = is(  '('  ); // this is how we turn that definition to the Java syntax
+    //    RBRACKET   ::=  ')'
+    Token RBRACKET = is(  ')'  );
 ```
 
 You may read it as you write it : the token `LBRACKET` is the character '`(`'.
@@ -156,15 +175,19 @@ Since you are defining those fields in a Java `interface`, no need to specify `p
    Token UNICODE_CHAR_CODE = is(0x1F60E);
    Token UNICODE_CHAR = is("😎".codePointAt(0));
 
-   Token UNICODE_STRING = isOneOf("😎👍🍀");
+   Token UNICODE_STRING = isOneOf("😎☕🍀");
 </pre></div>
 </div>
+
+A token can be defined with one of the numerous static methods of [`Grammar`](apidocs/ml/alternet/parser/Grammar.html).
 
 Similarly, we could define a token for the `sin` function that appears in the mathematical expression :
 
 <div class="source"><pre class="prettyprint">
     Token SIN_FUNCTION = is("sin");
 </pre></div>
+
+<a name="enumTokens"></a>
 
 #### Enum tokens
 
@@ -181,9 +204,7 @@ we can do better. Instead, we are designing an enum class, and create a token ba
 
 Again, you may read it as you write it : the token `FUNCTION` is given by the enum `Function.class`.
 
-Sometimes, a token can't be written as an enum value, because Java names have naming constraints.
-This is the case in our grammar, we want to write an enum class for "+" and "-" but they are invalid
-Java names :
+Sometimes, a token can't be written as an enum value, because Java names have naming constraints. This is the case in our grammar, we want to write an enum class for "`+`" and "`-`" but they are invalid Java names :
 
 ```java
     // ADDITIVE ::= '+' | '-'
@@ -231,12 +252,10 @@ Repeat for the multiplicative token :
     Token MULTIPLICATIVE = is(Multiplicative.class);
 ```
 
-Sometimes, the replacement is generic. Let's consider the XPath grammar :
-if you look at the [XPath specification](https://www.w3.org/TR/xpath/#axes),
-you will find 13 axis that contain a "-" in their names, which is an invalid character in Java names. Instead, we will
-write the values with "_" and replace them in the constructor like this :
+Sometimes, the replacement is generic. Let's consider the XPath grammar : if you look at the [XPath specification](https://www.w3.org/TR/xpath/#axes), you will find 13 axis that contain a "`-`" in their names, which is an invalid character in Java names. Instead, we will write the values with "`_`" and replace them in the constructor like this :
 
 ```java
+    // # From the XPath specification
     // [6] AxisName   ::=   'ancestor' | 'ancestor-or-self' | 'attribute'
     //                    | 'child' | 'descendant' | 'descendant-or-self'
     //                    | 'following' | 'following-sibling' | 'namespace'
@@ -255,30 +274,32 @@ write the values with "_" and replace them in the constructor like this :
 ```
 
 When parsing, the longest value if available will be read from the input. That is to say
-if the input contains "`ancestor-or-self`" the token value get will be `Axis.ancestor_or_self` and
-not jut `Axis.ancestor`. It means that the order of the enum values doesn't matter in the enum class.
-Internally, the tokenizer is smart enough to group commons characters together to avoid
-testing the same sequence several times.
+if the input contains "`ancestor-or-self`" the token value get will be `Axis.ancestor_or_self` and not jut `Axis.ancestor`. It means that the order of the enum values doesn't matter in the enum class. Internally, the tokenizer is smart enough to group commons characters together to avoid testing the same sequence several times.
+
+<a name="fragments"></a>
 
 #### Fragment tokens and composed tokens
 
-Let's go back in our grammar.
+Let's go back to our grammar.
 
-The production of variable names (`var_12` in our example) is made of "_", digits, and lowercase or uppercase characters.
-We can define the expected tokens like this :
+The production of variable names (`var_12` in our example) is made of "`_`", digits, and lowercase or uppercase characters. We can define the expected tokens like this :
 
 ```java
-    //              UNDERSCORE  ::= '_';
-    @Fragment Token UNDERSCORE = is('_');
+    //    UNDERSCORE  ::= '_';
+    @Fragment
+    Token UNDERSCORE = is('_');
 
-    //              UPPERCASE     ::= [A-Z]
-    @Fragment Token UPPERCASE = range('A', 'Z');
+    //    UPPERCASE     ::= [A-Z]
+    @Fragment
+    Token UPPERCASE = range('A', 'Z');
 
-    //              LOWERCASE     ::= [a-z]
-    @Fragment Token LOWERCASE = range('a', 'z');
+    //    LOWERCASE     ::= [a-z]
+    @Fragment
+    Token LOWERCASE = range('a', 'z');
 
-    //              DIGIT     ::= [0-9]
-    @Fragment Token DIGIT = range('0', '9')
+    //    DIGIT     ::= [0-9]
+    @Fragment
+    Token DIGIT = range('0', '9')
             .asNumber();
 
     //    VARIABLE ::= (LOWERCASE  |  UPPERCASE) (LOWERCASE | UPPERCASE | DIGIT | UNDERSCORE)*
@@ -287,27 +308,13 @@ We can define the expected tokens like this :
             .asToken();
 ```
 
-* The production of `Token DIGIT` ends with `.asNumber();`, that is a convenient method to get 
-number values instead of raw strings during parsing.
-* The production of `Token VARIABLE` ends with `.asToken();`. In fact, we have written our first `Rule` but we want to turn the entire
-rule in a simple token. We will examine rules in detail in the next section.
+* The production of `Token DIGIT` ends with [`.asNumber();`](apidocs/ml/alternet/parser/Grammar.Rule.html#asNumber--), that is a convenient method to get number values instead of raw strings during parsing.
+* The production of `Token VARIABLE` ends with [`.asToken();`](apidocs/ml/alternet/parser/Grammar.Rule.html#asToken--). In fact, we have written our first `Rule` but we want to turn the entire rule in a simple token. We will examine rules in detail in the next section.
 * In fact, the `Token VARIABLE` is made of smaller tokens, that are marked as `@Fragment`.
 
-[`@Fragment`](apidocs/ml/alternet/parser/Grammar.Fragment.html) ? A token is not necessary the smallest component of a grammar,
-but rather the smallest *useful* component of a grammar.
-In fact, we have convenient `@Fragment`s tokens that are defined here because they may be used elsewhere. 
-But the real useful part is to have a `VARIABLE` produced by the parser, we don't care that that variable name is made
-of a mix of uppercase, lowercase, digits, and underscore characters (our grammar ensure that it will be the case),
-we just want a variable name.
-If we omit the `@Fragment` annotation, each individual tokens will be produced by the parser and may mask the production
-of a `VARIABLE` token.
-However, when entering a token composed of other tokens, the components will be considered as fragments.
-Setting a `@Fragment` annotation indicates that the target token is not eligible for selection.
+[`@Fragment`](apidocs/ml/alternet/parser/Grammar.Fragment.html) ? A token is not necessary the smallest component of a grammar, but rather the smallest *useful* component of a grammar. In fact, we have convenient `@Fragment`s tokens that are defined here because they may be used elsewhere. But the real useful part is to have a `VARIABLE` produced by the parser, we don't care that that variable name is made of a mix of uppercase, lowercase, digits, and underscore characters (our grammar ensure that it will be the case), we just want a variable name. If we omit the `@Fragment` annotation, each individual token will be produced by the parser and may mask the production of a `VARIABLE` token. However, when entering a token composed of other tokens, the components will be considered as fragments. Setting a `@Fragment` annotation indicates that the target token is not eligible for selection.
 
-We can reuse the previously fragments defined elsewhere by using `.asToken()` if we want a string token, or `.asNumber()` if we want
-a number. A token annotated as fragment will be discarded, except if it is used in a rule exposed itself as a token with `.asToken()`
-or `.asNumber()` : such rule will aggregate the tokens. Be aware that for a rule made of non-fragment tokens, the matched characters
-will be reported twice !
+We can reuse the previously fragments defined elsewhere by using [`.asToken()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asToken--) if we want a string token, or [`.asNumber()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asNumber--) if we want a number. A token annotated as fragment will be discarded, except if it is used in a rule exposed itself as a token with `.asToken()` or `.asNumber()` : such rule will aggregate the tokens. Be aware that for a rule made of non-fragment tokens, the matched characters will be reported twice !
 
 ```java
     // NUMBER  ::= DIGIT+
@@ -330,16 +337,13 @@ As an alternative, you can combine character tokens ([`CharToken`](apidocs/ml/al
 [`CharToken`](apidocs/ml/alternet/parser/Grammar.CharToken.html) contains all the material to define
 and combine by inclusion `union()` or exclusion `except()` other ranges of characters.
 
+<a name="rules"></a>
+
 ### Rules
 
-Now that we are able to split our input into tokens defined in our grammar,
-we can specify the [`Rule`s](apidocs/ml/alternet/parser/Grammar.Rule.html) that tell how the input is structured.
+Now that we are able to split our input into tokens defined in our grammar, we can specify the [`Rule`s](apidocs/ml/alternet/parser/Grammar.Rule.html) that tell how the input is structured.
 
-A rule can be made of other rules and tokens. They are wired together by a connector that can be the alternative connector
-("|" character in most formal grammar languages)  or the sequential connector (a space in most grammars).
-In java, we have counterparts methods
-([`or()`](apidocs/ml/alternet/parser/Grammar.Rule.html#or-ml.alternet.parser.Grammar.Rule...-)
-and [`seq()`](apidocs/ml/alternet/parser/Grammar.Rule.html#seq-ml.alternet.parser.Grammar.Rule...-)) for that.
+A rule can be made of other rules and tokens. They are wired together by a connector that can be the alternative connector ("|" character in most formal grammar languages)  or the sequential connector (a space in most grammars). In java, we have counterparts methods ([`or()`](apidocs/ml/alternet/parser/Grammar.Rule.html#or-ml.alternet.parser.Grammar.Rule...-) and [`seq()`](apidocs/ml/alternet/parser/Grammar.Rule.html#seq-ml.alternet.parser.Grammar.Rule...-)) for that.
 
 ```java
     //   Value ::=  NUMBER  |  VARIABLE
@@ -387,8 +391,7 @@ or more consicely :
     Rule MyRule   = T1.seq(T2, T3, T4, T5);
 ```
 
-The thing to notice when writing grammars in Alternet Parsing, is that you write rules in the same order
-where they appear in the formal grammar language.
+The thing to notice when writing grammars in *Alternet Parsing*, is that you write rules in the same order where they appear in the formal grammar language.
 
 Rule parts can be combined together, and combined with operators such as * ? or +, that have their counterpart Java methods :
 
@@ -406,11 +409,7 @@ Rule parts can be combined together, and combined with operators such as * ? or 
     Rule RuleE = T1.optional().or(T2).oneOrMore();
 ```
 
-Notice how we wrote the 2 last rules. Remember that we are expressing rules in the Java language,
-and that the "." (dot) operator in Java applies a method on the previously given object. Therefore,
-when we write `.or( T2.oneOrMore() )` the `oneOrMore()` method applies on `T2` only, and when we
-write `.or(T2).oneOrMore()` this time the `oneOrMore()` method applies to the result of the `or()`
-connector to which `T2` was connected, that is to say an optional `T1`.
+Notice how we wrote the 2 last rules. Remember that we are expressing rules in the Java language, and that the "`.`" (dot) operator in Java applies a method on the previously given object. Therefore, when we write `.or( T2.oneOrMore() )` the `oneOrMore()` method applies on `T2` only, and when we write `.or(T2).oneOrMore()` this time the `oneOrMore()` method applies to the result of the `or()` connector to which `T2` was connected, that is to say an optional `T1`.
 
 Now we are able to write such rules, and when necessary to turn rules in tokens :
 
@@ -421,9 +420,11 @@ Now we are able to write such rules, and when necessary to turn rules in tokens 
             .asToken();
 ```
 
+<a name="self"></a>
+
 #### Self rule and deferred rules
 
-Let's go back in our grammar.
+Let's go back to our grammar.
 
 We have all the material to write rules like this :
 
@@ -482,10 +483,11 @@ definition of the field `Argument` :
 
 (at this time we assume that `SignedTerm` and `Product` have been already defined).
 
+<a name="proxy"></a>
+
 #### Proxy rules
 
-If you are in trouble by writing `$("Sum")` (which reduce the ease of reading), you can instead
-define it previously by being a proxy rule:
+If you are in trouble by writing `$("Sum")` (which reduce the ease of reading), you can instead define it previously by being a [`Proxy`](apidocs/ml/alternet/parser/Grammar.Proxy.html) rule:
 
 ```java
     Proxy Sum = $(); // we expect a definition later
@@ -495,8 +497,7 @@ define it previously by being a proxy rule:
     Rule Argument =   FUNCTION.seq( $self ).or( Value ).or( LBRACKET.seq( Expression, RBRACKET ) );
 ```
 
-...and later in the grammar, you supply its definition when appropriate.
-You can write it in 3 different flavors, plus the possibility to write it inline :
+...and later in the grammar, you supply its definition when appropriate. You can write it in 3 different flavors, plus the possibility to write it inline :
 
 * The former writing consist on mimicking a static block :
 
@@ -509,11 +510,9 @@ You can write it in 3 different flavors, plus the possibility to write it inline
 ```
 
 Why do we have a boolean ? In fact we just want to set a value to `Sum`, but since it has
-already been defined before, this writing is just a convenient way with Java to supply its value ;
-since an interface can't have static blocks, we are creating a dummy field `b1`.
+already been defined before, this writing is just a convenient way with Java to supply its value ; since an interface can't have static blocks, we are creating a dummy field `b1`.
 
-* The second writing consist on declaring a STATIC method that has the same name of the field, actually `Sum()`,
-that return the actual rule.
+* The second writing consist on declaring a STATIC method that has the same name of the field, actually `Sum()`, that return the actual rule.
 
 ```java
     // Sum ::= SignedTerm (ADDITIVE Product)*
@@ -522,22 +521,16 @@ that return the actual rule.
     }
 ```
 
-* The latter writing consist on declaring a property that has the same name of the field prepend with $,
-actually `$Sum`, this property being a supplier of the expected rule.
+* The latter writing consist on declaring a property that has the same name of the field prepend with $, actually `$Sum`, this property being a supplier of the expected rule.
 
 ```java
     // Sum ::= SignedTerm (ADDITIVE Product)*
     Supplier<Rule> $Sum = () -> SignedTerm.seq(ADDITIVE.seq(Product).zeroOrMore());
 ```
 
-* Alternatively, you can also supply the definition *inline*, at the place the rule
-field is declared. In that case, each field not yet defined in the grammar has to be 
-taken from the grammar class ; in our example the fields `SignedTerm` and 
-`Product` have not yet been defined, and we must refer them as class members :
-`Calc.SignedTerm` and `Calc.Product`.
+* Alternatively, you can also supply the definition *inline*, at the place the rule field is declared. In that case, each field not yet defined in the grammar has to be taken from the grammar class ; in our example the fields `SignedTerm` and `Product` have not yet been defined, and we must refer them as class members : `Calc.SignedTerm` and `Calc.Product`.
 
-Unlike previously, we don't get null values because the supplier is a deferred 
-method that will set the rule definition after all fields initialization :
+Unlike previously, we don't get null values because the supplier is a deferred method that will set the rule definition after all fields initialization :
 
 ```java
     // Sum ::= SignedTerm (ADDITIVE Product)*
@@ -550,15 +543,13 @@ method that will set the rule definition after all fields initialization :
     Rule Argument =   FUNCTION.seq( $self ).or( Value ).or( LBRACKET.seq( Expression, RBRACKET ) );
 ```
 
-The advantage of this writing is that the rule is defined in place,
-but at the cost of extra syntax.
+The advantage of this writing is that the rule is defined in place, but at the cost of extra syntax.
 
-Choose your style of writing : `$()` with its inline or deferred assignment is 
-interchangeable with `$("foo")` with a normal definition.
+Choose your style of writing : `$()` with its inline or deferred assignment is interchangeable with `$("foo")` with a normal definition.
 
-Now you should be able to write yourself the remaining rules. 
-The complete code of `Calc` grammar is available on Github.
-[`Calc`](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/step1/Calc.java)
+Now you should be able to write yourself the remaining rules. The complete code of `Calc` grammar is available on Github. [`Calc`](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/step1/Calc.java)
+
+<a name="directRef"></a>
 
 #### Direct reference
 
@@ -576,9 +567,9 @@ you might wonder why we didn't write it like that :
     Rule Expression = Sum; // ⛔ you will have an error
 ```
 
-The engine won't let you write that and reject such grammar. Rules must hold
-a specific value, not identical values because if one rule was annotated, it would
-affect both fields.
+The engine won't let you write that and reject such grammar. Rules must hold a specific value, not identical values because if one rule was annotated, it would affect both fields.
+
+<a name="whitespaces"></a>
 
 #### Handling whitespaces
 
@@ -588,10 +579,9 @@ In fact, we would like to parse inputs like this :
 sin (x) * ( 1 + var_12 )
 ```
 
-So simple in Alternet Parsing ;)
+So simple in Alternet Parsing ;) with [`@WhitespacePolicy`](../scanner/apidocs/ml/alternet/parser/Grammar.WhitespacePolicy.html)
 
-By default, whitespaces are left as-is, but if you want to ignore them,
-simply set this annotation to your grammar :
+By default, whitespaces are left as-is, but if you want to ignore them, simply set this annotation to your grammar :
 
 ```java
 @WhitespacePolicy(preserve=false, isWhitespace=ml.alternet.scan.JavaWhitespace.class)
@@ -615,12 +605,9 @@ public interface Calc extends Grammar {
 }
 ```
 
-Another kind of whitespaces are pre-defined, it is `ml.alternet.scan.XMLWhitespace.class` but
-you can write your own class, it just has to implement `Predicate<Character>>`.
+Another kind of whitespaces are pre-defined, it is [`ml.alternet.scan.XMLWhitespace.class`](apidocs/ml/alternet/scan/XMLWhitespace.html) but you can write your own class, it just has to implement `Predicate<Character>`.
 
-But wait, setting the `@WhitespacePolicy` annotation on the grammar affect every token.
-It's nice for the `NUMBER` token, but not appropriate for what it is made of, the `DIGIT` tokens.
-In the grammar, we have to change accordingly on its declaration :
+But wait, setting the `@WhitespacePolicy` annotation on the grammar affect every token. It's nice for the `NUMBER` token, but not appropriate for what it is made of, the `DIGIT` tokens. In the grammar, we have to change accordingly on its declaration :
 
 ```java
     // DIGIT ::= [0-9]
@@ -632,9 +619,9 @@ In the grammar, we have to change accordingly on its declaration :
             .asNumber();
 ```
 
-Now, whereas `NUMBER` inherit the whitespace policy defined by the grammar, `DIGIT` override it
-with its own requirements. In our grammar we are setting `@WhitespacePolicy(preserve=true)` on
-other fragments tokens, actually `UPPERCASE`, `LOWERCASE`, and `UNDERSCORE`.
+Now, whereas `NUMBER` inherit the whitespace policy defined by the grammar, `DIGIT` override it with its own requirements. In our grammar we are setting `@WhitespacePolicy(preserve=true)` on other fragments tokens, actually `UPPERCASE`, `LOWERCASE`, and `UNDERSCORE`.
+
+<a name="extending"></a>
 
 #### Extending grammars and overriding rules
 
@@ -671,10 +658,9 @@ public interface Math extends Calc { // 👈 look here, we extend Calc
 }
 ```
 
-Then it have to contain the new definitions.
+Then it has to contain its new definitions.
 
-If the new field have the same name as an existing field in the other grammar,
-it is replacing it :
+If the new field have the same name as an existing field in the other grammar, it is replacing it :
 
 ```java
     // MULTIPLICATIVE ::= '×' | '÷'
@@ -714,8 +700,7 @@ in this case, you also have to specify the appropriate grammar in the annotation
     Token ADVANCED_FUNCTION = is(MathFunction.class);
 ```
 
-You don't need to rewrite the rules where those new definitions are used, they will
-be replaced in the new grammar. Of course, the original grammar will stay unchanged.
+You don't need to rewrite the rules where those new definitions are used, they will be replaced in the new grammar. Of course, the original grammar will stay unchanged.
 
 Here is a parsing example with each grammar :
 
@@ -724,20 +709,19 @@ Here is a parsing example with each grammar :
     Math.$.parse(Scanner.of("asin( X ) × ( 1 + VAR_12 )"), handler);
 ```
 
+<a name="grammarToken"></a>
+
 #### A grammar as a token
 
-Sometimes it is preferable to expose a grammar as a token rather than extending an
-existing grammar.
+Sometimes it is preferable to expose a grammar as a token rather than extending an existing grammar.
 
-For example, imagine that our expression `sin( x ) * ( 1 + var_12 )` always appear in fact
-in value templates, delimited with `{` and `}` like this :
+For example, imagine that our expression `sin( x ) * ( 1 + var_12 )` always appear in fact in value templates, delimited with `{` and `}` like this :
 
 <div class="source"><pre class="prettyprint">
 the result of the expression sin(x)*(1+var_12) is { sin(x)*(1+var_12) } !
 </pre></div>
 
-Everything between the curly braces is the expression, and everything around is just text,
-and after parsing and evaluating, we expect an output like this :
+Everything between the curly braces is the expression, and everything around is just text, and after parsing and evaluating, we expect an output like this :
 
 <div class="source"><pre class="prettyprint">
 the result of the expression sin(x)*(1+var_12) is 42 !
@@ -745,8 +729,7 @@ the result of the expression sin(x)*(1+var_12) is 42 !
 
 (as an exercise you can find a couple for x and var_12 that gives 42)
 
-To achieve this, we need a new grammar, but instead of extending our `Calc` grammar,
-we simply expose it as a token :
+To achieve this, we need a new grammar, but instead of extending our `Calc` grammar, we simply expose it as a token :
 
 ```java
 public interface ValueTemplate extends Grammar {
@@ -772,24 +755,22 @@ public interface ValueTemplate extends Grammar {
 }
 ```
 
-We will learn later about `ExpressionBuilder()`, it is just the handler that we
-create in order to build an AST.
+We will learn later about `ExpressionBuilder()`, it is just the handler that we create in order to build an AST.
 
-This approach is preferable than extending a grammar when the target result
-type differs from the other grammar. In our case, an expression is evaluated
-to a number, whereas a value template expression is evaluated to a string.
+This approach is preferable than extending a grammar when the target result type differs from the other grammar. In our case, an expression is evaluated to a number, whereas a value template expression is evaluated to a string.
 
 In the next section we will learn how to build a custom data model.
 
+<a name="customTypes"></a>
+
 ### Grammar with custom token types
 
-A token value represent the input characters that are parsed.
-We have seen before that a token value may have various types :
+A **token value** represent the input characters that are parsed. We have seen before that a token value may have various types :
 
-* a single character : this is the default behaviour. E.g. `"("`
-* a string : this is also the default behaviour when a sequence is matched. E.g. `"var_12"`
-* a number : when it is specified by `.asNumber()`. E.g. `123.45`
-* an enum value : when the token is defined with an enum class. E.g. `Axis.ancestor_or_self`
+* **a single character** : this is the default behaviour. E.g. `"("`
+* **a string** : this is also the default behaviour when a sequence of characters is matched. E.g. `"var_12"`
+* **a number** : when it is specified by [`.asNumber()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asNumber--). E.g. `123.45`
+* **an enum value** : when the token is defined with an enum class. E.g. `Axis.ancestor_or_self`
 
 It is also possible to specify in the grammar :
 
@@ -815,6 +796,8 @@ WWW-Authenticate: Bearer realm="FooCorp", error=invalid_token, error_description
 We will design our `WAuth` grammar and our custom result objects, say
 the `Challenge` class for the global result and the `Parameter` class
 for each {name, value} pair.
+
+<a name="targetClasses"></a>
 
 #### The target custom classes
 
@@ -850,7 +833,7 @@ public class Challenge {
 
 #### The WAuth grammar
 
-Now, the grammar :
+Now, the grammar (using the "Augmented BNF" syntax, see §2.1 in [RFC-2616](https://www.ietf.org/rfc/rfc2616.txt)) :
 
 ```
     # from RFC-2617 (HTTP Basic and Digest authentication)
@@ -859,7 +842,7 @@ Now, the grammar :
     auth-scheme    = token
     auth-param     = token "=" ( token | quoted-string )
 
-    # from RFC2616 (HTTP/1.1)
+    # from RFC-2616 (HTTP/1.1)
 
     token          = 1*<any CHAR except CTLs or separators>
     separators     = "(" | ")" | "<" | ">" | "@"
@@ -870,6 +853,8 @@ Now, the grammar :
     qdtext         = <any TEXT except <">>
     quoted-pair    = "\" CHAR
 ```
+
+<a name="skip"></a>
 
 #### Skipping tokens
 
@@ -903,21 +888,12 @@ public interface WAuth extends Grammar {
 ```
 
 We defined various tokens as ranges of characters, and tokens made of other tokens.
-`$any` is a built-in token that matches any character. Remember that
-as soon as you use modifiers such as `.oneOrMore()` or combiners
-such as `.seq()` you get a `Rule`, but you can turn it back to a
-`Token` with `.asToken()`.
-Notice that the `BACKSLASH` token is skipped with `.skip()`.
-It means that the handler won't ever received this token,
-but the grammar ensure that the following character is properly
-escaped, and that the relevant value received is properly
-stripped from the `\` character.
 
-Conversely, the `DOUBLE_QUOTE` token is not skipped at the token
-definition, because sometimes it stands for a delimiter (and in 
-that case it has to be removed), and some other times it stands for 
-itself (as `"`). Therefore, we use `.skip()` at the places we don't
-want to get `"` as data :
+* [`$any`](apidocs/ml/alternet/parser/Grammar.html#Z:Z:Dany) is a built-in token that matches any character.
+* Remember that as soon as you use modifiers such as [`.oneOrMore()`](apidocs/ml/alternet/parser/Grammar.Rule.html#oneOrMore--) or combiners such as [`.seq()`](apidocs/ml/alternet/parser/Grammar.Rule.html#seq-ml.alternet.parser.Grammar.Rule...-) you get a `Rule`, but you can turn it back to a `Token` with [`.asToken()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asToken--).
+* The `BACKSLASH` token is skipped with [`.skip()`](apidocs/ml/alternet/parser/Grammar.Rule.html#skip--). It means that the handler won't ever receive this token, but the grammar ensure that the following character is properly escaped, and that the relevant value received is properly stripped from the `\` character.
+
+Conversely, the `DOUBLE_QUOTE` token is not skipped at the token definition, because sometimes it stands for a delimiter (and in that case it has to be removed), and some other times it stands for itself (as `"`). Therefore, we use [`.skip()`](apidocs/ml/alternet/parser/Grammar.Rule.html#skip--) at the places we don't want to get `"` as data :
 
 ```java
     @WhitespacePolicy(preserve=true)
@@ -933,19 +909,21 @@ want to get `"` as data :
     @Fragment Token EQUAL = is('=');
 ```
 
+<a name="mapping"></a>
+
 #### Mapping tokens
 
-We already used `.asNumber()` for getting a number value and `.asToken()`
-for turning a rule to a token ; now we will use `.asToken(mapper)` to
-turn the tokens of a rule to a custom object. Actually, we expect our
-`Parameter` object, and we have a special type for the counterpart definition :
-`TypedToken<Parameter>`. The mapper is just a function that takes as
-argument the `List` of tokens parsed by the rule and that returns a
-value that can be consumed by the enclosing rule.
+Instead of having `String`s or `Numbers`s, we expect having our types (yes, fields and types may have the same name) :
 
-Below, the rule will match `aName = aValue` in 3 tokens (`aName`, `=`, and `aValue`),
-and we produce a `Parameter` object with the **first** and the **last** tokens ; the `=` token is
-ignored, no need to use `.skip()` on it (but you could, it wouldn't change anything).
+| Field name      | Type expected     |
+| --------------- |:-----------------:|
+| `Parameter`     | `Parameter`       |
+| `Parameters`    | `List<Parameter>` |
+| `Challenge`     | `Challenge`       |
+
+We already used [`.asNumber()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asNumber--) for getting a number value and [`.asToken()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asToken--) for turning a rule to a token ; now we will use [`.asToken(mapper)`](apidocs/ml/alternet/parser/Grammar.Rule.html#asToken-java.util.function.Function-) to turn the tokens of a rule to a custom object. Actually, we expect our `Parameter` object, and we have a special type for the counterpart definition : [`TypedToken<Parameter>`](apidocs/ml/alternet/parser/Grammar.TypedToken.html). The mapper is just a function that takes as argument the `List` of tokens parsed by the rule and that returns a value that can be consumed by the enclosing rule.
+
+Below, the rule will match `aName = aValue` in 3 tokens (`aName`, `=`, and `aValue`), and we produce a `Parameter` object with the **first** and the **last** tokens ; the `=` token is ignored, no need to use [`.skip()`](apidocs/ml/alternet/parser/Grammar.Rule.html#skip--) on it (but you could, it wouldn't change anything).
 
 ```java
     //                    Parameter ::= TOKEN     EQUAL  ParameterValue
@@ -957,13 +935,7 @@ ignored, no need to use `.skip()` on it (but you could, it wouldn't change anyth
         ));
 ```
 
-Similarly, a list of parameters can be produced easily, but since we don't know
-how many tokens will be available, we are streaming the list of tokens.
-Since the `Parameters` rule is made of `Parameter` rules that create new instances
-of our `Parameter` POJO (yes, we have the same name for a rule and our POJO),
-we can safely cast the token value.
-Below, instead of skipping the `COMMA` token, as an alternative we filter it while
-processing the stream :
+Similarly, a list of parameters can be produced easily, but since we don't know how many tokens will be available in that list, we are streaming the list of tokens. Since the <tt>Parameter<b>s</b></tt> rule is made of `Parameter` rules that create new instances of our `Parameter` POJO (yes, we have the same name for a rule and our POJO), we can safely cast the token value. Below, instead of skipping the `COMMA` token, as an alternative we filter it while processing the stream :
 
 ```java
     @WhitespacePolicy
@@ -979,11 +951,7 @@ processing the stream :
         );
 ```
 
-It's worth to mention that the tokens available in the list are
-instances of [`TokenValue<V>`](apidocs/ml/alternet/parser/EventsHandler.TokenValue.html)
-from which you can extract the rule/token that matched the input
-(`.getRule()`) and the actual value (`.getValue()`). You can aslo
-retrieve the type of the value or set a new value.
+It's worth to mention that the tokens available in the list are instances of [`TokenValue<V>`](apidocs/ml/alternet/parser/EventsHandler.TokenValue.html) from which you can extract the rule/token that matched the input ([`.getRule()`](apidocs/ml/alternet/parser/EventsHandler.RuleEvent.html#getRule--)) and the actual value ([`.getValue()`](apidocs/ml/alternet/parser/EventsHandler.TokenValue.html#getValue--)). You can aslo retrieve the type of the value or set a new value.
 
 Finally, the production of the `Challenge` is obvious,
 and it is marked as the main rule of our grammar :
@@ -1021,9 +989,80 @@ indicates when set to `true` to consume all the characters from the input
 (it would be a failure if some characters remain at the end).
 
 
+<a name="augmented"></a>
+
+### Separating the raw grammar and the augmented grammar
+
+In the previous example, we made an augmented grammar as a whole ("augmented" means augmented with our custom classes). Imagine that somebody want to use our grammar but using its own classes ; he had to rewrite all the augmented rules + its own mappings, whereas it would be better if he had to write only its own mappings. We need a clean separation of the "raw" grammar that only deal with scalar and enum values, and the "augmented" grammar that uses our objects.
+
+First, let's clean the grammar in order to get back a raw grammar :
+
+```java
+public interface WAuth extends Grammar {
+
+    // all the tokens are defined here as shown previously...
+
+    // Parameter ::= TOKEN     EQUAL  ParameterValue
+    Rule Parameter = TOKEN.seq(EQUAL, ParameterValue);
+
+    // Parameters ::= Parameter (COMMA Parameter?)*
+    Rule Parameters = Parameter.seq(COMMA.seq(Parameter.optional()).zeroOrMore());
+
+    // Challenge ::= TOKEN     Parameters
+    @MainRule
+    Rule Challenge = TOKEN.seq(Parameters);
+
+    WAuth $ = $();
+
+}
+```
+
+Now we can extend it in a second grammar with our own mappings :
+
+```java
+public interface WAuthAugmented extends WAuth {
+
+    //            augment Parameter from the rule of the raw grammar
+    TypedToken<Parameter> Parameter = WAuth.Parameter
+        .asToken(tokens ->
+            new Parameter(
+                    tokens.getFirst().getValue(), // TOKEN
+                    tokens.getLast().getValue()   // ParameterValue
+        ));
+
+    //                  augment Parameters from the rule of the raw grammar
+    TypedToken<List<Parameter>> Parameters = WAuth.Parameters
+        .asToken(tokens ->
+                tokens.stream()
+                    // drop ","
+                    .filter(t -> t.getRule() != COMMA)
+                    // extract the value as a Parameter
+                    .map(t -> (Parameter) t.getValue())
+                    .collect(toList())
+        );
+
+    @MainRule
+    //            augment Challenge from the rule of the raw grammar
+    TypedToken<Challenge> Challenge = WAuth.Challenge
+        .asToken(tokens -> new Challenge(
+                tokens.removeFirst().getValue(),
+                tokens.removeFirst().getValue())
+            );
+
+    WAuthAugmented $ = $();
+
+}
+```
+
+That way your users may use either the raw grammar, the augmented grammar with your classes, or their own augmented grammar with their own classes.
+
+It is certainly a good practice to follow this pattern to make your grammar really reusable.
+
 <a name="parsing-tutorial"></a>
 
 ## Parsing tutorial
+
+<a name="input"></a>
 
 ### Parsing an input
 
@@ -1058,6 +1097,8 @@ If the `parse()` method is invoked without specifying any rule, the main rule wi
     Calc.$.parse(Scanner.of(input), handler);
 ```
 
+<a name="tokenizer"></a>
+
 #### The "tokenizer" rule
 
 A special rule is available in every grammar, it is the rule that takes all the tokens that are not fragment :
@@ -1071,6 +1112,8 @@ A special rule is available in every grammar, it is the rule that takes all the 
 The tokenizer will match tokens regardlesss the structure, therefore inputs badly structured can be parsed,
 but you will be sure that the input is made of valid tokens.
 
+<a name="handlers"></a>
+
 ### Handlers
 
 Alternet Parsing comes with out-of-the-box [`Handler`s](apidocs/ml/alternet/parser/Handler.html)
@@ -1081,6 +1124,8 @@ that can receive the result of the parsing, that will be handy for processing th
 
 The [AST package](apidocs/ml/alternet/parser/ast/package-summary.html) contains helper classes to build
 an abstract syntax tree while parsing.
+
+<a name="dataModel"></a>
 
 ### Target data model
 
@@ -1299,6 +1344,8 @@ In the `Calc` grammar, we enhance the enum class accordingly :
 
 Here is the complete code of [`NumericExpression`](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/step4/NumericExpression.java)
 
+<a name="ast"></a>
+
 ### AST builder
 
 As mentionned previously, a node builder can be designed from our `Calc` grammar instance.
@@ -1330,6 +1377,8 @@ which means that their tokens will be simply pass to the enclosing rule. Tokens 
 as well as tokens that are aggregated (enclosed in a rule exposed as a token with `.asToken(...)`) are
 not present either in the mappings.
 
+<a name="nodeBuilder"></a>
+
 #### Node builder
 
 From this base, we are able to build our node builder :
@@ -1356,6 +1405,8 @@ And run the result :
     Optional<NumericExpression> exp = new ExpressionBuilder().build("sin( x )* (1 + var_12)", true);
     Number result = exp.get().eval(variables);
 ```
+
+<a name="mappers"></a>
 
 #### Token mappers and rule mappers
 
@@ -1407,7 +1458,7 @@ Now we can write the mappers, starting with the simplest ones :
     };
 ```
 
-* the `NUMBER` token is produced in the grammar with `.asNumber()`, we write the `NUMBER` mapper that create a `Constant` instance from our data model with that number token :
+* the `NUMBER` token is produced in the grammar with [`.asNumber()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asNumber--), we write the `NUMBER` mapper that create a `Constant` instance from our data model with that number token :
 
 ```java
     NUMBER { // mapper for : Token NUMBER = DIGIT.oneOrMore().asNumber();

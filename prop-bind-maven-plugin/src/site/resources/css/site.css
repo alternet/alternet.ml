@@ -1,4 +1,4 @@
-  .navbar.affix {
+.navbar.affix {
     top: 50px;
   }
 
@@ -17,4 +17,44 @@ a[name]:before {
 
 .nopub {
     display: none
+}
+
+a tt {
+    color: #ee5f5b;
+}
+a:hover tt, a:focus tt {
+    color: #005580;
+}
+a {
+    color: #ee5f5b;
+    position: relative;
+    text-decoration: none;
+    padding-bottom: 4px;
+    transition: 0.3s color ease-in-out;
+}
+a:focus, a:hover, a:hover tt, a:focus tt {
+    text-decoration: none;
+    transition: 0.3s color ease-in-out;
+}
+a:before, a:after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #ee5f5b;
+    transition: .3s all ease-in-out;
+    opacity: 0;
+    transform: translateY(8px);
+    text-decoration: none;
+}
+a:hover:before, a:hover:after, a:focus:before, a:focus:after {
+    opacity: 1;
+    transform: translateY(0);
+    transition: .3s all ease-in-out;
+}
+
+div.navbar a:before, div.navbar a:after {
+    background-color: transparent;
 }

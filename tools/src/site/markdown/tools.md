@@ -55,11 +55,11 @@ Allow to define ranges of Unicode characters, merge them, exclude some, etc :
     CharRange others = CharRange.ANY.except(base64);
 ```
 
-* [CharRange](apidocs/ml/alternet/misc/CharRange.html)
+* [`CharRange`](apidocs/ml/alternet/misc/CharRange.html)
 
 ### Thrower
 
-Allow to cast (without wrapping) any exception to a RuntimeException.
+Allow to cast (**without wrapping**) any exception to a `RuntimeException`.
 
 Helpful for lambdas. For example, a method that accept a supplier :
 
@@ -72,7 +72,7 @@ Helpful for lambdas. For example, a method that accept a supplier :
         }
     });
 ```
-* [Thrower](apidocs/ml/alternet/misc/Thrower.html)
+* [`Thrower`](apidocs/ml/alternet/misc/Thrower.html)
 
 ### Type
 
@@ -86,11 +86,11 @@ Allow to work on Java types even on those that doesn't exist :
     // gives it...
 ```
 
-* [Type](apidocs/ml/alternet/misc/Type.html)
+* [`Type`](apidocs/ml/alternet/misc/Type.html)
 
 ### JAXBStream
 
-Allow to stream repeatable elements from an XML document to objects :
+Allow to stream repeatable elements from an XML document to objects, with eventually a cache strategy :
 
 ```xml
 <list xmlns="http://example.com/items">
@@ -113,7 +113,7 @@ For unmarshalling `<item>`s to a stream of `example.com.Item`, use :
         });
 ```
 
-* [JAXBStream](apidocs/ml/alternet/misc/JAXBStream.html)
+* [`JAXBStream`](apidocs/ml/alternet/misc/JAXBStream.html)
 
 ### Concurrent and locking tools
 
@@ -123,7 +123,7 @@ synchronization for a given user context.
 As mentionned in section 3.10.5 of the Java Language Spec 2.0 :
 > "Literal strings within different classes in different packages likewise represent references to the same String object."
 
-The [MutexContext](apidocs/ml/alternet/concurrent/MutexContext.html) class
+The [`MutexContext`](apidocs/ml/alternet/concurrent/MutexContext.html) class
 allow to create a context in order to manage safe string-based mutexes, that
 is to say without the inherent conditions of the String class that can lead
 to a dead-lock.
@@ -149,12 +149,12 @@ will be automatically removed after all references to it are dropped.
    }
 ```
 
-Instead of synchronizing on a [Mutex](apidocs/ml/alternet/concurrent/Mutex.html)
+Instead of synchronizing on a [`Mutex`](apidocs/ml/alternet/concurrent/Mutex.html)
 it is also possible to get one of the available lock :
 
-* [Lock](apidocs/ml/alternet/concurrent/MutexContext.html#getLock-java.lang.String-)
-* [ReadWriteLock](apidocs/ml/alternet/concurrent/MutexContext.html#getReadWriteLock-java.lang.String-)
-* [StampedLock](apidocs/ml/alternet/concurrent/MutexContext.html#getStampedLock-java.lang.String-)
+* [`Lock`](apidocs/ml/alternet/concurrent/MutexContext.html#getLock-java.lang.String-)
+* [`ReadWriteLock`](apidocs/ml/alternet/concurrent/MutexContext.html#getReadWriteLock-java.lang.String-)
+* [`StampedLock`](apidocs/ml/alternet/concurrent/MutexContext.html#getStampedLock-java.lang.String-)
 
 ## Other tools
 

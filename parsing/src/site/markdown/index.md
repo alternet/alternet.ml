@@ -1,11 +1,10 @@
+# Summary
+
 <div class="nopub">
 <a href="http://alternet.ml/alternet-libs/parsing/index.html">
 Published version of this page available HERE</a></div>
 
-# Alternet Parsing
-
-Alternet Parsing is a nice Parsing Expression Grammar framework
-that includes an Abstract Syntax Tree builder.
+**Alternet Parsing** is a nice [Parsing Expression Grammar](https://en.wikipedia.org/wiki/Parsing_expression_grammar) framework that includes an Abstract Syntax Tree builder.
 
 ---
 

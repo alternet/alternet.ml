@@ -4,36 +4,14 @@ Published version of this page available HERE</a></div>
 
 ## Passwords in Java
 
-The [Crypto Specification](http://docs.oracle.com/javase/8/docs/technotes/guides/security/crypto/CryptoSpec.html#PBEEx)
-states that since as String is immutable (and subject to be stored in a
-pool by the JVM), char arrays are preferred for storing password.
-Additionally, when a String password is no longer used, it won't be necessarily
-reclaimed immediately by the garbage collector ; in the meantime it is impossible
-to unset its characters. Strings are unsafe for storing passwords.
+The [Crypto Specification](http://docs.oracle.com/javase/8/docs/technotes/guides/security/crypto/CryptoSpec.html#PBEEx) states that since `String`s are immutable (and subject to be stored in a pool by the JVM), char arrays are preferred for storing password. Additionally, when a `String` password is no longer used, it won't be necessarily reclaimed immediately by the garbage collector ; in the meantime it is impossible to unset its characters. **`String`s are unsafe for storing passwords**.
 
-Usually, a password may be used for granting an access to
-a resource ; before and after granting such permit, the intermediate
-data used as the password should not remain in memory :
-the idea of the [Password](apidocs/ml/alternet/security/Password.html) class is to allow a long-term
-storage of the password between its creation and when it is used.
-The [Password](apidocs/ml/alternet/security/Password.html) class aims to
-obfuscate the characters of a password, if the memory is dumped
-it will be difficult to guess which part of the memory was
-a password, and even to deobfuscate it when it has been encrypted.
-The idea is to limit usage of the clear password
-outside of the [Password](apidocs/ml/alternet/security/Password.html) class.
+Usually, a password may be used for granting an access to a resource ; before and after granting such permit, the intermediate data used as the password should not remain in memory : the idea of the [`Password`](apidocs/ml/alternet/security/Password.html) class is to allow a long-term storage of the password between its creation and when it is used. The [`Password`](apidocs/ml/alternet/security/Password.html) class aims to obfuscate the characters of a password, if the memory is dumped
+it will be difficult to guess which part of the memory was a password, and even to deobfuscate it when it has been encrypted. The idea is to limit usage of the clear password outside of the [`Password`](apidocs/ml/alternet/security/Password.html) class.
 
-In some cases, passwords will be built from data that are coming from
-a String. In this case it is recommended to not keep a strong reference
-to such data, but be aware that such practice create a flaw in your
-environment.
+In some cases, passwords will be built from data that are coming from a `String`. In this case it is recommended to not keep a strong reference to such data, but be aware that such practice create a flaw in your environment.
 
-In Alternet Security, passwords are always built from characters,
-never from String. Additionally, Web facilities are supplied to ensure
-that when a Web server is receiving a password, a String is never
-built from the incoming data. The obfuscation method used by default
-in Web applications is the strongest obfuscation method in Alternet
-Security, which relies on cryptography.
+In **Alternet Security**, passwords are always built from characters, never from `String`. Additionally, Web facilities are supplied to ensure that when a Web server is receiving a password, a `String` is never built from the incoming data. The obfuscation method used by default in Web applications is the strongest obfuscation method in Alternet Security, which relies on cryptography.
 
 You will find in Alternet Security 3 mains features :
 
@@ -82,14 +60,14 @@ The idea is to keep low the period where a password
 appeared in clear in the memory, in order to make it
 difficult to find when a memory dump is performed.
 
-A password can be created thanks to a [PasswordManager](apidocs/ml/alternet/security/PasswordManager.html), that
+A password can be created thanks to a [`PasswordManager`](apidocs/ml/alternet/security/PasswordManager.html), that
 exist in several flavors (weak, default, or strong with encryption).
-To pick one, use the [PasswordManagerFactory](apidocs/ml/alternet/security/PasswordManagerFactory.html)
+To pick one, use the [`PasswordManagerFactory`](apidocs/ml/alternet/security/PasswordManagerFactory.html)
 or supply your own implementation (your own implementation can
-override the default one with the [discovery service](../tools/tools.html)).
+override the default one with the [discovery service](../tools/discovery.html)).
 
 <div class="alert alert-danger" role="alert">
-Once again : DO NOT CREATE A STRING OBJECT WITH THE PASSWORD CHARACTERS.
+Once again : <b>DO NOT CREATE A STRING OBJECT WITH THE PASSWORD CHARACTERS.</b>
 </div>
 
 ### Password creation
@@ -108,6 +86,7 @@ Password pwd = manager.newPassword(pwdChars);
 ### Typical usage
 
 ``` java
+Password pwd = // so we have it...
 try (Password.Clear clear = pwd.getClearCopy()) {
     char[] clearPwd = clear.get();
     // use clearPwd in the block
@@ -116,25 +95,16 @@ try (Password.Clear clear = pwd.getClearCopy()) {
 // before being eligible by the garbage collector
 ```
 
-The user has to ensure to keep the try-with-resource
-block as short as possible, and to not make copies of
-the char array if possible.
+The user has to ensure to keep the try-with-resource block as short as possible, and to not make copies of the char array if possible.
 
 <a name="auth"></a>
 
 # Authentication framework
 
-Credentials are informations supplied by a user that
-are used to authenticate him on an application.
-Typical credentials are the user login, its password,
-and optionally a realm or domain, but the more often
-only the password is used for authentication, although
-some tools are computing hashes with the login name.
+Credentials are informations supplied by a user that are used to authenticate him on an application.
+Typical credentials are the user login, its password, and optionally a realm or domain, but the more often only the password is used for authentication, although some tools are computing hashes with the login name.
 
-Alternet Security Authentication supply a framework for
-implementations that reasonably clean sensible data from the memory after
-the hash is computed, which can't be guaranteed by Java
-standard packages.
+**Alternet Security Authentication** supply a framework for implementations that reasonably clean sensible data from the memory after the hash is computed, which can't be guaranteed by Java standard packages.
 
 <div class="alert alert-danger" role="alert">
 Many of the hash algorithms supplied by this library are <b>NOT</b> secure.
@@ -170,16 +140,15 @@ All Alternet APIs :
 
 ## Hashers
 
-Alternet Security Authentication comes with out-of-the-box popular hashers and
-crypt formatters, including legacy algorithms such as Unix crypt.
+**Alternet Security Authentication** comes with out-of-the-box popular hashers and crypt formatters, including legacy algorithms such as Unix crypt.
 
 There are currently four good choices [<a href="#note_1">1</a>] for secure hashing:
 
 <ul>
-    <li>Argon2</li>
-    <li>BCrypt</li>
-    <li>PBKDF2 SHA256 / PBKDF2 SHA512</li>
-    <li>SHA256 / SHA512</li>
+    <li>[Argon2](https://en.wikipedia.org/wiki/Argon2)</li>
+    <li>[BCrypt](https://en.wikipedia.org/wiki/Bcrypt)</li>
+    <li>[PBKDF2 SHA256 / PBKDF2 SHA512](https://en.wikipedia.org/wiki/PBKDF2)</li>
+    <li>[SHA256 / SHA512](https://en.wikipedia.org/wiki/SHA-2)</li>
 </ul>
 
 All four hashes share the following properties:
@@ -196,38 +165,33 @@ All four hashes share the following properties:
         In the near future, it stands likely to become the recommended standard.</li>
 </ul>
 
-<a name="note_1">[1]</a> As of June 2016, the most commonly used password hashes are BCrypt and PBKDF2,
-followed by SHA512, with Argon2 rapidly moving up the ranks.
+<a name="note_1">[1]</a> As of June 2016, the most commonly used password hashes are BCrypt and PBKDF2, followed by SHA512, with Argon2 rapidly moving up the ranks.
 
 <div class="alert alert-info" role="alert">
-Argon2 is the recommended choice in Alternet Security : it safely erase sensitive data at the very beginning
-of hashing, unlike PBKDF2 and BCrypt (that keep a reference to the password during all the long hashing process).
+Argon2 is the recommended choice in Alternet Security : it safely erase sensitive data at the very beginning of hashing, unlike PBKDF2 and BCrypt (that keep a reference to the clear password during all the long hashing process).
 </div>
 
 ## Usage
 
 3 main classes are supplied :
 
- * [Credentials](../security/apidocs/ml/alternet/security/auth/Credentials.html), which is roughly a wrapper around `Password`
- * [Hasher](../security-auth/apidocs/ml/alternet/security/auth/Hasher.html) which allow to compute a crypt, and check some credentials given a crypt
- * [CryptFormatter](../security-auth/apidocs/ml/alternet/security/auth/formats/CryptFormatter.html) which allow to turn the bytes of a hash to a string crypt, or to parse a crypt in its parts
+ * [`Credentials`](../security/apidocs/ml/alternet/security/auth/Credentials.html), which is roughly a wrapper around `Password`
+ * [`Hasher`](../security-auth/apidocs/ml/alternet/security/auth/Hasher.html) which allow to compute a crypt, and check some credentials given a crypt
+ * [`CryptFormatter`](../security-auth/apidocs/ml/alternet/security/auth/formats/CryptFormatter.html) which allow to turn the bytes of a hash to a string crypt, or to parse a crypt in its parts
 
 ### Generate a hash
 
 Most common hashers are available and parameterized in :
 
- * [CurlyBracesCryptFormatHashers](../security-auth/apidocs/ml/alternet/security/auth/hashers/CurlyBracesCryptFormatHashers.html)
- * [ModularCryptFormatHashers](../security-auth/apidocs/ml/alternet/security/auth/hashers/ModularCryptFormatHashers.html)
- * [UnixHashers](../security-auth/apidocs/ml/alternet/security/auth/hashers/UnixHashers.html)
+ * [`CurlyBracesCryptFormatHashers`](../security-auth/apidocs/ml/alternet/security/auth/hashers/CurlyBracesCryptFormatHashers.html)
+ * [`ModularCryptFormatHashers`](../security-auth/apidocs/ml/alternet/security/auth/hashers/ModularCryptFormatHashers.html)
+ * [`UnixHashers`](../security-auth/apidocs/ml/alternet/security/auth/hashers/UnixHashers.html)
 
-If the default configuration doesn't suit your needs, you can alter
-any supported parameter.
+If the default configuration doesn't suit your needs, you can alter any supported parameter.
 
-Pick a hasher and set its parameters from a formatter family. For example,
-let's hash "`password`" with PBKDF2,  set a custom number of iterations,
-and format it in curly braces :
+Pick a hasher and set its parameters from a formatter family. For example, let's hash "`password`" with [PBKDF2](https://en.wikipedia.org/wiki/PBKDF2),  set a custom number of iterations, and format it in curly braces :
 
-"`password`" -&gt; "`{PBKDF2}131000$tLbWWssZ45zzfi9FiDEmxA$dQlpmhY4dGvmx4MOK/uOj/WU7Lg`"
+"`password`" ➡ "`{PBKDF2}131000$tLbWWssZ45zzfi9FiDEmxA$dQlpmhY4dGvmx4MOK/uOj/WU7Lg`"
 
 ``` java
 Password pwd = ... // see above
@@ -271,7 +235,7 @@ if (hasher.check(credentials, crypt)) {
 ```
 
 Sometimes, you may have existing crypts available in various formats.
-For that purpose, a more suitable credentials checker (see [CredentialsChecker](../security-auth/apidocs/ml/alternet/security/auth/CredentialsChecker.html))
+For that purpose, a more suitable credentials checker (see [`CredentialsChecker`](../security-auth/apidocs/ml/alternet/security/auth/CredentialsChecker.html))
 will lookup for the right hasher.
 
 For example, the following credentials checker will try all the formats in sequence.
@@ -282,7 +246,7 @@ and should not be used in production.
 CredentialsChecker checker = new CredentialsChecker.$(
     ModularCryptFormat, 
     CurlyBracesCryptFormat, 
-    PlainTextCryptFormat
+    PlainTextCryptFormat // remove this one in a production environment
 );
 if (checker.check(credentials, crypt)) {
     // authentication succeeds
@@ -295,15 +259,14 @@ if (checker.check(credentials, crypt)) {
 
 # Alternet Security for Web applications
 
-Alternet Security for Web applications allow handling safe passwords inside Web applications :
-during the Web processing chain, a password NEVER appear as a String (unsafe) inside the server.
+**Alternet Security for Web applications** allow handling safe passwords inside Web applications : during the Web processing chain, a password NEVER appear as a String (unsafe) inside the server.
 
 It consist on two parts :
 
 * Using safe password in servlet-based applications or RESTful (JAX-RS) applications (included in the first Maven module)
 * Enhancing an existing Web container ([Jetty](#jetty), [Tomcat](#tomcat)) to make that feature available in Web applications (specifics Maven modules are supplied).
 
-The default password manager used in Web application is the strong password manager that encrypt passwords.
+The default password manager used in Web applications is the strong password manager that encrypt passwords.
 
 According to the Web container ([Jetty](#jetty), [Tomcat](#tomcat)) in use, additional configurations are expected (see below).
 
@@ -318,7 +281,7 @@ In web applications, a password can be sent to the server :
 
 Note that sending a form with a password (for login, for registration, for changing a
 user password or for any other purpose) have to be performed with HTTP POST ; sending
-a password with HTTP GET is unsecure and therefore not available with Alternet Security.
+a password with HTTP GET is **unsecure** and therefore not available with **Alternet Security**.
 
 The Web application have to be configured (`web.xml` file) with values that takes
 the shape of a path, as shown follow :
@@ -352,12 +315,12 @@ is missing, no login will be handled by Alternet Security.
 
 Once configured properly (see below ([Jetty](#jetty) and [Tomcat](#tomcat)) configurations),
 the Web container will substitute the passwords found in the form fields or HTTP authentication header
-with '*' characters, in order to make such strings unusable ; the actual passwords will be wrapped in
-[Password](apidocs/ml/alternet/security/Password.html) instances, and will be available like shown hereafter :
+with `*` characters, in order to make such strings unusable ; the actual passwords will be wrapped in
+[`Password`](apidocs/ml/alternet/security/Password.html) instances, and will be available like shown hereafter :
 
 ### Servlets applications
 
-To retrieve the passwords in a Servlet, use the [Passwords](apidocs/ml/alternet/security/web/Passwords.html) class :
+To retrieve the passwords in a Servlet, use the [`Passwords`](apidocs/ml/alternet/security/web/Passwords.html) class :
 
 ```java
 public void doPost(HttpServletRequest req, HttpServletResponse resp) {
@@ -367,7 +330,7 @@ public void doPost(HttpServletRequest req, HttpServletResponse resp) {
 }
 ```
 
-The [PasswordParam](apidocs/ml/alternet/security/web/PasswordParam.html) class represent
+The [`PasswordParam`](apidocs/ml/alternet/security/web/PasswordParam.html) class represent
 a sequence of passwords, since fields (in Web forms or in HTTP headers) can be multivalued :
 
 ```java
@@ -382,8 +345,8 @@ public void doPost(HttpServletRequest req, HttpServletResponse resp) {
 
 ### RESTfull applications (JAX-RS)
 
-Simply use the [Password](apidocs/ml/alternet/security/Password.html) class
-(or the [PasswordParam](apidocs/ml/alternet/security/web/PasswordParam.html) class
+Simply use the [`Password`](apidocs/ml/alternet/security/Password.html) class
+(or the [`PasswordParam`](apidocs/ml/alternet/security/web/PasswordParam.html) class
 for handling multiple values) in the parameter of a REST method :
 
 <div class="alert alert-danger" role="alert">
@@ -399,9 +362,9 @@ public String getSomeData(@FormParam("username") String userName,
 }
 ```
 
-Note that the [Password](apidocs/ml/alternet/security/Password.html) instance
-as well as the [PasswordParam](apidocs/ml/alternet/security/web/PasswordParam.html)
-instance are supplied thanks to the [PasswordConverterProvider](apidocs/ml/alternet/security/web/PasswordConverterProvider.html)
+Note that the [`Password`](apidocs/ml/alternet/security/Password.html) instance
+as well as the [`PasswordParam`](apidocs/ml/alternet/security/web/PasswordParam.html)
+instance are supplied thanks to the [`PasswordConverterProvider`](apidocs/ml/alternet/security/web/PasswordConverterProvider.html)
 annotated as a provider. According to the JAX-RS specification, this provider has to
 be registered to the concrete JAX-RS engine (this can be done either manually or discovered
 automatically ; please check the documentation of your JAX-RS engine).
@@ -410,14 +373,14 @@ automatically ; please check the documentation of your JAX-RS engine).
 
 Specific submodules supply means for the Web container to capture the received passwords.
 
-To ensure security, passwords received by the server are NEVER stored in a String.
+**To ensure security, passwords received by the server are NEVER stored in a `String`.**
 
 The passwords are captured from the raw input data stream (char or bytes) and
 stored in a safe password object ; the raw data are replaced by a dummy value
-(typically '*' characters) that will appear in Strings that would be handled
+(typically `*` characters) that will appear in `String`s that would be handled
 uselessly by the application. Of course, this value can't be used in the
 application, instead, the safe password object will be injected in the Web
-application.
+application and available in servlets or RESTful applications (see above).
 
 <a name="jetty"></a>
 
@@ -478,7 +441,7 @@ Configuring Jetty is very simple :
 * set a parameter to the Web app context to tell
 which paths and form fields to intercept in the HTTP requests
 (like in the `web.xml` configuration file, see above),
-* create a [AltHttpConnectionFactory](../security-jetty-9.1/apidocs/ml/alternet/security/web/jetty/AltHttpConnectionFactory.html)
+* create a [`AltHttpConnectionFactory`](../security-jetty-9.1/apidocs/ml/alternet/security/web/jetty/AltHttpConnectionFactory.html)
 * and bound it to the Jetty server connector.
 
 ```Java
@@ -603,7 +566,7 @@ of the credentials ; in that case the `ml.alternet.security.auth.CryptFormat` pa
 If `forceBindingLogin="false"`, it means that Jetty will retrieve the hash from the
 LDAP server and perform the check of the credentials ; in that case the `ml.alternet.security.auth.CryptFormat` parameter will contain a comma-separated
 list of concrete classes. Note that `ml.alternet.security.auth.formats.PlainTextCryptFormat` is used for plain text
-passwords stored not hashed in the LDAP server and MUST NOT be used in production environments.
+passwords stored not hashed in the LDAP server and **MUST NOT** be used in production environments.
 
 <a name="tomcat"></a>
 
@@ -650,9 +613,9 @@ All Alternet APIs :
 
 Configuring Tomcat is very simple :
 
-* create a specific connector [AltProtocolHandler](../security-tomcat-8.0/apidocs/ml/alternet/security/web/tomcat/AltProtocolHandler.html)
-* create a specific authenticator [AltBasicAuthenticator](../security-tomcat-8.0/apidocs/ml/alternet/security/web/tomcat/AltBasicAuthenticator.html)
-* create a specific credential handler [AltCredentialHandler](../security-tomcat-8.0/apidocs/ml/alternet/security/web/tomcat/AltCredentialHandler.html)
+* create a specific connector [`AltProtocolHandler`](../security-tomcat-8.0/apidocs/ml/alternet/security/web/tomcat/AltProtocolHandler.html)
+* create a specific authenticator [`AltBasicAuthenticator`](../security-tomcat-8.0/apidocs/ml/alternet/security/web/tomcat/AltBasicAuthenticator.html)
+* create a specific credential handler [`AltCredentialHandler`](../security-tomcat-8.0/apidocs/ml/alternet/security/web/tomcat/AltCredentialHandler.html)
 
 ```Java
 Tomcat server = new Tomcat();
@@ -779,8 +742,8 @@ Edit the file `$CATALINA_BASE/conf/server.xml` and change it as follow :
 </Server>
 ```
 
-* configure the Alternet `<Connector>` : the "passwordManager" attributes contains the name of a class that implements [PasswordManager](apidocs/ml/alternet/security/PasswordManager.html) ; the default value is shown in the example above
-* set the Alternet `<CredentialHandler>` to your `<Realm>` : the "hasher" attribute contains the name of a class that implements [Hasher](apidocs/ml/alternet/security/auth/Hasher.html) ; the default value is shown in the example above
+* configure the Alternet `<Connector>` : the "passwordManager" attributes contains the name of a class that implements [`PasswordManager`](apidocs/ml/alternet/security/PasswordManager.html) ; the default value is shown in the example above
+* set the Alternet `<CredentialHandler>` to your `<Realm>` : the "hasher" attribute contains the name of a class that implements [`Hasher`](apidocs/ml/alternet/security/auth/Hasher.html) ; the default value is shown in the example above
 * configure your `<Context>` with an Alternet `<Valve>` that use a specific authenticator (if you intend to deploy an application that use BASIC HTTP Authentication)
 
 Ensure that the passwords available in your realm are hashed values.
@@ -798,18 +761,17 @@ If you use `$CATALINA_BASE/conf/tomcat-users.xml` it will look like this :
 If you use another kind of resource, such as a database, store the user password hash accordingly.
 The Alternet credential handler will simply compare the password supply by the user with the hash stored in the resource.
 
-<hr />
+<!--
 TODO : the following is deprecated
 
 To produce such a hash, you can compute a hash with Alternet Security :
 
 ```
-java -cp $CATALINA_BASE/lib/alternet-security-tomcat-bundle.jar ml.alternet.security.auth.impl.PBKDF2Hasher --encrypt
+java -cp $CATALINA_BASE/lib/alternet-security-tomcat-bundle.jar ml.alternet.security.auth.impl.PBKDF2Hasher - - encrypt
 ```
 
 you will be prompted for a password.
-
-<hr />
+-->
 
 Ideally, a user account manager application should allow to initialize user accounts transparently.
 
@@ -855,23 +817,16 @@ Maven import :
 
 ## Preserving the security chain
 
-Many third-party authentication mechanisms (LDAP, relational databases, etc)
-are performing authentication thanks to String.
+Many third-party authentication mechanisms (LDAP, relational databases, etc) are performing authentication thanks to `String`.
 
-As mentioned before, the purpose of this library is to
-ensure that the Web container won't ever create a String object
-from a password when the relevant Web container is properly configured.
+As mentioned before, the purpose of this library is to ensure that the Web container won't ever create a `String` object from a password when the relevant Web container is properly configured.
 
-It is strongly recommended to avoid String creation from passwords for
-this stage, for example by passing instead a char array to the authenticator.
-([LDAP authenticator](https://docs.oracle.com/javase/tutorial/jndi/ldap/simple.html)
-support char arrays passwords)
+It is strongly recommended to avoid `String` creation from passwords for this stage, for example by passing instead a char array to the authenticator ([LDAP authenticator](https://docs.oracle.com/javase/tutorial/jndi/ldap/simple.html) support char/byte arrays passwords) or better, a byte array ; consider turning chars to bytes by using the [SafeBuffer](../security-auth/apidocs/ml/alternet/security/binary/SafeBuffer.html) methods.
 
 ## The Authentication Framework
 
 It's worth to mention that hash algorithms are kept as close as possible to the original.
-Adaptations are made for using them with the Password class, to clean intermediate data when possible,
-and to separate the production of the formated crypt from the hashed bytes.
+Adaptations are made for using them with the `Password` class, to clean intermediate data when possible, and to separate the production of the formated crypt from the hashed bytes.
 [They are available here](../security-auth/apidocs/ml/alternet/security/algorithms/package-summary.html).
 
 [Here are some considerations about the Authentication Framework](../security-auth/auth-formats.html)

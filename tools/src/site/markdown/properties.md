@@ -6,7 +6,7 @@ Published version of this page available HERE</a></div>
 
 Given a Java property file, allow to populate a counterpart class with typed values.
 
-Also allow to generate the target class, and run that generator as a Maven plugin.
+Also allow to generate the target class(es), and run that generator as a Maven plugin.
 
 1. [Overview](#overview)
 2. [Tutorial](#tutorial)
@@ -63,7 +63,7 @@ Other Alternet APIs :
 
 ## Tutorial
 
-Many Java applications are configured with external parameters that have to be loaded by the application from `.properties` files. Once loaded, those parameters are exposed as `String`s, and the keys to access them are also `String`s.
+Many Java applications are configured with external parameters that have to be loaded by the application from "`.properties`" files. Once loaded, those parameters are exposed as `String`s, and the keys to access them are also `String`s.
 
 * The **property binder** allow to populate a configuration class within which fields are the counterpart keys, and values are typed values.
 
@@ -73,9 +73,9 @@ Many Java applications are configured with external parameters that have to be l
 
 ### Populating fields with property values
 
-Say we have such a configuration file "`conf.properties`" :
+Say we have such a configuration file "<code class="files">conf.properties</code>" :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 # Properties definining the GUI
 gui.window.width = 500
 gui.window.height = 300
@@ -121,10 +121,9 @@ To achieve this, you can create the target class by hand, but it is much more ea
 
 ### Creating the template property file
 
-The **template property file** aims to describe the shape of the target structure thanks to example values and additional indications for the [generator](#generator) that will create the Java source code of that class.
+The **template property file** aims to describe the shape of the target structure thanks to example values and additional indications for the [generator](#generator) that will create the Java source code of that class(es).
 
-Create a copy of `conf.properties` to `conf.template.properties` and
-apply the following modifications to that template.
+Create a copy of "`conf.properties`" to "`conf.template.properties`" and apply the following modifications to that template.
 
 <a name="directives"></a>
 
@@ -132,7 +131,7 @@ apply the following modifications to that template.
 
 First, create a new entry at the top, in order to indicate the fully qualified name of the target class to generate :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 . = #org.example.Conf
 </pre></div>
 
@@ -148,7 +147,7 @@ The right type will be used according to the value supplied in the template prop
 
 In our template we have :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 gui.window.width = 500
 </pre></div>
 
@@ -156,7 +155,7 @@ You don't need to change anything, `500` is a number, and the field `width` will
 
 If you want to force the type regardless the value, you can also write its type before the value :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 gui.window.width = $int 500
 </pre></div>
 
@@ -168,12 +167,12 @@ Note that we use <code>$</code> for an existing type rather than a <code>#</code
 
 #### URIs
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 service.url = https://some-services.example.org/someService
 </pre></div>
 
-You don't need to change anything, `https://some-services.example.org/someService` is an URI,
-and the field `url` will be a `java.net.URI`.
+You don't need to change anything, "`https://some-services.example.org/someService`" is an URI,
+and the field `url` will be a [`java.net.URI`](https://docs.oracle.com/javase/8/docs/api/java/net/URI.html).
 
 <a name="strings"></a>
 
@@ -181,13 +180,13 @@ and the field `url` will be a `java.net.URI`.
 
 Similarly, the `db.url` is also an URI :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 db.url = jdbc:fakesql://localhost:3306/localdb?autoReconnect=true
 </pre></div>
 
 But imagine we want it as a `java.lang.String`, we can surround it between double quotes to force it to be a `java.lang.String` instead of a `java.net.URI`:
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 db.url = "jdbc:fakesql://localhost:3306/localdb?autoReconnect=true"
 </pre></div>
 
@@ -195,7 +194,7 @@ Similarly, every time we found a character used to introduce a directive, we can
 
 Finally, if no recipe is applicable, a `java.lang.String` will be assumed :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 db.account.login = theLogin
 </pre></div>
 
@@ -203,30 +202,30 @@ db.account.login = theLogin
 
 #### Classes
 
-For the database driver, we expect having an existing `java.lang.Class`. We can enforce that by prepending the value with `java:`
+For the database driver, we expect having an existing `java.lang.Class`. We can enforce that by prepending the value with `java:` in the template :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 db.driver = java:com.fakesql.jdbc.Driver
 </pre></div>
 
 In your program, no more need of an additional `Class.forName("com.fakesql.jdbc.Driver");`, it is performed by the loader. Be aware that the class referred must be of the type given, therefore, a more general type should be specified in the template :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 db.driver = java:java.sql.Driver
 </pre></div>
 
 or if you don't really know what will be the concrete type in the property, just use a wildcard in the template :
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 db.driver = java:?
 </pre></div>
 
 Note that an entry such as :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 jndi.ds = java:/comp/env/jdbc/someDB
 </pre></div>
 
-wouldn't be considered as a Java class, but as a `java.net.URI`.
+wouldn't be considered as a Java class, but as a [`java.net.URI`](https://docs.oracle.com/javase/8/docs/api/java/net/URI.html).
 
 <a name="passwords"></a>
 
@@ -234,12 +233,12 @@ wouldn't be considered as a Java class, but as a `java.net.URI`.
 
 The password should not be left as-is in that template, replace the value by `*****` to get a `char[]` field (it is a bad practice to store passwords in Strings)
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 db.account.password = *****
 </pre></div>
 
 <div class="alert alert-info" role="alert">
-Instead of getting a <code>char[]</code> field, it is possible to get a <code><a href="../apidocs/ml/alternet/security/Password.html">ml.alternet.security.Password</a></code>.
+Instead of getting a <code>char[]</code> field, it is possible to get a secure <code><a href="../apidocs/ml/alternet/security/Password.html">ml.alternet.security.Password</a></code>.
 To achieve this, simply add the Maven declaration in your build :
 
 <pre>
@@ -260,11 +259,11 @@ You also have to write your own adapter (see below). Note that since such passwo
 
 Finally, we need to supply an adapter for the colors. First, indicates what is the type of the field by prepending the special notation `$java.awt.Color` before the actual value :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 gui.colors.background = $java.awt.Color #FFFFFF
 </pre></div>
 
-Then, we need to supply an adapter, and tell the generator to use that adapter. An adapter is just a function that takes a `java.lang.String` and parse it to get an instance of the expected type ; our adapter is just a `java.util.function.Function<java.lang.String, java.awt.Color>`, and such function already exist, it is `java.awt.Color::decode`.
+Then, we need to supply an adapter, and tell the generator to use that adapter. An adapter is just a function that takes a `java.lang.String` and parse it to get an instance of the expected type ; our adapter is just a `java.util.function.Function<java.lang.String, java.awt.Color>`, and such function already exist, it is [`java.awt.Color::decode`](https://docs.oracle.com/javase/8/docs/api/java/awt/Color.html#decode-java.lang.String-).
 
 To bind that adapter to the target class, we would write this Java code :
 
@@ -272,11 +271,11 @@ To bind that adapter to the target class, we would write this Java code :
     Adapter.map(Color.class, Color::decode) // when a Color type is expected, parse the text with Color.decode()
 ```
 
-The [ml.alternet.properties.Binder.Adapter](apidocs/ml/alternet/properties/Binder.Adapter.html) class comes with convenient static methods to bind a class or a property name to an adapter function, or even a regular expression of a property name. It is also possible to map items from a list.
+The [`ml.alternet.properties.Binder.Adapter`](apidocs/ml/alternet/properties/Binder.Adapter.html) class comes with convenient static methods to bind a class or a property name to an adapter function, or even a regular expression of a property name. It is also possible to map items from a list.
 
 We will insert the above Java code inside our template, by using 2 others directives, the former to import the `Color` class, the latter to generate an unmarshaller with that adapter ; similarly, we also need an adapter for UUID :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 # directives for importing the required types
 . = !java.awt.Color
 . = !java.util.UUID
@@ -287,7 +286,7 @@ We will insert the above Java code inside our template, by using 2 others direct
 
 and accordingly, setting the type on the property definition :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 service.uuid = $java.util.UUID 5da66c77-7062-4b30-97fc-e747eb64570a
 </pre></div>
 
@@ -325,7 +324,7 @@ Since no intermediate Java names called `UUID` or `Color` are in the scope of ou
 
 Conversely, if we had a property like this (note that `gui.colors` have been changed to `gui.color`) :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 gui.color.background = $java.awt.Color #FFFFFF
 </pre></div>
 
@@ -337,7 +336,7 @@ Well, if you don't know whether to import a type or not, don't worry, the compil
 
 The final property template "`conf.template.properties`" looks like this :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 # Target class name
 . = #org.example.Conf
 # Required adapters
@@ -366,20 +365,20 @@ The next step is to [generate](#generator) the target class from that template. 
 
 #### Files
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 files.help = file:///path/to/help.txt
 </pre></div>
 
 You don't need to change anything, `file:///path/to/help.txt` is a file path,
-and the field `help` will be a `java.io.File`.
+and the field `help` will be a [`java.io.File`](https://docs.oracle.com/javase/8/docs/api/java/io/File.html).
 
 <a name="datesTimes"></a>
 
 #### Dates and times
 
-Dates, times, and date-times without time-zone in the ISO-8601 calendar system such as (respectively) `2007-12-03`, `10:15:30`, and `2007-12-03T10:15:30` are giving (respectively) `java.time.LocalDate`, `java.time.LocalTime`, and `java.time.LocalDateTime` :
+Dates, times, and date-times without time-zone in the ISO-8601 calendar system such as (respectively) `2007-12-03`, `10:15:30`, and `2007-12-03T10:15:30` are giving (respectively) [`java.time.LocalDate`](https://docs.oracle.com/javase/8/docs/api/java/time/LocalDate.html), [`java.time.LocalTime`](https://docs.oracle.com/javase/8/docs/api/java/time/LocalTime.html), and [`java.time.LocalDateTime`](https://docs.oracle.com/javase/8/docs/api/java/time/LocalDateTime.html) :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 schedule.launch : 2007-12-03
 schedule.reload : 10:15:30
 </pre></div>
@@ -390,13 +389,13 @@ schedule.reload : 10:15:30
 
 If several values are separated by a comma, the field will be a list :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 gui.colors.pie = $java.awt.Color #FF0000, #00FF00, #0000FF
 </pre></div>
 
 gives a `java.util.List<java.awt.Color>`.
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 gui.fonts.size = $int 12, 16, 24
 </pre></div>
 
@@ -408,7 +407,7 @@ gives a `java.util.List<java.lang.Integer>`.
 
 If several values are separated by a pipe, the field will be an enum :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 service.status = PENDING | ACTIVE | INACTIVE | DELETED
 </pre></div>
 
@@ -416,7 +415,7 @@ This will generate the enum `org.example.Conf.Service.Status`.
 
 When the same enum is used several time, we can refer to it with its name, just like other properties that refer to an existing type :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 plugin.status = $org.example.Conf.Service.Status PENDING | ACTIVE | INACTIVE | DELETED
 </pre></div>
 
@@ -424,21 +423,25 @@ plugin.status = $org.example.Conf.Service.Status PENDING | ACTIVE | INACTIVE | D
 
 A comma after the enumeration gives a list, e.g :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 plugin.multipleStatus = $org.example.Conf.Service.Status PENDING | ACTIVE | INACTIVE | DELETED, ACTIVE
 </pre></div>
 
-gives a `java.util.List<org.example.Conf.Service.Status>`. That comma can also be set on the enum definition.
+gives a `java.util.List<org.example.Conf.Service.Status>`. That comma can also be set on the enum definition like this :
+
+<div class="source"><pre class="prettyprint properties">
+service.multipleStatus = PENDING | ACTIVE | INACTIVE | DELETED, ACTIVE
+</pre></div>
 
 Sometimes we expect the enum class to be generated with a different name than the name of the field; below, we don't want an enum named `org.example.Conf.Service.StartState`, we prefer having `org.example.Conf.Service.Status` :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 service.startState = #Status PENDING | ACTIVE | INACTIVE | DELETED
 </pre></div>
 
 Sometimes we expect the enum class to be generated in its own file. To achieve this, write the fully qualified type name followed by the values :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 service.status = #org.example.Status PENDING | ACTIVE | INACTIVE | DELETED
 </pre></div>
 
@@ -448,34 +451,32 @@ service.status = #org.example.Status PENDING | ACTIVE | INACTIVE | DELETED
 
 Sometimes, a property file contains names that are not known in advance :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 map.paris.geo = 48.864716, 2.349014
 map.london.geo = 51.509865, -0.118092
 map.istanbul.geo = 41.015137, 28.979530
 </pre></div>
 
-The template property file may set a star character at the place of this field :
+The template properties file may set a star character at the place of this field :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 map.*.geo = $org.example.Geo 48.864716, 2.349014
 </pre></div>
 
-This will generate the special [`$()` method](apidocs/ml/alternet/properties/$.html#Z:Z:D-java.lang.String-) that allow to retrieve a property by name.
+This will generate a special method that allow to retrieve a property by name. You also have to map that key to its adapter like this :
 
-You also have to map that key to its adapter like this :
-
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 . = @Adapter.map("map.*.geo", Geo::parse)
 </pre></div>
 
-In your program, the keys will be available like this :
+In your program, the special [`$()` method](apidocs/ml/alternet/properties/$.html#Z:Z:D-java.lang.String-) generated will allow to retreive the keys like this :
 
 ```java
     long dist = conf.map.<Geo> $("paris.geo")
                     .computeDistance(conf.map.<Geo> $("istanbul.geo"));
 ```
 
-That `map` property may also contains other predefined fields if needed.
+That `map` property may also contains other predefined fields if needed. Those fields are not reachable with the `$()` method ; that method allow to retrieve only fields that are not predefined.
 
 <a name="typesWithValue"></a>
 
@@ -483,7 +484,7 @@ That `map` property may also contains other predefined fields if needed.
 
 Sometimes, there is a value as well as subproperties ; they have to be specified in the template property file as well :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 gui.window = Sample application
 gui.window.width = $int 500
 gui.window.height = 300
@@ -501,7 +502,7 @@ In your program, the field `conf.gui.window` gives an instance of `org.example.C
 
 In order to create a separate type (like for enums), write its type at the group level. The group level represents the class to create, and **ends with a dot**, like `gui.window.` :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 gui.window. = #org.example.Window
 gui.window.width = $int 500
 gui.window.height = 300
@@ -509,7 +510,7 @@ gui.window.height = 300
 
 And without a fully qualified name, it's just a renaming from `org.example.Conf.Gui.Window` to `org.example.Conf.Gui.Application` :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 gui.window. = #Application
 gui.window.width = $int 500
 gui.window.height = 300
@@ -517,7 +518,7 @@ gui.window.height = 300
 
 Do not confuse with the self value, that may also have its own type :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 gui.window = $java.lang.String Sample application
 gui.window. = #org.example.Gui
 gui.window.width = $int 500
@@ -540,7 +541,7 @@ The directives `. = @Adapter.map()` are strings that may refer to other types ; 
 
 ### Generating the target class
 
-The [ml.alternet.properties.Generator](apidocs/ml/alternet/properties/Generator.html) class can be used to generate the target classes from the template property files :
+The [`ml.alternet.properties.Generator`](apidocs/ml/alternet/properties/Generator.html) class can be used to generate the target classes from the template properties files :
 
 ```java
     File propertiesTemplatesDirectory = new File("file:///path/to/templates-dir/");
@@ -608,7 +609,7 @@ Before loading the property file, all the fields are empty (default value for pr
 
 If you don't like default values for primitives, use the counterpart boxed type instead :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 # the property will be null if the value is missing in the properties file
 gui.window.width = $java.lang.Integer 500
 </pre></div>
@@ -641,7 +642,7 @@ When loading properties, instead of having a single property file, it is possibl
 
 * "`conf.properties`" :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 # Properties definining the GUI
 gui.window.width = 500
 gui.window.height = 300
@@ -657,7 +658,7 @@ db = file:datasource/db.properties
 
 * "`datasource/db.properties`" :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 # Properties definining DB datasource
 driver = com.fakesql.jdbc.Driver
 url = jdbc:fakesql://localhost:3306/localdb?autoReconnect=true
@@ -675,11 +676,11 @@ Accessing a property in your Java program remains unchanged :
 
 The file may be either a relative path **relative to the current directory** or an absolute path :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 db = file:relative/path/to/db.properties
 </pre></div>
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 db = file:///absolute/path/to/db.properties
 </pre></div>
 
@@ -699,7 +700,7 @@ Variable interpolation is available with Java EE Expression Language. In order t
 
 Only the variables already set can be referred :
 
-<div class="source"><pre class="prettyprint">
+<div class="source"><pre class="prettyprint properties">
 # Properties definining the GUI
 gui.window.height = 300
 gui.window.width = ${gui.window.height + 200}

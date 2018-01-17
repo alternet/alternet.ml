@@ -26,7 +26,7 @@ Other Alternet APIs :
 
 ## Discovery Service
 
-The [DiscoveryService](apidocs/ml/alternet/discover/DiscoveryService.html) class
+The [`DiscoveryService`](apidocs/ml/alternet/discover/DiscoveryService.html) class
 is a component for retrieving classes that support the following features :
 
 * several variant implementations can be defined aside
@@ -125,7 +125,7 @@ directory name has been retained, actually `xservices`(that stands for
 
 ### Self-registration
 
-The [@LookupKey](apidocs/ml/alternet/discover/LookupKey.html) annotation can be
+The [`@LookupKey`](apidocs/ml/alternet/discover/LookupKey.html) annotation can be
 used in order to generate automatically an entry under `META-INF/xservices/` :
 
 When no variant is specified, the annotation : 
@@ -172,13 +172,13 @@ annotations supplied may help.
 Even if you used a CDI container, you are not compelled to inject every
 classes to lookup, just the ones you want to or have to inject.
 
-- As mentioned previously, [@LookupKey](apidocs/ml/alternet/discover/LookupKey.html)
+- As mentioned previously, [`@LookupKey`](apidocs/ml/alternet/discover/LookupKey.html)
 generates an entry in `META-INF/xservices/`
 
 Additionally :
 
-- [@Injection.LookupKey](apidocs/ml/alternet/discover/Injection.LookupKey.html) qualifies an instance to inject
-- [@Injection.Producer](apidocs/ml/alternet/discover/Injection.Producer.html) generates a class producer for injections
+- [`@Injection.LookupKey`](apidocs/ml/alternet/discover/Injection.LookupKey.html) qualifies an instance to inject
+- [`@Injection.Producer`](apidocs/ml/alternet/discover/Injection.Producer.html) generates a class producer for injections
 
 #### Example : start situation (without injection)
 
