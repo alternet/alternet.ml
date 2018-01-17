@@ -111,10 +111,10 @@ public class Argon2Hasher extends HasherBase<Argon2Hasher.Argon2Parts> implement
      * You must supply an implementation of this interface in order to
      * support the "keyid" parameter.
      *
-     * <pre>@LookupKey(forClass=SecretResolver.class)
+     * <pre>{@literal @}LookupKey(forClass=SecretResolver.class)
      *public static class MySecretResolver implements SecretResolver {
      *
-     *    @Override
+     *    {@literal @}Override
      *    public byte[] getSecret(byte[] keyid) {
      *        byte[] secret = ... // your code here
      *        return secret;

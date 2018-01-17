@@ -486,8 +486,8 @@ public interface Hasher extends Credentials.Checker {
              *
              * @see Builder#use(String)
              *
-             * @param crypt
-             * @return
+             * @param crypt A crypt.
+             * @return A hasher.
              */
             Hasher configureWithCrypt(String crypt);
 
