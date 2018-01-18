@@ -28,6 +28,11 @@ public interface ComposedRule<T> {
      */
     void setComponent(T component);
 
+    /**
+     * Get a stream of composed rules.
+     *
+     * @return The stream of composed rules.
+     */
     Stream<Grammar.Rule> getComposedRules();
 
 }
