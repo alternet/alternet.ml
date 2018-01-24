@@ -8,6 +8,8 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import ml.alternet.misc.TodoException;
+
 /**
  * Class-related utilities.
  *
@@ -46,7 +48,7 @@ public final class ClassUtil {
      * @param clazz
      *            The actual class.
      *
-     * @return A stream over the interfaces and classes of the class and its
+     * @return A lazy stream over the interfaces and classes of the class and its
      *         ancestors except "Object".
      */
     public static Stream<Class<?>> getClasses(final Class<?> clazz) {
@@ -57,23 +59,42 @@ public final class ClassUtil {
             | Spliterator.NONNULL | Spliterator.ORDERED | Spliterator.SIZED;
 
     private static Stream<Class<?>> getClassesStream(Class<?> clazz, Set<Class<?>> interfaces) {
-        if (clazz == null || clazz.getSuperclass() == null) {
+        if (clazz == null) {
             return Stream.empty();
         } else {
-            Spliterator<Class<?>> parent = new Spliterators.AbstractSpliterator<Class<?>>(Long.MAX_VALUE, FLAGS) {
-                Spliterator<Class<?>> classes;
+            if (clazz.isInterface()) {
+                return Stream.concat(
+                    Stream.of(clazz),
+                    Stream.of(clazz.getInterfaces())
+                        .filter(i -> interfaces.add(i))
+                        .flatMap(i -> getClassesStream(i, interfaces)) // lazy by nature
+                );
+            } else if (clazz.getSuperclass() == null) {
+                return Stream.empty(); // Object
+            } else {
+                // to make it lazy
+                Spliterator<Class<?>> parent = new Spliterators.AbstractSpliterator<Class<?>>(Long.MAX_VALUE, FLAGS) {
+                    Spliterator<Class<?>> classes;
 
-                @Override
-                public boolean tryAdvance(Consumer<? super Class<?>> action) {
-                    if (classes == null) {
-                        classes = getClassesStream(clazz.getSuperclass(), interfaces).spliterator();
+                    @Override
+                    public boolean tryAdvance(Consumer<? super Class<?>> action) {
+                        if (classes == null) {
+                            classes = getClassesStream(clazz.getSuperclass(), interfaces).spliterator();
+                        }
+                        return classes.tryAdvance(action);
                     }
-                    return classes.tryAdvance(action);
-                }
 
-            };
-            return Stream.concat(Stream.of(clazz.getInterfaces()).filter(c -> interfaces.add(c)),
-                    Stream.concat(Stream.of(clazz), StreamSupport.stream(parent, false)));
+                };
+                return Stream.concat(
+                    Stream.of(clazz),
+                    Stream.concat(
+                        Stream.of(clazz.getInterfaces())
+                            .filter(i -> interfaces.add(i))
+                            .flatMap(i -> getClassesStream(i, interfaces)),
+                        StreamSupport.stream(parent, false)
+                    )
+                );
+            }
         }
     }
 
