@@ -1,5 +1,7 @@
 package ml.alternet.properties;
 
+import static ml.alternet.misc.Thrower.*;
+
 import java.beans.FeatureDescriptor;
 import java.io.File;
 import java.io.FileInputStream;
@@ -296,13 +298,9 @@ public class Binder {
 
         HierarchicProperties(Class<T> clazz, Adapter<?, ?>[] adapters) {
             LOG.info("Start populating " + clazz.getCanonicalName());
-            try {
-                this.properties = clazz.newInstance();
-                this.log = Logger.getLogger(clazz.getName());
-                setAdapters(adapters);
-            } catch (InstantiationException | IllegalAccessException e) {
-                Thrower.doThrow(e);
-            }
+            this.properties = safeCall(clazz::newInstance);
+            this.log = Logger.getLogger(clazz.getName());
+            setAdapters(adapters);
         }
 
         @SuppressWarnings("unchecked")
@@ -603,14 +601,8 @@ public class Binder {
                         public ValueExpression resolveVariable(String variable) {
                             // the variable is not "a.b.c.d" but only "a"
                             // the remainder will be resolved by FieldELResolver
-                            try {
-                                Object node = properties.getClass().getField(variable).get(properties);
-                                return elFactory.createValueExpression(node, Object.class);
-                            } catch (IllegalArgumentException | IllegalAccessException
-                                    | NoSuchFieldException | SecurityException e)
-                            {
-                                return Thrower.doThrow(e);
-                            }
+                            Object node = safeCall(() -> properties.getClass().getField(variable).get(properties));
+                            return elFactory.createValueExpression(node, Object.class);
                         }
                     };
                     @Override

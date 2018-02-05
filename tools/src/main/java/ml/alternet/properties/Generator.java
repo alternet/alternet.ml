@@ -1,12 +1,12 @@
 package ml.alternet.properties;
 
+import static ml.alternet.misc.Thrower.*;
 import static ml.alternet.properties.NamesUtil.asClassName;
 import static ml.alternet.properties.NamesUtil.asPropName;
 
 import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -81,12 +81,8 @@ public class Generator {
 
         PropertiesTemplate(Path path, Type name) {
             LOG.info("Reading properties file " + path.toAbsolutePath());
-            try {
-                this.input = new FileInputStream(path.toFile());
-                this.className = name;
-            } catch (FileNotFoundException e) {
-                Thrower.doThrow(e);
-            }
+            this.input = safeCall(() -> new FileInputStream(path.toFile()));
+            this.className = name;
         }
 
     }
@@ -595,11 +591,7 @@ public class Generator {
                 w.writeln("public #0 #1;", className, propName);
                 w.writeln();
                 if (! this.isExistingType) {
-                    try {
-                        generateOuter(w);
-                    } catch (IOException e) {
-                        Thrower.doThrow(e);
-                    }
+                    safeCall(() -> generateOuter(w));
                 }
             } else {
                 String typeName = this.type.toString(t -> omitPackage(t));
@@ -819,11 +811,7 @@ public class Generator {
 
         @Override
         void generate(Writindent w) {
-            try {
-                generateOuter(w);
-            } catch (IOException e) {
-                Thrower.doThrow(e);
-            }
+            safeCall(() -> generateOuter(w));
         }
 
         @Override
@@ -923,11 +911,7 @@ public class Generator {
         int level = 0;
 
         public void writeln() {
-            try {
-                w.write("\n");
-            } catch (IOException e) {
-                Thrower .doThrow(e);
-            }
+            safeCall(() -> w.write("\n"));
         }
 
         String indent() {
