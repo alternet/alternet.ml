@@ -8,8 +8,6 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import ml.alternet.misc.TodoException;
-
 /**
  * Class-related utilities.
  *
