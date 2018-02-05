@@ -115,6 +115,16 @@
                             <compilerArgument>-proc:none</compilerArgument>
                         </configuration>
                     </execution>
+
+                    <execution>
+                        <!-- additional compilation for generated classes
+                             that are not compiled by the default test compilation -->
+                        <id>compile-generated</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
                     <execution>
                         <!-- additional compilation for generated classes
                              that are not compiled by the default test compilation -->

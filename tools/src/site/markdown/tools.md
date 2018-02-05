@@ -88,6 +88,75 @@ Allow to work on Java types even on those that doesn't exist :
 
 * [`Type`](apidocs/ml/alternet/misc/Type.html)
 
+### Enum extension
+
+Java `Enum`s are not designed to be extended, which prevents using an illegal value (one of the child type enum) on an enum variable that would be of the parent enum type. However, it appears that sometimes we do want to extend an enum. `EnumUtil::extend` can copy existing enum values to a new enum :
+
+```java
+    public enum A {
+        a, b, c;
+    }
+
+    public enum Z {
+        x, y, z;
+        static {
+            EnumUtil.extend(A.class, Z.class);
+        }
+        // Z : (a, b, c, x, y, z)
+    }
+```
+
+#### Exemple of 2 enums merged in a 3rd
+
+```java
+
+    public static enum Weekday {
+        MON, TUE, WED, THU, FRI;
+    }
+
+    public static enum WeekendDay {
+        SAT, SUN;
+    }
+
+    public static enum DayOfWeek {
+        MON; // enum expect at least one value
+
+        static {
+            EnumUtil.extend(Weekday.class, DayOfWeek.class);
+            EnumUtil.extend(WeekendDay.class, DayOfWeek.class);
+        }
+
+        // DayOfWeek contains MON, TUE, WED, THU, FRI, SAT, SUN
+    }
+```
+
+It may be helpful to inherit some behaviours of the other enums :
+
+```java
+    public static enum DayOfWeek {
+        MON; // enum expect at least one value
+
+        private boolean isWeekendDay = false;
+
+        public boolean isWeekendDay() {
+            return this.isWeekendDay;
+        }
+
+        private DayOfWeek() { }
+
+        private DayOfWeek(WeekendDay weekendDay) {
+            this.isWeekendDay = true;
+        }
+
+        static {
+            EnumUtil.extend(Weekday.class, DayOfWeek.class);
+            EnumUtil.extend(WeekendDay.class, DayOfWeek.class);
+        }
+    }
+```
+
+* [`EnumUtil`](apidocs/ml/alternet/util/EnumUtil.html)
+
 ### JAXBStream
 
 Allow to stream repeatable elements from an XML document to objects, with eventually a cache strategy :
