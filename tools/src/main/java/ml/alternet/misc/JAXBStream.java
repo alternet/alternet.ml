@@ -1,5 +1,6 @@
 package ml.alternet.misc;
 
+import static ml.alternet.misc.Thrower.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -211,13 +212,7 @@ public class JAXBStream<T> {
 
         StreamSource(URL url) {
             this.url = Optional.of(url);
-            this.input = () -> {
-                try {
-                    return new InputSource(url.openStream());
-                } catch (IOException e) {
-                    return Thrower.doThrow(e);
-                }
-            };
+            this.input = () -> safeCall(() -> new InputSource(url.openStream()));
         }
 
         StreamSource(Supplier<InputSource> input) {
@@ -243,14 +238,8 @@ public class JAXBStream<T> {
                         : xif.createXMLEventReader(is.getCharacterStream());
                     Unmarshaller unmarshaller = JAXBContext.newInstance(clazz).createUnmarshaller();
                     XMLEventReader xml = JAXBStream.this.useFilter.map(
-                            filter -> {
-                                try {
-                                    return xif.createFilteredReader(xmlSource, filter);
-                                } catch (XMLStreamException e) {
-                                    return Thrower.doThrow(e);
-                                }
-                            })
-                            .orElse(xmlSource);
+                            filter -> safeCall(() -> xif.createFilteredReader(xmlSource, filter))
+                        ).orElse(xmlSource);
 
                     @Override
                     public boolean tryAdvance(Consumer<? super T> action) {
@@ -368,44 +357,40 @@ public class JAXBStream<T> {
         localTmpFileCache {
             @Override
             <U> JAXBStream<U>.Interceptor newInterceptor(JAXBStream<U> jaxbStream) {
-                try {
-                    File tmp = File.createTempFile("JAXBStream_", ".xml");
-                    tmp.deleteOnExit();
-                    LOG.info(() -> "🗄 Starting storing " + jaxbStream.clazz.getName() + " items in temp file " + tmp);
-                    return jaxbStream.new Interceptor() {
+                File tmp = safeCall(() -> File.createTempFile("JAXBStream_", ".xml"));
+                tmp.deleteOnExit();
+                LOG.info(() -> "🗄 Starting storing " + jaxbStream.clazz.getName() + " items in temp file " + tmp);
+                return jaxbStream.new Interceptor() {
 
-                        @Override
-                        InputSource intercept(InputSource input) {
-                            try {
-                                if (input.getCharacterStream() == null) {
-                                    return new InputSource(
-                                        new TeeInputStream(input.getByteStream(), new FileOutputStream(tmp))
-                                    );
-                                } else {
-                                    return new InputSource(
-                                        new TeeReader(input.getCharacterStream(), new FileWriter(tmp))
-                                    );
-                                }
-                            } catch (IOException e) {
-                                return Thrower.doThrow(e);
+                    @Override
+                    InputSource intercept(InputSource input) {
+                        try {
+                            if (input.getCharacterStream() == null) {
+                                return new InputSource(
+                                    new TeeInputStream(input.getByteStream(), new FileOutputStream(tmp))
+                                );
+                            } else {
+                                return new InputSource(
+                                    new TeeReader(input.getCharacterStream(), new FileWriter(tmp))
+                                );
                             }
+                        } catch (IOException e) {
+                            return Thrower.doThrow(e);
                         }
+                    }
 
-                        @Override
-                        public void cacheSource() throws IOException {
-                            jaxbStream.cacheStrategy = noCache;
-                            jaxbStream.source = jaxbStream.new StreamSource(tmp.toURI().toURL());
-                            jaxbStream.cleaner = () -> {
-                                tmp.delete();
-                                jaxbStream.cleaner = () -> false;
-                                return true;
-                            };
-                        }
+                    @Override
+                    public void cacheSource() throws IOException {
+                        jaxbStream.cacheStrategy = noCache;
+                        jaxbStream.source = jaxbStream.new StreamSource(tmp.toURI().toURL());
+                        jaxbStream.cleaner = () -> {
+                            tmp.delete();
+                            jaxbStream.cleaner = () -> false;
+                            return true;
+                        };
+                    }
 
-                    };
-                } catch (IOException e) {
-                    return Thrower.doThrow(e);
-                }
+                };
             }
         };
 

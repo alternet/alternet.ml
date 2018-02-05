@@ -341,16 +341,12 @@ public class IOUtil {
                         Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL) {
                     @Override
                     public boolean tryAdvance(Consumer<? super Character> action) {
-                        try {
-                            int c = data.read();
-                            if (c == EOF) {
-                                return false;
-                            } else {
-                                action.accept((char) c);
-                                return true;
-                            }
-                        } catch (IOException e) {
-                            return Thrower.doThrow(e);
+                        int c = Thrower.safeCall(() -> data.read());
+                        if (c == EOF) {
+                            return false;
+                        } else {
+                            action.accept((char) c);
+                            return true;
                         }
                     }
                 },
@@ -370,16 +366,12 @@ public class IOUtil {
                     Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL) {
                 @Override
                 public boolean tryAdvance(IntConsumer action) {
-                    try {
-                        int i = data.read();
-                        if (i == EOF) {
-                            return false;
-                        } else {
-                            action.accept(i);
-                            return true;
-                        }
-                    } catch (IOException e) {
-                        return Thrower.doThrow(e);
+                    int i = Thrower.safeCall(() -> data.read());
+                    if (i == EOF) {
+                        return false;
+                    } else {
+                        action.accept(i);
+                        return true;
                     }
                 }
             },
