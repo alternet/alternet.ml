@@ -230,7 +230,38 @@ public class EnumUtil {
      * @param baseEnumClass The values to add.
      * @param targetEnumClass The target enum to extend.
      */
-    public static void extend(Class<? extends Enum<?>> baseEnumClass, Class<? extends Enum<?>> targetEnumClass) {
+    public static void extend(Class<? extends Enum<?>> baseEnumClass) {
+        Class<? extends Enum<?>> targetEnumClass = ECF.getEnumClass();
+        extend(baseEnumClass, targetEnumClass);
+    }
+
+    // allow to find the caller enum class
+    private static class EnumClassFinder extends SecurityManager  {
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        Class<? extends Enum<?>> getEnumClass() {
+            Class[] classes = getClassContext();
+            // call stack :
+            // class ml.alternet.util.EnumUtil$EnumClassFinder,
+            // class ml.alternet.util.EnumUtil,
+            // enum org.example.YourEnum,
+            // ...]
+            return classes[2];
+        };
+    }
+    private static final EnumClassFinder ECF = new EnumClassFinder();
+
+    /**
+     * Extend an enum class with the values of another enum. If the base enum
+     * expose some logic in an interface, the target enum should have a
+     * constructor with as its unique argument an instance of the base enum,
+     * in order to cast them properly ; otherwise that logic will be lost.
+     * Existing values can be copied either with the aforementioned constructor,
+     * or with a zero-arg constructor.
+     *
+     * @param baseEnumClass The values to add.
+     * @param targetEnumClass The target enum to extend.
+     */
+    private static void extend(Class<? extends Enum<?>> baseEnumClass, Class<? extends Enum<?>> targetEnumClass) {
         try {
             List<Enum<?>> baseValues = new LinkedList<>( // need to remove items (see below)
                 Arrays.asList(baseEnumClass.getEnumConstants())

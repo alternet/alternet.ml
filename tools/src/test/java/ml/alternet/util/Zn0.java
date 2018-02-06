@@ -26,4 +26,8 @@ public enum Zn0 implements Supplier<Integer> {
         return this.e.get();
     };
 
+    static {
+        EnumUtil.extend(A42.class);
+    }
+
 }
