@@ -16,7 +16,7 @@ public class EnumUtilTest {
     public static enum Z {
         x, b, y;
         static {
-            EnumUtil.extend(A.class, Z.class); // expect z = { b, c, d, x, y }
+            EnumUtil.extend(A.class); // expect z = { b, c, d, x, y }
         }
     }
 
@@ -36,7 +36,7 @@ public class EnumUtilTest {
     }
 
     public void enumWithInterface_ShouldBe_extendWithNewValues() {
-        EnumUtil.extend(A42.class, Zn0.class); // expect z = { b, c, d, x, y }
+        // expect z = { b, c, d, x, y }
         Zn0[] values = Zn0.values();
 
         Assertions.assertThat(values).hasSize(5);
@@ -110,8 +110,8 @@ public class EnumUtilTest {
         }
 
         static {
-            EnumUtil.extend(Weekday.class, DayOfWeek.class);
-            EnumUtil.extend(WeekendDay.class, DayOfWeek.class);
+            EnumUtil.extend(Weekday.class);
+            EnumUtil.extend(WeekendDay.class);
         }
     }
 
