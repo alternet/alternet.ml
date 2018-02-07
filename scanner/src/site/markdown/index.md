@@ -1,10 +1,10 @@
+# Alternet Scanner
+
 <div class="nopub">
 <a href="http://alternet.ml/alternet-libs/scanner/index.html">
 Published version of this page available HERE</a></div>
 
-# Alternet Scanner
-
-Alternet Scanner supply means to scan character streams.
+**Alternet Scanner** supply means to scan character streams.
 
 This is a low-level library for handling character streams,
 you will find advanced features in [Alternet Parsing](../parsing/parsing.html).

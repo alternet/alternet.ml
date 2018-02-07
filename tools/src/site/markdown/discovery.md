@@ -1,28 +1,29 @@
+# Discovery Service
+
 <div class="nopub">
 <a href="http://alternet.ml/alternet-libs/tools/discovery.html">
 Published version of this page available HERE</a></div>
 
-# Discovery Service
+**Alternet Tools** include discovery service tools.
 
-Alternet Tools include discovery service tools.
-
-## Maven import
-
-```xml
+<div style="columns: 2">
+<div>
+<h3 style="margin: 0">Maven import</h3>
+<pre class="prettyprint"><![CDATA[
 <dependency>
     <groupId>ml.alternet</groupId>
     <artifactId>alternet-tools</artifactId>
     <version>1.0</version>
-</dependency>
-```
-
-## JavaDoc API documentation
-
-* [Alternet Tools](apidocs/index.html)
-
-Other Alternet APIs :
-
-* [Alternet Libs](../apidocs/index.html)
+</dependency>]]>
+</pre>
+</div>
+<div style="break-before: column">
+<h3>JavaDoc API documentation</h3>
+<ul><li><a href="apidocs/index.html">Alternet Tools</a></li></ul>
+<p>Other Alternet APIs :</p>
+<ul><li><a href="../apidocs/index.html">Alternet Libs</a></li></ul>
+</div>
+</div>
 
 ## Discovery Service
 

@@ -1,28 +1,29 @@
+# Alternet Scanner
+
 <div class="nopub">
 <a href="http://alternet.ml/alternet-libs/scanner/scanner.html">
 Published version of this page available HERE</a></div>
 
-# Alternet Scanner
+**Alternet Scanner** supply means to scan character streams.
 
-Alternet Scanner supply means to scan character streams.
-
-## Maven import
-
-```xml
+<div style="columns: 2">
+<div>
+<h3 style="margin: 0">Maven import</h3>
+<pre class="prettyprint"><![CDATA[
 <dependency>
     <groupId>ml.alternet</groupId>
     <artifactId>alternet-scanner</artifactId>
     <version>1.0</version>
-</dependency>
-```
-
-## JavaDoc API documentation
-
-* [Alternet Scanner](apidocs/index.html)
-
-Other Alternet APIs :
-
-* [Alternet Libs](../apidocs/index.html)
+</dependency>]]>
+</pre>
+</div>
+<div style="break-before: column">
+<h3>JavaDoc API documentation</h3>
+<ul><li><a href="apidocs/index.html">Alternet Scanner</a></li></ul>
+<p>Other Alternet APIs :</p>
+<ul><li><a href="../apidocs/index.html">Alternet Libs</a></li></ul>
+</div>
+</div>
 
 ## Usage
 

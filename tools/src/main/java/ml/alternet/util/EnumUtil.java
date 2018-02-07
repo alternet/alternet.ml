@@ -44,17 +44,31 @@ public class EnumUtil {
      *
      *    MyEnum() {
      *        // replace the "_" in the name by a " "
-     *       EnumUtil.replace(MyEnum.class, this, s -&gt; s.replace('_', ' '));
+     *       EnumUtil.replace(this, s -&gt; s.replace('_', ' '));
      *    }
      *}</pre>
      * Usage :
      * <pre> MyEnum val = MyEnum.valueOf("VALUE 2");</pre>
      *
+     * @param enumValue The instance to change
+     * @param transformer Apply a transformation on the name of the instance
+     */
+    public static void replace(Object enumValue, UnaryOperator<String> transformer) {
+        Class<? extends Enum<?>> enumClass = ECF.getEnumClass();
+        replace(enumClass, enumValue, transformer);
+    }
+
+    /**
+     * Replace the value of an enum instance by another value.
+     *
+     * Helpful for enum values that are made of characters that
+     * are not Java names.
+     *
      * @param enumClass The enum class to patch
      * @param enumValue The instance to change
      * @param transformer Apply a transformation on the name of the instance
      */
-    public static void replace(Class<? extends Enum<?>> enumClass, Object enumValue,
+    private static void replace(Class<? extends Enum<?>> enumClass, Object enumValue,
             UnaryOperator<String> transformer)
     {
         try {
@@ -80,11 +94,22 @@ public class EnumUtil {
     /**
      * Replace the ordinal of an enum instance by another ordinal.
      *
+     * @param enumValue The instance to change
+     * @param transformer Apply a transformation on the ordinal of the instance
+     */
+    public static void reorder(Object enumValue, UnaryOperator<Integer> transformer) {
+        Class<? extends Enum<?>> enumClass = ECF.getEnumClass();
+        reorder(enumClass, enumValue, transformer);
+    }
+
+    /**
+     * Replace the ordinal of an enum instance by another ordinal.
+     *
      * @param enumClass The enum class to patch
      * @param enumValue The instance to change
      * @param transformer Apply a transformation on the ordinal of the instance
      */
-    public static void reorder(Class<? extends Enum<?>> enumClass, Object enumValue,
+    private static void reorder(Class<? extends Enum<?>> enumClass, Object enumValue,
             UnaryOperator<Integer> transformer)
     {
         try {
@@ -117,6 +142,32 @@ public class EnumUtil {
     public interface EnumConstruct {
 
         /**
+         * Initialize this {@code EnumConstruct}
+         *
+         * @param baseEnumClass The base enum class, maybe used as argument in the constructor of the target enum class.
+         * @param targetEnumClass The target enum class.
+         *
+         * @throws NoSuchMethodException When an error occurs
+         * @throws SecurityException When an error occurs
+         * @throws IllegalAccessException When an error occurs
+         * @throws IllegalArgumentException When an error occurs
+         * @throws InvocationTargetException When an error occurs
+         */
+        void init(Class<? extends Enum<?>> baseEnumClass, Class<? extends Enum<?>> targetEnumClass)
+            throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException;
+
+        /**
+         * Build an enum value.
+         *
+         * @param name The name of the enum value.
+         * @param i The order.
+         * @param baseValue The base value it is made of, or {@code null}
+         *
+         * @return A new enum value.
+         */
+        Enum<?> build(String name, int i, Enum<?> baseValue);
+
+        /**
          * Create a new instance of {@code EnumConstruct}
          *
          * @return A new instance of {@code EnumConstruct}
@@ -136,19 +187,20 @@ public class EnumUtil {
          *
          * @author Philippe Poulard
          */
-        @LookupKey(forClass=EnumConstruct.class, byDefault=true)
-        public static class SunEnumConstruct implements EnumConstruct {
+        @LookupKey(forClass = EnumConstruct.class, byDefault = true)
+        class SunEnumConstruct implements EnumConstruct {
 
             @SuppressWarnings("restriction")
             sun.reflect.ConstructorAccessor ca;
             boolean withEnumParam = true;
 
-            Constructor<?> getConstructor(Class<? extends Enum<?>> baseEnumClass, Class<? extends Enum<?>> targetEnumClass)
-                throws NoSuchMethodException, SecurityException
+            Constructor<?> getConstructor(Class<? extends Enum<?>> baseEnumClass,
+                Class<? extends Enum<?>> targetEnumClass) throws NoSuchMethodException, SecurityException
             {
                 try {
                     // looking for constructor : TargetEnumClass(BaseEnumClass base)
-                    // that is to say with enum looking for : TargetEnumClass(String name, int order, BaseEnumClass base)
+                    // that is to say with enum looking for :
+                    //                           TargetEnumClass(String name, int order, BaseEnumClass base)
                     return targetEnumClass.getDeclaredConstructor(String.class, int.class, baseEnumClass);
                 } catch (NoSuchMethodException e) {
                     this.withEnumParam = false;
@@ -161,7 +213,8 @@ public class EnumUtil {
             @SuppressWarnings("restriction")
             @Override
             public void init(Class<? extends Enum<?>> baseEnumClass, Class<? extends Enum<?>> targetEnumClass)
-                throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+                throws NoSuchMethodException, SecurityException, IllegalAccessException,
+                IllegalArgumentException, InvocationTargetException
             {
                 Constructor<?> c = getConstructor(baseEnumClass, targetEnumClass);
                 AccessController.doPrivileged((PrivilegedAction<Void>) (() -> {
@@ -191,32 +244,6 @@ public class EnumUtil {
             }
         }
 
-        /**
-         * Initialize this {@code EnumConstruct}
-         *
-         * @param baseEnumClass The base enum class, maybe used as argument in the constructor of the target enum class.
-         * @param targetEnumClass The target enum class.
-         *
-         * @throws NoSuchMethodException When an error occurs
-         * @throws SecurityException When an error occurs
-         * @throws IllegalAccessException When an error occurs
-         * @throws IllegalArgumentException When an error occurs
-         * @throws InvocationTargetException When an error occurs
-         */
-        public void init(Class<? extends Enum<?>> baseEnumClass, Class<? extends Enum<?>> targetEnumClass)
-            throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException;
-
-        /**
-         * Build an enum value.
-         *
-         * @param name The name of the enum value.
-         * @param i The order.
-         * @param baseValue The base value it is made of, or {@code null}
-         *
-         * @return A new enum value.
-         */
-        public Enum<?> build(String name, int i, Enum<?> baseValue);
-
     }
 
     /**
@@ -228,7 +255,6 @@ public class EnumUtil {
      * or with a zero-arg constructor.
      *
      * @param baseEnumClass The values to add.
-     * @param targetEnumClass The target enum to extend.
      */
     public static void extend(Class<? extends Enum<?>> baseEnumClass) {
         Class<? extends Enum<?>> targetEnumClass = ECF.getEnumClass();
@@ -275,7 +301,7 @@ public class EnumUtil {
             List<Enum<?>> newValues = new ArrayList<>();
             // copy the target values, but if one is found within base values, use it instead
             targetValues.stream().forEach(t -> {
-                for (Iterator<Enum<?>> baseIt = baseValues.iterator() ; baseIt.hasNext() ;) {
+                for (Iterator<Enum<?>> baseIt = baseValues.iterator() ; baseIt.hasNext() ; ) {
                     Enum<?> b = baseIt.next();
                     if (b.name().equals(t.name())) {
                         baseIt.remove();

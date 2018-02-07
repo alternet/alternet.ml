@@ -1,28 +1,10 @@
+# Alternet Tools
+
 <div class="nopub">
 <a href="http://alternet.ml/alternet-libs/tools/tools.html">
 Published version of this page available HERE</a></div>
 
-# Alternet Tools
-
-Alternet Tools include discovery service tools, properties binder and classes generator, concurrent and locking tools, and more.
-
-## Maven import
-
-```xml
-<dependency>
-    <groupId>ml.alternet</groupId>
-    <artifactId>alternet-tools</artifactId>
-    <version>1.0</version>
-</dependency>
-```
-
-## JavaDoc API documentation
-
-* [Alternet Tools](apidocs/index.html)
-
-Other Alternet APIs :
-
-* [Alternet Libs](../apidocs/index.html)
+**Alternet Tools** include discovery service tools, properties binder and classes generator, concurrent and locking tools, and more.
 
 ## Overview
 
@@ -35,6 +17,25 @@ Alternet Tools contains mainly :
 * and additional utility classes
 
 This documentation covers the two latter topics.
+
+<div style="columns: 2">
+<div>
+<h3 style="margin: 0">Maven import</h3>
+<pre class="prettyprint"><![CDATA[
+<dependency>
+    <groupId>ml.alternet</groupId>
+    <artifactId>alternet-tools</artifactId>
+    <version>1.0</version>
+</dependency>]]>
+</pre>
+</div>
+<div style="break-before: column">
+<h3>JavaDoc API documentation</h3>
+<ul><li><a href="apidocs/index.html">Alternet Tools</a></li></ul>
+<p>Other Alternet APIs :</p>
+<ul><li><a href="../apidocs/index.html">Alternet Libs</a></li></ul>
+</div>
+</div>
 
 ## Some useful tools
 
@@ -100,7 +101,7 @@ Java `Enum`s are not designed to be extended, which prevents using an illegal va
     public enum Z {
         x, y, z;
         static {
-            EnumUtil.extend(A.class, Z.class);
+            EnumUtil.extend(A.class);
         }
         // Z : (a, b, c, x, y, z)
     }
@@ -122,8 +123,8 @@ Java `Enum`s are not designed to be extended, which prevents using an illegal va
         MON; // enum expect at least one value
 
         static {
-            EnumUtil.extend(Weekday.class, DayOfWeek.class);
-            EnumUtil.extend(WeekendDay.class, DayOfWeek.class);
+            EnumUtil.extend(Weekday.class);
+            EnumUtil.extend(WeekendDay.class);
         }
 
         // DayOfWeek contains MON, TUE, WED, THU, FRI, SAT, SUN
@@ -149,11 +150,13 @@ It may be helpful to inherit some behaviours of the other enums :
         }
 
         static {
-            EnumUtil.extend(Weekday.class, DayOfWeek.class);
-            EnumUtil.extend(WeekendDay.class, DayOfWeek.class);
+            EnumUtil.extend(Weekday.class);
+            EnumUtil.extend(WeekendDay.class);
         }
     }
 ```
+
+If a value of the new enum already exist in the base enum, the new behaviour override the existing one.
 
 * [`EnumUtil`](apidocs/ml/alternet/util/EnumUtil.html)
 

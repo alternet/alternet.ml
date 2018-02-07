@@ -1,3 +1,5 @@
+# Alternet Security
+
 <div class="nopub">
 <a href="http://alternet.ml/alternet-libs/security/security.html">
 Published version of this page available HERE</a></div>
@@ -34,25 +36,24 @@ All Alternet APIs :
 
 # Secure passwords handling
 
-## Maven import
-
-```xml
+<div style="columns: 2">
+<div>
+<h3 style="margin: 0">Maven import</h3>
+<pre class="prettyprint"><![CDATA[
 <dependency>
     <groupId>ml.alternet</groupId>
     <artifactId>alternet-security</artifactId>
     <version>1.0</version>
-</dependency>
-```
-
-Additional Maven modules are available for using Alternet Security in Tomcat or Jetty (see below).
-
-## JavaDoc API documentation
-
-* [Alternet Security](apidocs/index.html)
-
-All Alternet APIs :
-
-* [Alternet Libs](../apidocs/index.html)
+</dependency>]]>
+</pre>
+</div>
+<div style="break-before: column">
+<h3>JavaDoc API documentation</h3>
+<ul><li><a href="apidocs/index.html">Alternet Security</a></li></ul>
+<p>Other Alternet APIs :</p>
+<ul><li><a href="../apidocs/index.html">Alternet Libs</a></li></ul>
+</div>
+</div>
 
 ## Usage
 
@@ -112,27 +113,27 @@ Alternet Security Authentication supports a wide array of hash algorithms,
 primarily to support legacy data and systems.
 </div>
 
-## Maven import
-
-This module (or any other implementation) is required for
+<div style="columns: 2">
+<div>
+<h3 style="margin: 0">Maven import</h3>
+<p>This module (or any other implementation) is required for
 performing credentials verification, such as in Web applications
-(see below).
-
-```xml
+(see below).</p>
+<pre class="prettyprint"><![CDATA[
 <dependency>
     <groupId>ml.alternet</groupId>
     <artifactId>alternet-security-auth</artifactId>
     <version>1.0</version>
-</dependency>
-```
-
-## JavaDoc API documentation
-
-* [Alternet Security Authentication](../security-auth/apidocs/index.html)
-
-All Alternet APIs :
-
-* [Alternet Libs](../apidocs/index.html)
+</dependency>]]>
+</pre>
+</div>
+<div style="break-before: column">
+<h3>JavaDoc API documentation</h3>
+<ul><li><a href="../security-auth/apidocs/index.html">Alternet Security Authentication</a></li></ul>
+<p>Other Alternet APIs :</p>
+<ul><li><a href="../apidocs/index.html">Alternet Libs</a></li></ul>
+</div>
+</div>
 
 ## Project page
 
@@ -144,12 +145,10 @@ All Alternet APIs :
 
 There are currently four good choices [<a href="#note_1">1</a>] for secure hashing:
 
-<ul>
-    <li>[Argon2](https://en.wikipedia.org/wiki/Argon2)</li>
-    <li>[BCrypt](https://en.wikipedia.org/wiki/Bcrypt)</li>
-    <li>[PBKDF2 SHA256 / PBKDF2 SHA512](https://en.wikipedia.org/wiki/PBKDF2)</li>
-    <li>[SHA256 / SHA512](https://en.wikipedia.org/wiki/SHA-2)</li>
-</ul>
+* [Argon2](https://en.wikipedia.org/wiki/Argon2)
+* [BCrypt](https://en.wikipedia.org/wiki/Bcrypt)
+* [PBKDF2 SHA256 / PBKDF2 SHA512](https://en.wikipedia.org/wiki/PBKDF2)
+* [SHA256 / SHA512](https://en.wikipedia.org/wiki/SHA-2)
 
 All four hashes share the following properties:
 
@@ -398,37 +397,34 @@ Jetty doesn't supply any mean to handle passwords from HTTP requests the way Alt
 The [Jetty tests](../security-jetty-9.1/surefire-report.html) show how a password is captured
 ([source code](https://github.com/alternet/alternet.ml/blob/master/security-jetty-9.1/src/test/java/ml/alternet/test/security/web/jetty/RESTTest.java)).
 
-#### Maven import
-
-Don't forget to also import the authentication module for checking the credentials (see above).
-
-Jetty 9.1 and 9.2 :
-
-```xml
+<div style="columns: 2">
+<div>
+<h3 style="margin: 0">Maven import</h3>
+<p>Don't forget to also import the authentication module for checking the credentials (see above).</p>
+<p>Jetty 9.1 and 9.2 :</p>
+<pre class="prettyprint"><![CDATA[
 <dependency>
     <groupId>ml.alternet</groupId>
     <artifactId>alternet-security-jetty-9.1</artifactId>
     <version>1.0</version>
-</dependency>
-```
-
-Jetty 9.3 :
-
-```xml
+</dependency>]]>
+</pre>
+<p>Jetty 9.3 :</p>
+<pre class="prettyprint"><![CDATA[
 <dependency>
     <groupId>ml.alternet</groupId>
     <artifactId>alternet-security-jetty-9.3</artifactId>
     <version>1.0</version>
-</dependency>
-```
-
-#### JavaDoc API documentation
-
-* [Alternet Security for Jetty](../security-jetty-9.1/apidocs/index.html)
-
-All Alternet APIs :
-
-* [Alternet Libs](../apidocs/index.html)
+</dependency>]]>
+</pre>
+</div>
+<div style="break-before: column">
+<h3>JavaDoc API documentation</h3>
+<ul><li><a href="../security-jetty-9.1/apidocs/index.html">Alternet Security for Jetty</a></li></ul>
+<p>Other Alternet APIs :</p>
+<ul><li><a href="../apidocs/index.html">Alternet Libs</a></li></ul>
+</div>
+</div>
 
 #### Project page
 
@@ -585,25 +581,25 @@ This example runs a Jetty server and an LDAP server and connect the authenticati
 The [Tomcat tests](../security-tomcat-8.0/surefire-report.html) show how a password is captured
 ([source code](https://github.com/alternet/alternet.ml/blob/master/security-tomcat-8.0/src/test/java/ml/alternet/test/security/web/tomcat/RESTTest.java)).
 
-#### Maven import
-
-Don't forget to also import a module that checks the credentials (see above).
-
-```xml
+<div style="columns: 2">
+<div>
+<h3 style="margin: 0">Maven import</h3>
+<p>Don't forget to also import a module that checks the credentials (see above).</p>
+<pre class="prettyprint"><![CDATA[
 <dependency>
     <groupId>ml.alternet</groupId>
     <artifactId>alternet-security-tomcat-8.0</artifactId>
     <version>1.0</version>
-</dependency>
-```
-
-#### JavaDoc API documentation
-
-* [Alternet Security for Tomcat](../security-tomcat-8.0/apidocs/index.html)
-
-All Alternet APIs :
-
-* [Alternet Libs](../apidocs/index.html)
+</dependency>]]>
+</pre>
+</div>
+<div style="break-before: column">
+<h3>JavaDoc API documentation</h3>
+<ul><li><a href="../security-tomcat-8.0/apidocs/index.html">Alternet Security for Tomcat</a></li></ul>
+<p>Other Alternet APIs :</p>
+<ul><li><a href="../apidocs/index.html">Alternet Libs</a></li></ul>
+</div>
+</div>
 
 #### Project page
 

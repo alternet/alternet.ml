@@ -212,11 +212,11 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher.Builder> {
     };
 
     ModularCryptFormatHashers() {
-        EnumUtil.replace(ModularCryptFormatHashers.class, this, s -> s.replace("\\$", ""));
+        EnumUtil.replace(this, s -> s.replace("\\$", ""));
     }
 
     ModularCryptFormatHashers(String name) {
-        EnumUtil.replace(ModularCryptFormatHashers.class, this, s -> name);
+        EnumUtil.replace(this, s -> name);
     }
 
     @Override

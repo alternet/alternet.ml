@@ -147,7 +147,7 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher.Builder> {
     public abstract Hasher.Builder get();
 
     private CurlyBracesCryptFormatHashers() {
-        EnumUtil.replace(CurlyBracesCryptFormatHashers.class, this, s -> s.replace("_", "-"));
+        EnumUtil.replace(this, s -> s.replace("_", "-"));
     }
 
 }

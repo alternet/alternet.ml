@@ -1,10 +1,10 @@
+# Summary
+
 <div class="nopub">
 <a href="http://alternet.ml/alternet-libs/tools/index.html">
 Published version of this page available HERE</a></div>
 
-# Alternet Tools
-
-Alternet Tools include discovery service tools, concurrent and locking tools, byte code generator and more.
+**Alternet Tools** include discovery service tools, concurrent and locking tools, byte code generator and more.
 
 ---
 

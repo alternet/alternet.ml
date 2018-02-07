@@ -1,10 +1,10 @@
+# Alternet Security Jetty
+
 <div class="nopub">
 <a href="http://alternet.ml/alternet-libs/security-jetty-9.1/index.html">
 Published version of this page available HERE</a></div>
 
-# Alternet Security Jetty
-
-Alternet Security Jetty is a patch that allow to handle
+**Alternet Security Jetty** is a patch that allow to handle
 secured passwords in Web applications.
 
 ---

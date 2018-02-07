@@ -1,10 +1,10 @@
+# Alternet Security
+
 <div class="nopub">
 <a href="http://alternet.ml/alternet-libs/security/index.html">
 Published version of this page available HERE</a></div>
 
-# Alternet Security
-
-Alternet Security for Web applications allow handling safe passwords inside Web applications.
+**Alternet Security** for Web applications allow handling safe passwords inside Web applications.
 
 ---
 
@@ -23,6 +23,7 @@ Other Alternet guides :
 
 * [Alternet Scanner](../scanner/scanner.html)
 * [Alternet Tools](../tools/tools.html)
+* [Alternet Parsing](../parsing/parsing.html)
 
 ## ![download](../images/download.png) [Download](../download.html)
 

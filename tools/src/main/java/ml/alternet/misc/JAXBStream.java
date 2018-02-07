@@ -375,7 +375,7 @@ public class JAXBStream<T> {
                                 );
                             }
                         } catch (IOException e) {
-                            return Thrower.doThrow(e);
+                            return doThrow(e);
                         }
                     }
 

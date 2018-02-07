@@ -1,6 +1,7 @@
 package ml.alternet.properties;
 
-import static ml.alternet.misc.Thrower.*;
+import static ml.alternet.misc.Thrower.doThrow;
+import static ml.alternet.misc.Thrower.safeCall;
 import static ml.alternet.properties.NamesUtil.asClassName;
 import static ml.alternet.properties.NamesUtil.asPropName;
 
@@ -42,7 +43,6 @@ import java.util.stream.Stream;
 
 import javax.annotation.Generated;
 
-import ml.alternet.misc.Thrower;
 import ml.alternet.misc.Type;
 import ml.alternet.misc.Type.Kind;
 import ml.alternet.util.NumberUtil;
@@ -172,7 +172,7 @@ public class Generator {
                 return new PropertiesTemplate(file, Type.of(pkg, cl));
             });
         } catch (IOException e) {
-            Thrower.doThrow(e);
+            doThrow(e);
         }
         return this;
     }
@@ -208,7 +208,7 @@ public class Generator {
                 LOG.info("Writing to " + javaFile);
                 return new FileOutputStream(javaFile);
             } catch (IOException e) {
-                return Thrower.doThrow(e);
+                return doThrow(e);
             }
         });
         return this;
@@ -249,7 +249,7 @@ public class Generator {
             // generate the main class and dependencies
             collector.mainClass.generateOuter(null); // null : let resolve the writer
         } catch (IOException e) {
-            Thrower.doThrow(e);
+            doThrow(e);
         }
     }
 
@@ -290,7 +290,9 @@ public class Generator {
                     LOG.finest("Defining Adapter " + strType);
                 } else if (strVal.startsWith("#")) {
                     if (strType.length() == 0) {
-                        throw new IllegalArgumentException("Type definition incomplete \". = #\", a class name was expected.");
+                        throw new IllegalArgumentException(
+                            "Type definition incomplete \". = #\", a class name was expected."
+                        );
                     }
                     Type type = Type.parseTypeDefinition(strType); // org.example.conf.TheConf
                     if (type instanceof GenericArrayType || type instanceof ParameterizedType) {
@@ -924,7 +926,7 @@ public class Generator {
                 write(line, vars);
                 w.write("\n");
             } catch (IOException e) {
-                Thrower .doThrow(e);
+                doThrow(e);
             }
         }
 
@@ -935,7 +937,7 @@ public class Generator {
             try {
                 w.write(line);
             } catch (IOException e) {
-                Thrower .doThrow(e);
+                doThrow(e);
             }
         }
 
@@ -952,7 +954,7 @@ public class Generator {
                 w.flush();
                 w.close();
             } catch (IOException e) {
-                Thrower.doThrow(e);
+                doThrow(e);
             }
         }
 

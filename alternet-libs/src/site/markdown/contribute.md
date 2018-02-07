@@ -1,3 +1,5 @@
+## Contribute
+
 There are several ways you can contribute to the betterment of the project.
 
 ---

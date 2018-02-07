@@ -99,11 +99,7 @@ public class StringScanner extends Scanner {
             throw new IllegalStateException( "Can't cancel the reading since no position was marked." );
         } else {
             this.state.cursor = this.state.source.pop();
-            try {
-                this.state.source.read();
-            } catch (IOException e) {
-                Thrower.doThrow(e);
-            }
+            Thrower.safeCall(this.state.source::read);
         }
     }
 

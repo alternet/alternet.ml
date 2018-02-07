@@ -1,6 +1,8 @@
-Alternet Libs are part of the Alternet open source project.
+## Alternet Libs
 
-Alternet Libs provide a bunch of common Java Libraries.
+**Alternet Libs** are part of the Alternet open source project.
+
+**Alternet Libs** provide a bunch of common Java Libraries.
 
 
 ---

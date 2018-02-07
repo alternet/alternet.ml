@@ -1,8 +1,8 @@
+# Authentication Formats
+
 <div class="nopub">
 <a href="http://alternet.ml/alternet-libs/security-auth/auth-formats.html">
 Published version of this page available HERE</a></div>
-
-# Authentication Formats
 
  * Description of popular crypt formats
  * Design considerations

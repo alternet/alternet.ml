@@ -155,7 +155,7 @@ class Type$ implements Type {
 
         Native(Class<?> clazz) {
             // remove the first _   e.g. change  _int  to  int
-            EnumUtil.replace(Type$.Native.class, this, s -> s.charAt(0) == '_' ? s.substring(1) : s );
+            EnumUtil.replace(this, s -> s.charAt(0) == '_' ? s.substring(1) : s );
             this.type = new Type$(clazz) {
                 @Override
                 public <T> T parse(String value) {

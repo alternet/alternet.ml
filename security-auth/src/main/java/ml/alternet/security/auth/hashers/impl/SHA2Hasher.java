@@ -68,9 +68,9 @@ public class SHA2Hasher extends HasherBase<WorkFactorSaltedParts> {
         // ordinal used only in the MCF formatting
         Algorithm(int ordinal) {
             // replace the "_" in the name by a "-"
-            EnumUtil.replace(Algorithm.class, this, s -> s.replace('_', '-'));
+            EnumUtil.replace(this, s -> s.replace('_', '-'));
             // replace the ordinal value
-            EnumUtil.reorder(Algorithm.class, this, o -> ordinal);
+            EnumUtil.reorder(this, o -> ordinal);
         }
 
         /**

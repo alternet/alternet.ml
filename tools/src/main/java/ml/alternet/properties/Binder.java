@@ -41,7 +41,6 @@ import javax.el.StaticFieldELResolver;
 import javax.el.ValueExpression;
 import javax.el.VariableMapper;
 
-import ml.alternet.misc.Thrower;
 import ml.alternet.misc.Type;
 import static ml.alternet.properties.NamesUtil.asPropName;
 import static ml.alternet.properties.NamesUtil.asClassName;
@@ -311,7 +310,7 @@ public class Binder {
                     return Class.forName(cl);
                 } catch (ClassNotFoundException e) {
                     log.warning("ClassNotFoundException " + cl);
-                    return Thrower.doThrow(e);
+                    return doThrow(e);
                 }
             });
             Stream.of(adapters).forEach(adapter -> {
@@ -362,7 +361,10 @@ public class Binder {
                                     this.log.fine(() -> "Setting " + key + ".$ to " + escapeForLog(value));
                                 } catch (NoSuchFieldException e) {
                                     // ERROR : can't assign the value
-                                    throw new IllegalArgumentException("Adapter missing for the target class : Unable to create " + f.getType() + " from " + value);
+                                    throw new IllegalArgumentException(
+                                        "Adapter missing for the target class : Unable to create "
+                                        + f.getType() + " from " + value
+                                    );
                                 }
                             }
                         } else {
@@ -376,7 +378,10 @@ public class Binder {
                                     this.log.fine(() -> "Setting " + key + " to " + escapeForLog(value));
                                 } else {
                                     // ERROR : can't assign the value
-                                    throw new IllegalArgumentException("Adapter missing for the target class : Unable to create " + f.getType() + " from " + value);
+                                    throw new IllegalArgumentException(
+                                        "Adapter missing for the target class : Unable to create "
+                                        + f.getType() + " from " + value
+                                    );
                                 }
                             }
                         }
@@ -463,7 +468,7 @@ public class Binder {
                             } catch (IllegalAccessException | IllegalArgumentException
                                     | InvocationTargetException | SecurityException ie)
                             {
-                                Thrower.doThrow(ie); // we have it but we can't use it
+                                doThrow(ie); // we have it but we can't use it
                             }
                         }
                         if (freeKeys == null) {
@@ -476,7 +481,7 @@ public class Binder {
                 } catch (SecurityException | IllegalArgumentException
                         | IllegalAccessException | InstantiationException e)
                 {
-                    Thrower.doThrow(e);
+                    doThrow(e);
                 }
             }
             return null;
@@ -539,7 +544,7 @@ public class Binder {
                     } catch (InstantiationException | IllegalAccessException
                             | IllegalArgumentException | InvocationTargetException e)
                     {
-                        return Thrower.doThrow(e);
+                        return doThrow(e);
                     } catch (NoSuchMethodException | SecurityException e) {
                         return null;
                     }
@@ -580,7 +585,7 @@ public class Binder {
                     this.log.info(() -> "End loading " + fileFinal);
                     return true;
                 } catch (IOException e) {
-                    Thrower.doThrow(e);
+                    doThrow(e);
                 }
             }
             return false; // it was not a file to load

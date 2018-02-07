@@ -1,6 +1,5 @@
 package ml.alternet.misc;
 
-import java.lang.reflect.GenericArrayType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -491,8 +490,8 @@ public interface Type extends java.lang.reflect.Type {
         if (c.isPresent()) {
             if (c.get().isEnum()) {
                 return (T) Enum.valueOf((Class<Enum>) c.get(), value);
-            } else if (this instanceof GenericArrayType) {
-                Type t = (Type) ((GenericArrayType) this).getGenericComponentType();
+            } else if (this instanceof java.lang.reflect.GenericArrayType) {
+                Type t = (Type) ((java.lang.reflect.GenericArrayType) this).getGenericComponentType();
                 if (t.equals(char.class)) {
                     // special handling
                     return (T) value.toCharArray();

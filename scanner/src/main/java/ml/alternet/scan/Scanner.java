@@ -69,11 +69,7 @@ public abstract class Scanner implements Trackable, Rewindable {
      * @return The scanner
      */
     public static Scanner of(CharSequence input) {
-        try {
-            return new StringScanner(input);
-        } catch (IOException e) {
-            return Thrower.doThrow(e);
-        }
+        return Thrower.safeCall(() -> new StringScanner(input));
     }
 
     /**
