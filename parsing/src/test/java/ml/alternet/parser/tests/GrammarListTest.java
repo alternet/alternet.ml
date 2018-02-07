@@ -22,7 +22,7 @@ public class GrammarListTest {
 
     public interface Seq1 extends Grammar {
 
-        Token COMMA = is(',').skip();
+        Token COMMA = is(',').drop();
 
         Rule B = is(Items.class);
 
@@ -43,7 +43,7 @@ public class GrammarListTest {
 
         Rule B = is(Items.class);
 
-        Token COMMA = is(',').skip();
+        Token COMMA = is(',').drop();
 
         // [1]     A    ::=      B ( ',' B )*
         @MainRule

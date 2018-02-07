@@ -4,6 +4,7 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 
+import ml.alternet.parser.Grammar;
 import ml.alternet.parser.Grammar.Rule;
 import ml.alternet.parser.ast.NodeBuilder;
 import ml.alternet.parser.ast.RuleMapper;
@@ -29,7 +30,11 @@ import ml.alternet.parser.util.ValueStack;
 public class ExpressionBuilder extends NodeBuilder<NumericExpression> {
 
     public ExpressionBuilder() {
-        super(Calc.$);
+        this(Calc.$);
+    }
+
+    public ExpressionBuilder(Grammar g) {
+        super(g);
         setTokenMapper(CalcTokens.class);
         setRuleMapper(CalcRules.class);
     }
@@ -132,7 +137,7 @@ public class ExpressionBuilder extends NodeBuilder<NumericExpression> {
             {
                 // e.g.   sin  x
                 //   function  argument
-                Calc.Function function = token.getValue();   // e.g.   Calc.Function.sin
+                EvaluableFunction function = token.getValue();   // e.g.   Calc.Function.sin
                 NumericExpression argument = next.pollFirst().getTarget(); // e.g.   Expression.Variable("x")
                 return new Function(function, argument);
             }
@@ -157,10 +162,21 @@ public class ExpressionBuilder extends NodeBuilder<NumericExpression> {
             {
                 // e.g. a + b
                 Additive op = token.getValue(); // + | -
-                // + is always followed by an argument
-                NumericExpression arg = next.pollFirst().getTarget(); // b argument
-                Term<Additive> term = new Term<>(op, arg);
-                return term;
+                if (next.isEmpty()) { // in SignedTerm and SignedFactor, the ADDITIVE term
+                                      // is within an optional term therefore always alone,
+                                      // it is the optional term that is followed by a Product term
+                                      // or Factor term, not the ADDITIVE term
+                                      // When the next terms list is empty, we are in this situation
+                    // SignedTerm   ::= ADDITIVE? Product
+                    // SignedFactor ::= ADDITIVE? Factor
+                    return null; // raw value Additive
+                } else {
+                    // + is always followed by an argument
+                    // Sum ::= SignedTerm (ADDITIVE Product)*
+                    NumericExpression arg = next.pollFirst().getTarget(); // b argument
+                    Term<Additive> term = new Term<>(op, arg);
+                    return term;
+                }
             }
         },
         MULTIPLICATIVE {

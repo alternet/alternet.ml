@@ -6,7 +6,6 @@ import ml.alternet.parser.handlers.HandlerAccumulator;
 import static ml.alternet.parser.Grammar.*;
 import static ml.alternet.parser.tests.GrammarTest.SimpleGrammar.AltExpr;
 import static ml.alternet.parser.tests.GrammarTest.SimpleGrammar.Expr;
-import static ml.alternet.parser.tests.GrammarTest.SimpleGrammar.ExprExcept;
 import static ml.alternet.parser.tests.GrammarTest.SimpleGrammar.ExprList;
 import static ml.alternet.parser.tests.GrammarTest.SimpleGrammar.LT;
 import static ml.alternet.parser.tests.GrammarTest.SimpleGrammar.LTE;
@@ -16,7 +15,6 @@ import static ml.alternet.parser.tests.GrammarTest.SimpleGrammar.NUMBER;
 import static ml.alternet.parser.tests.GrammarTest.SimpleGrammar.NotExpr;
 import static ml.alternet.parser.tests.GrammarTest.SimpleGrammar.NumberList;
 import static ml.alternet.parser.tests.GrammarTest.SimpleGrammar.Sequence;
-import static ml.alternet.parser.tests.GrammarTest.SimpleGrammar.SimpleExcept;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
@@ -44,9 +42,6 @@ public class GrammarTest extends GrammarTestBase {
         Rule GteExpr = NUMBER.seq(GTE).seq(NUMBER);
         Rule LteExpr = NUMBER.seq(LTE).seq(NUMBER);
         Rule AltExpr = LteExpr.or(GteExpr).or(LtExpr).or(GtExpr);
-        Rule ExprExcept = NUMBER.seq(LT.or(LTE).or(GTE).or(GT).except(LTE, GT)).seq(NUMBER);
-
-        Rule SimpleExcept = LTE.or(LT).except(LTE);
 
         Rule NotExpr = NOT.seq(LPAREN).seq(Expr.optional()).seq(RPAREN);
 
@@ -153,42 +148,6 @@ public class GrammarTest extends GrammarTestBase {
     public void simpleGrammar_Should_consumeNotExpression() throws IOException {
         List<String> res = parseToAcc("not(1234>5678)", SimpleGrammar.class, NotExpr);
         assertThat(res).contains("String:not", "String:(", "Number:1234", "String:>", "Number:5678", "String:)");
-    }
-
-    @Test(enabled=false)
-    public void simpleGrammar_Should_consumeSimpleExcept1() throws IOException {
-        List<String> res = parseToAcc("<", SimpleGrammar.class, SimpleExcept);
-        assertThat(res).contains("String:<");
-    }
-
-    @Test(enabled=false)
-    public void simpleGrammar_Should_consumeSimpleExcept2() throws IOException {
-        List<String> res = parseToAcc("<=", SimpleGrammar.class, SimpleExcept);
-        assertThat(res).isEmpty();
-    }
-
-    @Test(enabled=false)
-    public void simpleGrammar_Should_consumeExpressionExcept1() throws IOException {
-        List<String> res = parseToAcc("1234<5678", SimpleGrammar.class, ExprExcept);
-        assertThat(res).contains("Number:1234", "String:<", "Number:5678");
-    }
-
-    @Test(enabled=false)
-    public void simpleGrammar_Should_consumeExpressionExcept2() throws IOException {
-        List<String> res = parseToAcc("1234<=5678", SimpleGrammar.class, ExprExcept);
-        assertThat(res).isEmpty(); // except LTE
-    }
-
-    @Test(enabled=false)
-    public void simpleGrammar_Should_consumeExpressionExcept3() throws IOException {
-        List<String> res = parseToAcc("1234>5678", SimpleGrammar.class, ExprExcept);
-        assertThat(res).isEmpty(); // except GT
-    }
-
-    @Test(enabled=false)
-    public void simpleGrammar_Should_consumeExpressionExcept4() throws IOException {
-        List<String> res = parseToAcc("1234>=5678", SimpleGrammar.class, ExprExcept);
-        assertThat(res).contains("Number:1234", "String:>=", "Number:5678");
     }
 
     @Test

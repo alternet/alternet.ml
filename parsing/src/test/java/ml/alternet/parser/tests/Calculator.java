@@ -5,7 +5,7 @@ import static ml.alternet.util.EnumUtil.replace;
 
 import ml.alternet.parser.Grammar;
 
-public interface CalcGrammar extends Grammar {
+public interface Calculator extends Grammar {
 
     // FUNCTION ::= 'sin' | 'cos' | 'exp' | 'ln' | 'sqrt'
     enum Function {
@@ -21,7 +21,7 @@ public interface CalcGrammar extends Grammar {
     enum Additive {
         PLUS("+"), MINUS("-");
         Additive(String str) {
-            replace(Additive.class, this, s -> str);
+            replace(this, s -> str);
         }
     }
     Token ADDITIVE = is(Additive.class);
@@ -30,7 +30,7 @@ public interface CalcGrammar extends Grammar {
     enum Multiplicative {
         MULT("*"), DIV("/");
         Multiplicative(String str) {
-            replace(Multiplicative.class, this, s -> str);
+            replace(this, s -> str);
         }
     }
     Token MULTIPLICATIVE = is(Multiplicative.class);
@@ -97,6 +97,6 @@ public interface CalcGrammar extends Grammar {
         ADDITIVE.seq(Term, SumOp).optional()
     );
 
-    CalcGrammar C = $(CalcGrammar.class);
+    Calculator C = $();
 
 }

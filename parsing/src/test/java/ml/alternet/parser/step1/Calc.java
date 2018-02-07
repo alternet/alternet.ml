@@ -22,7 +22,7 @@ public interface Calc extends Grammar {
     enum Additive {
         PLUS("+"), MINUS("-");
         Additive(String str) {
-            replace(Additive.class, this, s -> str);
+            replace(this, s -> str);
         }
     }
     Token ADDITIVE = is(Additive.class);
@@ -31,7 +31,7 @@ public interface Calc extends Grammar {
     enum Multiplicative {
         MULT("*"), DIV("/");
         Multiplicative(String str) {
-            replace(Multiplicative.class, this, s -> str);
+            replace(this, s -> str);
         }
     }
     Token MULTIPLICATIVE = is(Multiplicative.class);
@@ -89,6 +89,6 @@ public interface Calc extends Grammar {
         return SignedTerm.seq(SumOp);
     }
 
-    Calc $ = $(Calc.class);
+    Calc $ = $();
 
 }

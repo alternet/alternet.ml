@@ -1,6 +1,7 @@
 package ml.alternet.parser;
 
 import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
 import java.lang.annotation.Documented;
@@ -10,11 +11,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -24,14 +26,15 @@ import ml.alternet.facet.Initializable;
 import ml.alternet.facet.Presentable;
 import ml.alternet.facet.Trackable;
 import ml.alternet.misc.CharRange;
-import ml.alternet.misc.TodoException;
 import ml.alternet.parser.EventsHandler.NumberValue;
 import ml.alternet.parser.EventsHandler.RuleEnd;
 import ml.alternet.parser.EventsHandler.RuleStart;
 import ml.alternet.parser.EventsHandler.StringValue;
 import ml.alternet.parser.EventsHandler.TokenValue;
+import ml.alternet.parser.ast.NodeBuilder;
 import ml.alternet.parser.handlers.DataHandler;
 import ml.alternet.parser.handlers.TokensCollector;
+import ml.alternet.parser.util.ComposedRule;
 import ml.alternet.parser.util.Grammar$;
 import ml.alternet.parser.util.HasWhitespacePolicy;
 import ml.alternet.parser.util.TraversableRule;
@@ -40,7 +43,6 @@ import ml.alternet.scan.JavaWhitespace;
 import ml.alternet.scan.NumberConstraint;
 import ml.alternet.scan.Scanner;
 import ml.alternet.scan.StringConstraint;
-import ml.alternet.scan.StringScanner;
 import ml.alternet.util.ByteCodeFactory;
 import ml.alternet.util.NumberUtil;
 import ml.alternet.util.StringBuilderUtil;
@@ -93,21 +95,21 @@ public interface Grammar {
      * @return A char token.
      */
     static CharToken is(int car) {
-        return new CharToken(CharRange.is(car));
+        return new CharToken.Single(CharRange.is(car));
     }
 
     /**
      * Create a char token based on exclusion.
      *
      * <pre>// NOT_A_STAR ::= ! '*'
-     *Token NOT_A_STAR = isnot('*');</pre>
+     *Token NOT_A_STAR = isNot('*');</pre>
      *
      * @param car The Unicode character to exclude.
      *
      * @return A char token.
      */
     static CharToken isNot(int car) {
-        return new CharToken(CharRange.isNot(car));
+        return new CharToken.Single(CharRange.isNot(car));
     }
 
     /**
@@ -120,7 +122,7 @@ public interface Grammar {
      * @return A char token
      */
     static CharToken isOneOf(String string) {
-        return new CharToken(CharRange.isOneOf(string));
+        return new CharToken.Single(CharRange.isOneOf(string));
     }
 
     /**
@@ -133,7 +135,7 @@ public interface Grammar {
      * @return A char token
      */
     static CharToken isNotOneOf(String string) {
-        return new CharToken(CharRange.isNotOneOf(string));
+        return new CharToken.Single(CharRange.isNotOneOf(string));
     }
 
     /**
@@ -243,13 +245,7 @@ public interface Grammar {
      * @return A token.
      */
     static CharToken isNot(Token... chars) {
-        return new CharToken(
-            CharRange.ANY.except(
-                Arrays.stream(chars)
-                .map(c -> CharToken.unwrap(c).charRange)
-                .toArray(l -> new CharRange[l])
-            )
-        );
+        return $any.except(chars);
     }
 
     /**
@@ -267,10 +263,6 @@ public interface Grammar {
         return new GrammarToken(grammar, dataHandler);
     }
 
-    //    static Token matches(String string) {
-//        return new RegexpGrammar.Expr(string);
-//    }
-
     /**
      * Create a range rule.
      *
@@ -283,7 +275,7 @@ public interface Grammar {
      * @return A range rule.
      */
     static CharToken range(int start, int end) {
-        return new CharToken(CharRange.range(start, end));
+        return new CharToken.Single(CharRange.range(start, end));
     }
 
     /**
@@ -380,9 +372,8 @@ public interface Grammar {
      */
     default boolean parse(Scanner scanner, EventsHandler handler, Rule rule, boolean matchAll) throws IOException {
         Handler h = handler.asHandler();
-        // TODO : check if the rule belongs to this Grammar // TODO : Rule adopt(Rule rule) {}
-        //      parse with a wrapper if necessary
-        //      on which we have to perform init
+        // process substitutions if the rule belongs to another grammar
+        rule = ((Grammar$) this).adopt(rule);
         Match match = rule.parse(scanner, h);
         // TODO : notification that characters are available
         if (matchAll && scanner.hasNext()) {
@@ -474,8 +465,10 @@ public interface Grammar {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ ElementType.FIELD })
     @interface Replace {
+
         /** @return The field name */
-        String field();
+        String field() default "";
+
         /** Indicates the grammar that hold the field.
          * The default value <code>Grammar.class</code>
          * means unspecified, and a lookup on all the
@@ -484,6 +477,14 @@ public interface Grammar {
          * @return The grammar.
          */
         Class<? extends Grammar> grammar() default Grammar.class;
+
+        /**
+         * When <code>true</code>, prevent substition of an existing
+         * element by the annotated element
+         *
+         * @return <code>false</code> by default : substitution occurs.
+         */
+        boolean disable() default false;
     }
 
     /**
@@ -549,7 +550,7 @@ public interface Grammar {
         }
 
         /**
-         * Turn this match as an optional match,
+         * Turn this match to an optional match,
          * that is to say an optional won't fail
          * but is empty, which allow repeatable
          * rules to avoid looping.
@@ -561,7 +562,7 @@ public interface Grammar {
         }
 
         /**
-         * Turn this match as a mandatory match,
+         * Turn this match to a mandatory match,
          * that is to say a mandatory is never
          * empty.
          *
@@ -587,7 +588,7 @@ public interface Grammar {
     abstract class Rule implements Cloneable, Presentable, TraversableRule {
 
         String name;
-        boolean fragment = true;
+        boolean fragment = true; // by default false for Token
 
         /**
          * When a grammar declares a rule or token,
@@ -686,45 +687,35 @@ public interface Grammar {
         public abstract Match parse(Scanner scanner, Handler handler) throws IOException;
 
         /**
-         * Compose this rule with a choice of other rules.
+         * Compose this rule with a <b>choice</b> of other rules.
          *
          * @param alt The alternate rules.
          *
          * @return A new rule composed of this rule followed by all the given rules.
          */
         public Rule or(Rule... alt) {
-            if (this instanceof Choice) {
-                return new Choice(Stream.<Rule> concat(
-                    ((Choice) this).getComponent().stream(),
-                    Stream.of(alt)
-                ));
-            } else {
-                return new Choice(Stream.<Rule> concat(
-                    Stream.of(this),
-                    Stream.of(alt)
-                ));
-            }
+            // don't flatten here : flattening may be set on UNNAMED rules,
+            // after Grammar$.processFields() & processPlaceHolders()
+            return new Choice(Stream.<Rule> concat(
+                Stream.of(this),
+                Stream.of(alt)
+            ));
         }
 
         /**
-         * Compose this rule with a sequence of other rules.
+         * Compose this rule with a <b>sequence</b> of other rules.
          *
          * @param sequence The next rules.
          *
          * @return A new rule composed of this rule followed by all the given rules.
          */
         public Rule seq(Rule... sequence) {
-            if (this instanceof Sequence) {
-                return new Sequence(Stream.<Rule> concat(
-                    ((Sequence) this).getComponent().stream(),
-                    Stream.of(sequence)
-                ));
-            } else {
-                return new Sequence(Stream.<Rule> concat(
-                    Stream.of(this),
-                    Stream.of(sequence)
-                ));
-            }
+            // don't flatten here : flattening may be set on UNNAMED rules,
+            // after Grammar$.processFields() & processPlaceHolders()
+            return new Sequence(Stream.<Rule> concat(
+                Stream.of(this),
+                Stream.of(sequence)
+            ));
         }
 
         /**
@@ -750,23 +741,57 @@ public interface Grammar {
          *
          * @return A repeatable rule.
          */
-        public OneOrMore oneOrMore() {
-            return new OneOrMore(this);
+        public AtLeast oneOrMore() {
+            return new AtLeast(this, 1);
         }
 
         /**
-         * Define exceptions for this rule.
+         * Make this rule repeatable.
          *
-         * @param except The list of rules that
-         *      are exceptions to this rule.
-         * @return An exclusion rule if necessary.
+         * @param min The mininum number of times that rule has to be repeated.
+         * @return A repeatable rule.
          */
-        public Rule except(Rule... except) {
-            if (except.length == 0) {
-                return this;
+        public Rule atLeast(int min) {
+            if (min == 0) {
+                return new ZeroOrMore(this);
             } else {
-                return new Except(this, except);
+                return new AtLeast(this, min);
             }
+        }
+
+        /**
+         * Make this rule repeatable.
+         *
+         * @param max The maximum number of times that rule has to be repeated.
+         * @return A repeatable rule.
+         */
+        public Rule atMost(int max) {
+            if (max == 1) {
+                return new Optional(this);
+            } else {
+                return new AtMost(this, max);
+            }
+        }
+
+        /**
+         * Make this rule repeatable.
+         *
+         * @param min The mininum number of times that rule has to be repeated.
+         * @param max The maximum number of times that rule has to be repeated.
+         * @return A repeatable rule.
+         */
+        public Rule bounds(int min, int max) {
+            assert min <= max : "min must be <= max";
+            assert min >=0 : "min must be positive or nul";
+            assert max >=1 : "min must be positive";
+            if (min == 1) {
+                if (max == 1) {
+                    return this;
+                }
+            } else if (max == 1 && min == 0){
+                return new Optional(this);
+            }
+            return new Bounds(this, min, max);
         }
 
         /**
@@ -775,18 +800,7 @@ public interface Grammar {
          * @return This rule as a token.
          */
         public TypedToken<String> asToken() {
-            return new TypedToken<String>(this) {
-                @Override
-                public TokenValue<String> newTokenValue(TokensCollector<?> buf, Trackable trackable) {
-                    @SuppressWarnings("unchecked")
-                    StringBuilder sb = ((TokensCollector<StringBuilder>) buf).get();
-                    return new StringValue(this, sb.toString(), trackable);
-                }
-                @Override
-                public TokensCollector<?> collector() {
-                    return TokensCollector.newStringBuilderHandler();
-                }
-            };
+            return new TypedToken.String(this);
         }
 
         /**
@@ -795,19 +809,7 @@ public interface Grammar {
          * @return This rule as a token.
          */
         public TypedToken<java.lang.Number> asNumber() {
-            return new TypedToken<java.lang.Number>(this) {
-                @Override
-                public TokenValue<java.lang.Number> newTokenValue(TokensCollector<?> buf, Trackable trackable) {
-                    @SuppressWarnings("unchecked")
-                    StringBuilder sb = ((TokensCollector<StringBuilder>) buf).get();
-                    java.lang.Number number = NumberUtil.parseNumber(sb.toString());
-                    return new NumberValue(this, number, trackable);
-                }
-                @Override
-                public TokensCollector<?> collector() {
-                    return TokensCollector.newStringBuilderHandler();
-                }
-            };
+            return new TypedToken.Number(this);
         }
 
         /**
@@ -846,28 +848,24 @@ public interface Grammar {
          * @return This rule as a token.
          */
         public TypedToken<String> asToken(BiFunction<String, Rule, String> mapper) {
-            return new TypedToken<String>(this) {
+            return new TypedToken.String(this) {
                 @Override
-                public TokenValue<String> newTokenValue(TokensCollector<?> buf, Trackable trackable) {
+                public TokenValue<java.lang.String> newTokenValue(TokensCollector<?> buf, Trackable trackable) {
                     @SuppressWarnings("unchecked")
                     StringBuilder sb = ((TokensCollector<StringBuilder>) buf).get();
-                    String s = mapper.apply(sb.toString(), this);
+                    java.lang.String s = mapper.apply(sb.toString(), this);
                     return new StringValue(this, s, trackable);
-                }
-                @Override
-                public TokensCollector<?> collector() {
-                    return TokensCollector.newStringBuilderHandler();
                 }
             };
         }
 
         /**
-         * Skip the tokens produced by this rule.
+         * Drop the tokens produced by this rule.
          *
-         * @return A skip
+         * @return A drop element.
          */
-        public Skip skip() {
-            return new Skip(this);
+        public Drop drop() {
+            return new Drop(this);
         }
 
     }
@@ -879,17 +877,17 @@ public interface Grammar {
      *
      * @author Philippe Poulard
      */
-    class Skip extends Token implements TraversableRule.SimpleRule {
+    class Drop extends Token implements TraversableRule.SimpleRule {
 
         Rule rule;
 
         /**
-         * A skipped rule doesn't forward its event to the handler
+         * A dropped rule doesn't forward its event to the handler
          * while parsing.
          *
-         * @param rule The rule to skip.
+         * @param rule The rule that will have its matched tokens dropped.
          */
-        public Skip(Rule rule) {
+        public Drop(Rule rule) {
             this.rule = rule;
         }
 
@@ -965,6 +963,11 @@ public interface Grammar {
      */
     class Proxy extends Wrapper {
 
+        /**
+         * Create a proxy rule from a rule.
+         *
+         * @param proxiedRule The proxied rule.
+         */
         public Proxy(Rule proxiedRule) {
             super(proxiedRule);
         }
@@ -981,7 +984,7 @@ public interface Grammar {
             // Rule R1 = $("R2");
             if (super.getComponent() == null) {
                 // turn it to Rule R1 = is($("R2"));
-                super.rule = new Proxy(this);
+                setComponent(new Proxy(this));
             }
             return super.getComponent();
         }
@@ -994,7 +997,7 @@ public interface Grammar {
          * @return A dummy value.
          */
         public boolean is(Rule proxiedRule) {
-            this.rule = proxiedRule;
+            setComponent(proxiedRule);
             return true;
         }
 
@@ -1092,21 +1095,21 @@ public interface Grammar {
      *
      * @author Philippe Poulard
      */
-    class Optional extends Wrapper {
+    class Optional extends Repeatable implements Repeatable.Maximal, Repeatable.Minimal {
 
         /**
          * Create an optional rule
          *
          * @param optionalRule The rule to make optional.
          */
-        Optional(Rule optionalRule) {
+        public Optional(Rule optionalRule) {
             super(optionalRule);
         }
 
         @Override
         public Match parse(Scanner scanner, Handler handler) throws IOException {
             handler.receive(new RuleStart(this, scanner));
-            Match match = rule.parse(scanner, handler);
+            Match match = getComponent().parse(scanner, handler);
             handler.receive(new RuleEnd(this, scanner, true));
             return match.asOptional();
         }
@@ -1116,6 +1119,16 @@ public interface Grammar {
             return getComponent().toStringBuilder(buf).append('?');
         }
 
+        @Override
+        public int getMaximal() {
+            return 1;
+        }
+
+        @Override
+        public int getMinimal() {
+            return 0;
+        }
+
     }
 
     /**
@@ -1123,14 +1136,14 @@ public interface Grammar {
      *
      * @author Philippe Poulard
      */
-    class ZeroOrMore extends Wrapper {
+    class ZeroOrMore extends Repeatable implements Repeatable.Minimal {
 
         /**
          * Create an optional repeatable rule
          *
          * @param repeatableRule The rule to make optional repeatable.
          */
-        ZeroOrMore(Rule repeatableRule) {
+        public ZeroOrMore(Rule repeatableRule) {
             super(repeatableRule);
         }
 
@@ -1141,7 +1154,7 @@ public interface Grammar {
             Match ruleMatch = Match.EMPTY;
             if (scanner.hasNext()) {
                 do {
-                    Match match = this.rule.parse(scanner, handler);
+                    Match match = getComponent().parse(scanner, handler);
                     if (match.empty()) {
                         break;
                     } else {
@@ -1158,6 +1171,11 @@ public interface Grammar {
             return getComponent().toStringBuilder( buf).append('*');
         }
 
+        @Override
+        public int getMinimal() {
+            return 0;
+        }
+
     }
 
     /**
@@ -1165,28 +1183,32 @@ public interface Grammar {
      *
      * @author Philippe Poulard
      */
-    class OneOrMore extends Wrapper {
+    class AtLeast extends Repeatable implements Repeatable.Minimal {
+
+        int min;
 
         /**
-         * Create an repeatable rule
+         * Create a repeatable rule
          *
          * @param repeatable The rule to make repeatable.
          */
-        OneOrMore(Rule repeatable) {
+        public AtLeast(Rule repeatable, int min) {
             super(repeatable);
+            this.min = min;
         }
 
         @Override
         public Match parse(Scanner scanner, Handler handler) throws IOException {
+            int count = 0;
             handler.mark();
             handler.receive(new RuleStart(this, scanner));
-            Match ruleMatch = scanner.hasNext() ? rule.parse(scanner, handler) : Match.FAIL;
+            Match ruleMatch = scanner.hasNext() ? getComponent().parse(scanner, handler) : Match.FAIL;
             if (! ruleMatch.empty() && scanner.hasNext()) {
                 do {
                     Match match = rule.parse(scanner, handler);
                     if (match.empty()) {
                         break;
-                    } else {
+                    } else if (++count == this.min) {
                         ruleMatch = Match.SUCCESS;
                     }
                 } while (scanner.hasNext());
@@ -1198,122 +1220,248 @@ public interface Grammar {
 
         @Override
         public StringBuilder toPrettyString(StringBuilder buf) {
-            return getComponent().toStringBuilder( buf ).append('+');
+            return getMinimal() == 1 ? getComponent().toStringBuilder( buf ).append('+')
+                                     : getComponent().toStringBuilder( buf )
+                                         .append('{').append(this.min).append(",}");
+        }
+
+        @Override
+        public java.util.Optional<Rule> simplify() {
+            if (! getComponent().isGrammarField()) {
+                if (getComponent() instanceof AtMost) {
+                    AtMost atMost = (AtMost) getComponent();
+                    return java.util.Optional.of(
+                        atMost.getComponent().bounds(this.min, atMost.max)
+                    );
+                }
+            }
+            return java.util.Optional.empty();
+        }
+
+        @Override
+        public int getMinimal() {
+            return this.min;
         }
 
     }
 
     /**
-     * An exclusion rule.
+     * Make a rule repeatable.
      *
      * @author Philippe Poulard
      */
-    class Except extends Combine {
-        Rule r;
+    class AtMost extends Repeatable implements Repeatable.Maximal {
 
-        Except(Rule r, Rule... except) {
-            super(except[0]);
-            this.r = r;
-            int i = 0;
-            for (Rule e: except) {
-                if (i++ > 0) {
-                    this.combine.add(e);
-                }
-            }
+        int max;
+
+        /**
+         * Create a repeatable rule
+         *
+         * @param repeatable The rule to make repeatable.
+         */
+        public AtMost(Rule repeatable, int max) {
+            super(repeatable);
+            this.max = max;
         }
-        //        @Override
-        //        public boolean parse(Scanner scanner, HandlerBuffer h) throws IOException {
-        //            boolean b = true;
-        //            // exceptions first : consider they are less than normal case
-        //            scanner.mark(2048);
-        //            for (Grammar g: combine) {
-        //                if (scanner.hasNext() && g.parse(scanner, Handler.NULL_HANDLER)) {
-        //                    b = false;
-        //                    break;
-        //                };
-        //                scanner.cancel();
-        //                scanner.mark(2048);
-        //            }
-        //            scanner.cancel();
-        //            if (b) {
-        //                h.mark();
-        //                scanner.mark(2048);
-        //                b = g.parse(scanner, h);
-        //                if (b) {
-        //                    scanner.consume();
-        //                } else {
-        //                    scanner.cancel();
-        //                }
-        //                return h.flush(b);
-        //            } else {
-        //                return false;
-        //            }
-        //        }
+
         @Override
         public Match parse(Scanner scanner, Handler handler) throws IOException {
-            Match b = Match.SUCCESS;
-            scanner.mark();
-            handler.mark();
+            int count = 0;
+            // never fail, don't need to mark
             handler.receive(new RuleStart(this, scanner));
-
-            b = r.parse(scanner, handler);
-            if (! b.fail()) {
-//                int n = scanner.getPosition();
-                scanner.cancel(); // rewind
-                scanner.mark();
-//                n = n - scanner.getPosition();
-int n = 0; if (true) {throw new TodoException();} // TODO
-                StringBuilder data = new StringBuilder(n);
-                // capture data
-                scanner.nextString(new StringConstraint.ReadLength(n), data);
-                Scanner s = new StringScanner(data.toString());
-                s.mark();
-//                for (Rule g: combine) {
-//                    if (s.hasNext() // before parse
-//                            && g.parse(s, Handler.NULL_HANDLER.asHandler())
-//                            && ! s.hasNext()) { // after parse we expect no remainder
-//                        b = false;
-//                        break;
-//                    };
-//                    s.cancel();
-//                    s.mark();
-//                }
-//                s.cancel();
-            }
-//            scanner.commit(b);
-//            handler.receive(new RuleEnd(this, scanner, b));
-//            return handler.commit(b);
-            return b;
-        }
-
-        @Override
-        public Rule traverse(Rule hostRule, Set<Rule> traversed,
-                BiFunction<Rule, Rule, Rule> transformer, Function<Rule, Rule> targetRule)
-        {
-            Except target = this;
-            if (traversed.add(this)) {
-//                hostRule = asHostRule(hostRule);
-                target = (Except) super.traverse(hostRule, traversed, transformer, targetRule);
-                Rule newRule = transformer.apply(hostRule, this.r)
-                        .traverse(hostRule, traversed, transformer, targetRule);
-                if (this.r != newRule) {
-                    if (target == this) {
-                        target = (Except) targetRule.apply(this);
+            Match ruleMatch = Match.EMPTY;
+            if (scanner.hasNext()) {
+                do {
+                    Match match = getComponent().parse(scanner, handler);
+                    if (match.empty()) {
+                        break;
+                    } else {
+                        ruleMatch = Match.SUCCESS;
                     }
-                    target.r = newRule;
-                }
+                } while (scanner.hasNext() && ++count <= this.max);
             }
-            return target;
+            handler.receive(new RuleEnd(this, scanner, true));
+            return ruleMatch;
         }
 
         @Override
         public StringBuilder toPrettyString(StringBuilder buf) {
-            // TODO
-            StringBuilder string = new StringBuilder("! (");
-            r.toPrettyString(string);
-            string.append(")");
-            return string;
+            return getComponent().toStringBuilder( buf ).append("{,").append(this.max).append('}');
         }
+
+        @Override
+        public java.util.Optional<Rule> simplify() {
+            if (! getComponent().isGrammarField()) {
+                if (getComponent() instanceof AtLeast) {
+                    AtLeast atLeast = (AtLeast) getComponent();
+                    return java.util.Optional.of(
+                        atLeast.getComponent().bounds(atLeast.min, this.max)
+                    );
+                }
+            }
+            return java.util.Optional.empty();
+        }
+
+        @Override
+        public int getMaximal() {
+            return this.max;
+        }
+
+    }
+
+    /**
+     * Base class for repeatable rules.
+     *
+     * @author Philippe Poulard
+     */
+    abstract class Repeatable extends Wrapper {
+
+        /**
+         * For repeatable rules that must be repeated a minimal number of times.
+         *
+         * @author Philippe Poulard
+         */
+        interface Minimal {
+
+            /**
+             * Get the minimal number of repetition.
+             *
+             * @return An int greater than 2, or 0 (by default, a rule occurs 1).
+             */
+            int getMinimal();
+        }
+
+        /**
+         * For repeatable rules that must be repeated a maximal number of times.
+         *
+         * @author Philippe Poulard
+         */
+        interface Maximal {
+
+            /**
+             * Get the maximal number of repetition.
+             *
+             * @return An int greater than 2, or 0 (by default, a rule occurs 1).
+             */
+            int getMaximal();
+        }
+
+        /**
+         * Allow to repeat a rule.
+         *
+         * @param rule The rule to repeat.
+         */
+        public Repeatable(Rule rule) {
+            super(rule);
+        }
+
+        @Override
+        public java.util.Optional<Rule> simplify() {
+            return SIMPLIFY.apply(this);
+        }
+
+        /**
+         * The simplify method for repeatable rules.
+         */
+        public static Function<Repeatable, java.util.Optional<Rule>> SIMPLIFY = rule1 -> {
+            if (! rule1.isGrammarField()) { // don't simplify NAMED rules
+                Rule nested = rule1.getComponent();
+                if (nested instanceof SimpleRule && (nested instanceof Minimal || nested instanceof Maximal)) {
+                    SimpleRule rule2 = (SimpleRule) nested;
+                    nested = rule2.getComponent();
+                    // so far we have rule1 and rule2 that can be merged,
+                    //                               and the nested rule
+                    boolean min1 = rule1 instanceof Minimal;
+                    boolean max1 = rule1 instanceof Maximal;
+                    boolean min2 = rule2 instanceof Minimal;
+                    boolean max2 = rule2 instanceof Maximal;
+                    boolean haveMin = min1 || min2;
+                    boolean haveMax = max1 || max2;
+                    int min = haveMin ? (min1 ? (min2 ? Math.min(((Minimal) rule1).getMinimal(), ((Minimal) rule2).getMinimal())
+                                                      : ((Minimal) rule1).getMinimal())
+                                              : ((Minimal) rule2).getMinimal())
+                                      : 1;
+                    int max = haveMax ? (max1 ? (max2 ? Math.max(((Maximal) rule1).getMaximal(), ((Minimal) rule2).getMinimal())
+                                                      : ((Maximal) rule1).getMaximal())
+                                              : ((Maximal) rule2).getMaximal())
+                                      : 1;
+                    Rule simplified = haveMin ? (haveMax ? nested.bounds(min, max)
+                                                         : nested.atLeast(min))
+                                              : (haveMax ? nested.atMost(max)
+                                                         : nested);
+                    return java.util.Optional.of(simplified);
+                }
+            }
+            return java.util.Optional.empty();
+        };
+    }
+
+    /**
+     * Make a rule repeatable in bounds.
+     *
+     * @author Philippe Poulard
+     */
+    class Bounds extends Repeatable implements Repeatable.Minimal, Repeatable.Maximal {
+
+        int min;
+        int max;
+
+        /**
+         * Create an optional repeatable rule
+         *
+         * @param repeatableRule The rule to repeat in bounds.
+         * @param min The minimum occurs.
+         * @param max The maximum occurs.
+         */
+        public Bounds(Rule repeatableRule, int min, int max) {
+            super(repeatableRule);
+            this.min = min;
+            this.max = max;
+        }
+
+        @Override
+        public Match parse(Scanner scanner, Handler handler) throws IOException {
+            int count = 0;
+            Match ruleMatch = Match.FAIL;
+            if (this.min > 0) {
+                handler.mark();
+                ruleMatch = Match.EMPTY;
+            } // else never fail, don't need to mark
+            handler.receive(new RuleStart(this, scanner));
+            if (scanner.hasNext()) {
+                do {
+                    Match match = getComponent().parse(scanner, handler);
+                    if (match.empty()) {
+                        break;
+                    } else if (++count == this.min) {
+                        ruleMatch = Match.SUCCESS;
+                    }
+                } while (scanner.hasNext() && count++ <= this.max);
+            }
+            handler.receive(new RuleEnd(this, scanner, true));
+            if (this.min > 0) {
+                handler.commit(! ruleMatch.fail());
+                return ruleMatch.asMandatory();
+            }
+            return ruleMatch;
+        }
+
+        @Override
+        public StringBuilder toPrettyString(StringBuilder buf) {
+            return getComponent().toStringBuilder( buf)
+                .append('{').append(this.min).append(',').append(this.max).append('}');
+        }
+
+        @Override
+        public int getMaximal() {
+            return this.max;
+        }
+
+        @Override
+        public int getMinimal() {
+            return this.min;
+        }
+
     }
 
     /**
@@ -1322,6 +1470,73 @@ int n = 0; if (true) {throw new TodoException();} // TODO
      * @author Philippe Poulard
      */
     abstract class Combine extends Rule implements TraversableRule.CombinedRule {
+
+        /**
+         * For a rule that can be replaced by its component if it has
+         * just one, provided that it is not a grammar field.
+         *
+         * @see TraversableRule#isGrammarField()
+         *
+         * @author Philippe Poulard
+         */
+        interface Simplifiable extends ComposedRule<List<Rule>>, TraversableRule {
+
+            @Override
+            default java.util.Optional<Rule> simplify() {
+                return SIMPLIFY.apply(this);
+            }
+
+            /**
+             * The default simplify method doesn't simplify named rules.
+             *
+             * @see TraversableRule#isGrammarField()
+             */
+            Function<Simplifiable, java.util.Optional<Rule>> SIMPLIFY = compRule -> {
+                if (! compRule.isGrammarField() // don't simplify NAMED rules
+                        && compRule.getComponent().size() == 1)
+                {
+                    return java.util.Optional.of(compRule.getComponent().get(0));
+                } else {
+                    return java.util.Optional.empty();
+                }
+            };
+
+        }
+
+        /**
+         * For a rule that have components that may be flatten.
+         *
+         * @author Philippe Poulard
+         */
+        interface Flattenable extends ComposedRule<List<Rule>> {
+
+            @Override
+            default void flatten() {
+                FLATTEN.accept(this);
+            }
+
+            /**
+             * The default flatten method.
+             */
+            Consumer<ComposedRule<List<Rule>>> FLATTEN = compRule -> {
+                compRule.setComponent(
+                    compRule.getComponents().flatMap(r -> {
+                        if (r.isGrammarField() // don't flatten NAMED rules
+                                || ! (compRule.getClass().isAssignableFrom(r.getClass()))
+                        ) {
+                            return Stream.of(r);
+                        }
+                        if (r instanceof ComposedRule) {
+                            ComposedRule<?> cr = (ComposedRule<?>) r;
+                            cr.flatten();
+                            r = cr.simplify().orElse(r);
+                        }
+                        return ((ComposedRule<?>) r).getComponents();
+                    }).collect(toList())
+                );
+            };
+
+        }
 
         List<Rule> combine = new LinkedList<>();
 
@@ -1366,7 +1581,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
      *
      * @author Philippe Poulard
      */
-    class Choice extends Combine implements HasWhitespacePolicy {
+    class Choice extends Combine implements Combine.Simplifiable, HasWhitespacePolicy {
 
         java.util.Optional<Predicate<Integer>> whitespacePolicy = java.util.Optional.empty();
 
@@ -1405,7 +1620,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
             applyWhitespacePolicyBefore(scanner);
 
             scanner.mark();
-            for (Rule rule: combine) {
+            for (Rule rule: getComponent()) {
                 if (scanner.hasNext()) {
                     Match match = rule.parse(scanner, handler);
                     if (! match.empty()) {
@@ -1432,6 +1647,42 @@ int n = 0; if (true) {throw new TodoException();} // TODO
                 );
         }
 
+        @Override
+        public void flatten() {
+            // first, flatten and simplify everything within
+            Flattenable.FLATTEN.accept(this);
+
+            // then, merge consecutive CharTokens
+            int size = getComponent().size();
+            List<Rule> newRules = new ArrayList<>(size);
+            CharToken[] current = new CharToken[1];
+            getComponents().forEach(r -> {
+                if (r instanceof CharToken) {
+                    if (current[0] == null) {
+                        current[0] = (CharToken) r;
+                    } else {
+                        // it doesn't matter that the result CharToken lost the label
+                        // of their neighbor (or nested) CharToken that would have match :
+                        // we can't map it to a custom type (if it was mapped to a custom
+                        // type, it wouldn't be a CharToken).
+                        current[0] = current[0].union((CharToken) r);
+                    }
+                } else {
+                    if (current[0] != null) {
+                        newRules.add(current[0]);
+                        current[0] = null;
+                    }
+                    newRules.add(r);
+                }
+            });
+            if (current[0] != null) {
+                newRules.add(current[0]);
+            }
+            if (newRules.size() < size) {
+                setComponent(newRules);
+            }
+        }
+
     }
 
     /**
@@ -1439,14 +1690,14 @@ int n = 0; if (true) {throw new TodoException();} // TODO
      *
      * @author Philippe Poulard
      */
-    class Sequence extends Combine {
+    class Sequence extends Combine implements Combine.Simplifiable, Combine.Flattenable {
 
         /**
          * Create a sequence rule.
          *
          * @param sequence The rule in the sequence.
          */
-        Sequence(Rule sequence) {
+        public Sequence(Rule sequence) {
             super(sequence);
         }
 
@@ -1455,7 +1706,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
          *
          * @param rules The rules in the sequence.
          */
-        Sequence(Stream<? extends Rule> rules) {
+        public Sequence(Stream<? extends Rule> rules) {
             super(rules);
         }
 
@@ -1465,7 +1716,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
             handler.receive(new RuleStart(this, scanner));
             scanner.mark();
             Match ruleMatch = Match.EMPTY;
-            for (Rule r: combine) {
+            for (Rule r: getComponent()) {
                 Match match = r.parse(scanner, handler);
                 if (match.fail()) {
                     ruleMatch = Match.FAIL;
@@ -1498,6 +1749,9 @@ int n = 0; if (true) {throw new TodoException();} // TODO
      */
     abstract class Token extends Rule implements HasWhitespacePolicy {
 
+        /**
+         * Unless annotated, a Token is not a fragment.
+         */
         public Token() {
             this.fragment = false;
         }
@@ -1577,7 +1831,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
      *
      * @author Philippe Poulard
      */
-    class CharToken extends Token implements TraversableRule.SelfRule {
+    abstract class CharToken extends Token {
 
         CharRange charRange;
 
@@ -1638,7 +1892,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
          */
         public CharToken union(int codepoint) {
             CharRange cr = this.charRange.union(CharRange.is(codepoint));
-            return cr == this.charRange ? this : new CharToken(cr);
+            return new CharToken.Single(cr);
         }
 
         /**
@@ -1651,7 +1905,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
          */
         public CharToken union(int startCodepoint, int endCodepoint) {
             CharRange cr = this.charRange.union(CharRange.range(startCodepoint, endCodepoint));
-            return cr == this.charRange ? this : new CharToken(cr);
+            return new CharToken.Single(cr);
         }
 
         /**
@@ -1663,7 +1917,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
          */
         public CharToken union(CharSequence characters) {
             CharRange cr = this.charRange.union(CharRange.isOneOf(characters));
-            return cr == this.charRange ? this : new CharToken(cr);
+            return new CharToken.Single(cr);
         }
 
         /**
@@ -1675,35 +1929,44 @@ int n = 0; if (true) {throw new TodoException();} // TODO
          */
         public CharToken union(CharRange... charRanges) {
             CharRange cr = this.charRange.union(charRanges);
-            return cr == this.charRange ? this : new CharToken(cr);
+            return new CharToken.Single(cr);
         }
 
         /**
          * Combine this char token with the given char tokens.
          *
-         * @param charTokens The char ranges to combine, must be
+         * @param charTokens The char ranges to combine, should be
          *      CharToken or wrap a CharToken.
          *
          * @return A char token made of this char token union the given char tokens.
          */
-        public CharToken union(Token... charTokens) {
-            CharRange cr = this.charRange.union(
-                Arrays.stream(charTokens)
-                    .map(c -> CharToken.unwrap(c).charRange)
-                    .toArray(l -> new CharRange[l]));
-            return cr == this.charRange ? this : new CharToken(cr);
-        }
+        public CharToken union(CharToken... charTokens) {
+//            List<Rule> list = new ArrayList<>(charTokens.length);
+//            int i = 0;
+//            for ( ; i < charTokens.length ; i++) {
+//                if (charTokens[i] instanceof CharToken) {
+//                    list.add(charTokens[i]);
+//                } else {
+//                    break;
+//                }
+//            }
+//            if (list.isEmpty()) {
+//                return or(charTokens);
+//            } else {
+//                return new Composed(
+//                    this.charRange,
+//                    list,
+//                    CharRange::union // Composed by union
+//                ).union(charTokens);
+//            }
 
-        @Override
-        public Rule or(Rule... alt) {
-            if (Arrays.stream(alt).filter(r -> ! (r instanceof CharToken)).findFirst().isPresent()) {
-                // if we find one that is not a char token => process it normally
-                return super.or(alt);
-            } else {
-                // all are char token => merge with union
-                CharToken[] ct = Arrays.stream(alt).map(r -> (Token) r).toArray(l -> new CharToken[l]);
-                return union(ct);
-            }
+            return new Composed(
+                    this.charRange,
+                    Arrays.asList(charTokens).stream()
+                        .map(t -> (Rule) t)
+                        .collect(toList()),
+                    CharRange::union // Composed by union
+            );
         }
 
         /**
@@ -1715,7 +1978,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
          */
         public CharToken except(int codepoint) {
             CharRange cr = this.charRange.except(CharRange.is(codepoint));
-            return cr == this.charRange ? this : new CharToken(cr);
+            return new CharToken.Single(cr);
         }
 
         /**
@@ -1728,7 +1991,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
          */
         public CharToken except(int startCodepoint, int endCodepoint) {
             CharRange cr = this.charRange.except(CharRange.range(startCodepoint, endCodepoint));
-            return cr == this.charRange ? this : new CharToken(cr);
+            return new CharToken.Single(cr);
         }
 
         /**
@@ -1740,7 +2003,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
          */
         public CharToken except(CharSequence characters) {
             CharRange cr = this.charRange.except(CharRange.isOneOf(characters));
-            return cr == this.charRange ? this : new CharToken(cr);
+            return new CharToken.Single(cr);
         }
 
         /**
@@ -1752,7 +2015,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
          */
         public CharToken except(CharRange... charRanges) {
             CharRange cr = this.charRange.except(charRanges);
-            return cr == this.charRange ? this : new CharToken(cr);
+            return new CharToken.Single(cr);
         }
 
         /**
@@ -1764,11 +2027,13 @@ int n = 0; if (true) {throw new TodoException();} // TODO
          * @return A char token made of this char token minus the given char tokens.
          */
         public CharToken except(Token... charTokens) {
-            CharRange cr = this.charRange.except(
-                Arrays.stream(charTokens)
-                    .map(c -> CharToken.unwrap(c).charRange)
-                    .toArray(l -> new CharRange[l]));
-            return cr == this.charRange ? this : new CharToken(cr);
+            return new Composed(
+                    this.charRange,
+                    Arrays.asList(charTokens).stream()
+                        .map(t -> (Rule) t)
+                        .collect(toList()),
+                    CharRange::except // Composed by exclusion
+            );
         }
 
         @Override
@@ -1787,6 +2052,83 @@ int n = 0; if (true) {throw new TodoException();} // TODO
         public StringBuilder toPrettyString(StringBuilder buf) {
             return this.charRange.toPrettyString(buf);
         }
+
+        /**
+         * A token made of a single char range.
+         *
+         * @author Philippe Poulard
+         */
+        public static class Single extends CharToken implements TraversableRule.SelfRule {
+
+            /**
+             * Create a single char token.
+             *
+             * @param charRange The actual char range.
+             */
+            public Single(CharRange charRange) {
+                super(charRange);
+            }
+        }
+
+        /**
+         * A token made of a several char ranges.
+         *
+         * @author Philippe Poulard
+         */
+        public static class Composed extends CharToken implements TraversableRule.CombinedRule, Combine.Flattenable {
+
+            // we must keep the memory of the base char range and its components,
+            // because they may be affected by substitutions ; in this case, the
+            // composition() function must be run again
+            CharRange base;
+            List<Rule> charTokens;
+            BiFunction<CharRange, CharRange[], CharRange> composition;
+
+            /**
+             * Create composable char token.
+             *
+             * @param charRange The actual char range.
+             * @param charTokens The others tokens, MUST be or wrap char tokens.
+             * @param composition Indicates whether to compose by union or exclusion.
+             *
+             * @see CharRange#union(CharRange...)
+             * @see CharRange#except(CharRange...)
+             */
+            public Composed(CharRange charRange, List<Rule> charTokens, BiFunction<CharRange, CharRange[], CharRange> composition) {
+                super(null);
+                this.base = charRange;
+                this.charTokens = charTokens;
+                this.composition = composition;
+                simplify(); // set super.charRange
+            }
+
+            @Override
+            public List<Rule> getComponent() {
+                return this.charTokens;
+            }
+
+            @Override
+            public void setComponent(List<Rule> component) {
+                // may happen if one component has been substituted
+                this.charTokens = component;
+                simplify(); // here it is again
+            }
+
+            @Override
+            public java.util.Optional<Rule> simplify() {
+                // merge the char ranges together
+                this.charRange = this.composition.apply(
+                        this.base,
+                        this.charTokens.stream()
+                            .map(c -> ((CharToken) c).charRange)
+                            .toArray(l -> new CharRange[l])
+                    );
+                // in a grammar point of view, this didn't change the underlying rule
+                return java.util.Optional.empty();
+            }
+
+        }
+
     }
 
     /**
@@ -1801,7 +2143,13 @@ int n = 0; if (true) {throw new TodoException();} // TODO
         String string;
         boolean equal;
 
-        StringToken(String string, boolean equal) {
+        /**
+         * Create a string token.
+         *
+         * @param string The string to match.
+         * @param equal Indicates whether the given string has to match or must not.
+         */
+        public StringToken(String string, boolean equal) {
             this.string = string;
             this.equal = equal;
         }
@@ -1886,7 +2234,12 @@ int n = 0; if (true) {throw new TodoException();} // TODO
 
         Enum<?> value;
 
-        EnumValueToken(Enum<?> value) {
+        /**
+         * Create a value token.
+         *
+         * @param value The actual value to match.
+         */
+        public EnumValueToken(Enum<?> value) {
             this.value = value;
         }
 
@@ -1904,6 +2257,7 @@ int n = 0; if (true) {throw new TodoException();} // TODO
         public StringBuilder toPrettyString(StringBuilder buf) {
             return buf.append('\'').append(this.value.toString()).append('\'');
         }
+
     }
 
     /**
@@ -1917,11 +2271,19 @@ int n = 0; if (true) {throw new TodoException();} // TODO
 
         NumberConstraint constraint;
 
-        Number(NumberConstraint constraint) {
+        /**
+         * Create a number token based on a constraint.
+         *
+         * @param constraint The constraint to apply.
+         */
+        public Number(NumberConstraint constraint) {
             this.constraint = constraint;
         }
 
-        Number() { }
+        /**
+         * Create a number token.
+         */
+        public Number() { }
 
         @Override
         public boolean parse(Scanner scanner, Handler handler, boolean alreadyMarked) throws IOException {
@@ -1967,7 +2329,15 @@ int n = 0; if (true) {throw new TodoException();} // TODO
         Grammar grammar;
         Supplier<DataHandler<?>> dataHandlerSupplier;
 
-        GrammarToken(Grammar grammar, Supplier<DataHandler<?>> dataHandlerSupplier) {
+        /**
+         * Expose a grammar as a token.
+         *
+         * @param grammar The grammar instance.
+         * @param dataHandlerSupplier Allow to supply the result parsing object.
+         *
+         * @see NodeBuilder
+         */
+        public GrammarToken(Grammar grammar, Supplier<DataHandler<?>> dataHandlerSupplier) {
             this.grammar = grammar;
             this.dataHandlerSupplier = dataHandlerSupplier;
         }
@@ -2053,6 +2423,67 @@ int n = 0; if (true) {throw new TodoException();} // TODO
             return this.rule.toStringBuilder(buf);
         }
 
+        /**
+         * A token that collect its subrules to a single string.
+         *
+         * @author Philippe Poulard
+         */
+        public static class String extends TypedToken<java.lang.String> {
+
+            /**
+             * This token is made of subrules.
+             *
+             * @param rule The rule that this token is made of.
+             */
+            public String(Rule rule) {
+                super(rule);
+            }
+
+            @Override
+            public TokenValue<java.lang.String> newTokenValue(TokensCollector<?> buf, Trackable trackable) {
+                @SuppressWarnings("unchecked")
+                StringBuilder sb = ((TokensCollector<StringBuilder>) buf).get();
+                return new StringValue(this, sb.toString(), trackable);
+            }
+
+            @Override
+            public TokensCollector<?> collector() {
+                return TokensCollector.newStringBuilderHandler();
+            }
+
+        }
+
+        /**
+         * A token that collect its subrules to a number.
+         *
+         * @author Philippe Poulard
+         */
+        public static class Number extends TypedToken<java.lang.Number> {
+
+            /**
+             * This token is made of subrules.
+             *
+             * @param rule The rule that this token is made of.
+             */
+            public Number(Rule rule) {
+                super(rule);
+            }
+
+            @Override
+            public TokenValue<java.lang.Number> newTokenValue(TokensCollector<?> buf, Trackable trackable) {
+                @SuppressWarnings("unchecked")
+                StringBuilder sb = ((TokensCollector<StringBuilder>) buf).get();
+                java.lang.Number number = NumberUtil.parseNumber(sb.toString());
+                return new NumberValue(this, number, trackable);
+            }
+
+            @Override
+            public TokensCollector<?> collector() {
+                return TokensCollector.newStringBuilderHandler();
+            }
+
+        }
+
     }
 
     /**
@@ -2082,12 +2513,19 @@ int n = 0; if (true) {throw new TodoException();} // TODO
     /**
      * The char token for any Unicode codepoint.
      */
-    CharToken $any = new CharToken(CharRange.ANY);
+    CharToken $any = new CharToken.Single(CharRange.ANY);
 
     /**
      * The char token that matches nothing.
      */
-    CharToken $empty = new CharToken(CharRange.EMPTY);
+    CharToken $empty = new CharToken.Single(CharRange.EMPTY) {
+
+        @Override
+        public boolean parse(Scanner scanner, Handler handler, boolean alreadyMarked) throws IOException {
+            return true;
+        };
+
+    };
 
     /**
      * Return the singleton instance of the given grammar.

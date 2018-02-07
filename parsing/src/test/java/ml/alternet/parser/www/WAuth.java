@@ -52,7 +52,7 @@ public interface WAuth extends Grammar {
 
     @Fragment Token DOUBLE_QUOTE = is('"');
     @Fragment Token BACKSLASH = is('\\')
-            .skip();
+            .drop();
 
     @WhitespacePolicy(preserve=true)
     @Fragment Token QdText = isNot(DOUBLE_QUOTE);
@@ -64,9 +64,9 @@ public interface WAuth extends Grammar {
 //            return tokens.getFirst().getValue();
 //        });
 
-    Token QuotedString = DOUBLE_QUOTE.skip().seq(
+    Token QuotedString = DOUBLE_QUOTE.drop().seq(
             QuotedPair.or(QdText).zeroOrMore(),
-            DOUBLE_QUOTE.skip())
+            DOUBLE_QUOTE.drop())
         .asToken();
 //        .asToken(tokens -> {
 //            tokens.removeFirst(); // skip DOUBLE_QUOTE before...

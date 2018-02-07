@@ -14,7 +14,7 @@ import ml.alternet.parser.Grammar;
  *
  * @author Philippe Poulard
  */
-public interface SimpleCalculatorGrammar extends Grammar {
+public interface SimpleCalculator extends Grammar {
 
     Token PLUS = is('+');
     Token MINUS = is('-');
@@ -29,6 +29,6 @@ public interface SimpleCalculatorGrammar extends Grammar {
     boolean init = Term.is( Factor.seq(MULT.or(DIV).seq(Factor).zeroOrMore()) )
             ^    Factor.is( Number.or(LPAREN.seq(Expression).seq(RPAREN)) );
 
-    SimpleCalculatorGrammar $ = $();
+    SimpleCalculator $ = $();
 
 }

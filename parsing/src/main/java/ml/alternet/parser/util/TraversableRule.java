@@ -127,10 +127,18 @@ public interface TraversableRule {
         }
 
         @Override
-        default Stream<Rule> getComposedRules() {
+        default Stream<Rule> getComponents() {
             return Stream.of(getComponent());
         }
 
+        @Override
+        default void flatten() {
+            if (getComponent() instanceof ComposedRule &&
+                ! getComponent().isGrammarField())
+            {
+                ((ComposedRule<?>) getComponent()).flatten();
+            }
+        }
     }
 
     /**
@@ -179,7 +187,7 @@ public interface TraversableRule {
         }
 
         @Override
-        default Stream<Rule> getComposedRules() {
+        default Stream<Rule> getComponents() {
             return getComponent().stream();
         }
 

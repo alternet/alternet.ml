@@ -42,6 +42,8 @@ public class CalcTest {
     public static Object[][] createData() {
         Object[][] data = {
             {" 1 ", 1},
+            {"+1", 1},
+            {"-1", -1},
             {"sin( x )* (1 + var_12) ", Math.sin(1)*(1+10)},
             {"1 + 20 * 300", 1+20*300},
             {"1*20 + 300", 1*20+300},

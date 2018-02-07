@@ -126,8 +126,9 @@ public interface NumericExpression extends Expression<Number, Map<String,Number>
      * @param <T>
      */
     class Term<T> implements NumericExpression {
-        T operation;
-        NumericExpression term;
+
+        public T operation;
+        public NumericExpression term;
 
         public Term(T operation, NumericExpression term) {
             this.operation = operation;

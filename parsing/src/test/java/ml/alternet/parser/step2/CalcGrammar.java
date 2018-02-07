@@ -47,7 +47,7 @@ public interface CalcGrammar extends Grammar {
     enum Additive {
         PLUS("+"), MINUS("-");
         Additive(String str) {
-            replace(Additive.class, this, s -> str);
+            replace(this, s -> str);
         }
     }
     Token ADDITIVE = is(Additive.class);
@@ -56,14 +56,14 @@ public interface CalcGrammar extends Grammar {
     enum Multiplicative {
         MULT("*"), DIV("/");
         Multiplicative(String str) {
-            replace(Multiplicative.class, this, s -> str);
+            replace(this, s -> str);
         }
     }
     Token MULTIPLICATIVE = is(Multiplicative.class);
 
     // DIGIT ::= [0-9]
-    @Fragment Token DIGIT = range('0', '9')
-            .asNumber();
+    @Fragment
+    CharToken DIGIT = range('0', '9');
 
     // NUMBER ::= DIGIT+
     Token NUMBER = DIGIT.oneOrMore()

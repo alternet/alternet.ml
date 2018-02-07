@@ -1,5 +1,7 @@
 package ml.alternet.parser.util;
 
+import static ml.alternet.misc.Thrower.*;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -17,15 +19,15 @@ import java.util.stream.Stream;
 
 import ml.alternet.facet.Initializable;
 import ml.alternet.misc.Thrower;
-import ml.alternet.misc.TodoException;
 import ml.alternet.parser.Grammar;
 import ml.alternet.util.ByteCodeFactory;
+import ml.alternet.util.ClassUtil;
 import ml.alternet.util.gen.ByteCodeSpec;
 
 /**
  * Used internally to prepare every grammar :
  * perform initialization of the name fields,
- * some optimizations, and replacements.
+ * some optimizations, and substitutions.
  *
  * @author Philippe Poulard
  */
@@ -35,7 +37,7 @@ public abstract class Grammar$ implements Grammar, Initializable {
     @ByteCodeSpec(parentClass = Grammar$.class, factoryPkg = "ml.alternet.parser.util",
             template = "/ml/alternet/parser/util/ByteCodeFactory$.java.template")
     static final ByteCodeFactory BYTECODE_FACTORY = ByteCodeFactory
-        // this class exist after code generation
+        // the factory class exist after code generation
         .getInstance("ml.alternet.parser.util.ByteCodeFactory$");
 
     // allow to find the caller grammar interface
@@ -67,31 +69,25 @@ public abstract class Grammar$ implements Grammar, Initializable {
      */
     @SuppressWarnings("unchecked")
     public static <T extends Grammar> T $(Class<? extends Grammar> grammar) {
-        try {
-            if (grammar.isInterface()) {
+        if (grammar.isInterface()) {
+            try {
                 Grammar$ g = (Grammar$) BYTECODE_FACTORY.getInstance(grammar);
                 g.grammar = grammar;
-                g.init(); // before doing anything on the grammar, ensure to prepare it before
+                // before doing anything on the grammar,
+                // ensure to prepare it before
+                g.init();
                 return (T) g;
-            } else {
-                throw new IllegalArgumentException(grammar.getName() + " is not an interface.");
-            }
-        } catch (NoSuchFieldException | SecurityException e) {
-            try {
-                // maybe a user defined class without the SINGLETON field
-                Grammar g = BYTECODE_FACTORY.newInstance(grammar);
-                ((Initializable) g).init(); // before doing anything on the grammar, ensure to prepare it before
-                return (T) g;
-            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e1) {
+            } catch (NoSuchFieldException | SecurityException
+                    | InstantiationException | IllegalAccessException
+                    | ClassNotFoundException | IllegalArgumentException e)
+            {
+                // Trouble shooting java.lang.IllegalAccessError:
+                //        class a.b.c.D$E$ cannot access its superinterface a.b.c.D$E
+                //        because a.b.c.D$E is not public
                 return Thrower.doThrow(e);
             }
-        } catch (InstantiationException | IllegalAccessException
-                | ClassNotFoundException | IllegalArgumentException e)
-        {
-            // Trouble shooting java.lang.IllegalAccessError:
-            //        class a.b.c.D$E$ cannot access its superinterface a.b.c.D$E
-            //        because a.b.c.D$E is not public
-            return Thrower.doThrow(e);
+        } else {
+            throw new IllegalArgumentException(grammar.getName() + " is not an interface.");
         }
     }
 
@@ -194,17 +190,30 @@ public abstract class Grammar$ implements Grammar, Initializable {
     private Class<? extends Grammar> grammar; // the underlying grammar
     private Rule tokenizer; // once it has been computed, it is stored for later use
     private java.util.Optional<Grammar.Rule> mainRule; // same comment
+    private final Map<Rule, Rule> substitutions = new HashMap<>(); // contain rules that replace another ones
+    private Map<Rule, Rule> adopted = new HashMap<>(); // contain rules from another grammar
     private boolean init = false;
 
     @Override
     public <T> T init() {
         if (! this.init) {
+            // preconditions will be checked by RuleField on the first field browse
             this.init = true;
+            // apply initializations in this order
+            // don't merge the loops in those methods !!!
+            // typically : naming is an important step that must be
+            //          performed BEFORE optimization and substitutions
             try {
-                // apply in this order
-                // don't try to merge the loops of those methods
+                // set the name of rules that are fields,
+                // process fragments, and process proxies
                 processFields();
+                // resolve placeholders $self and $("namedRule")
+                processPlaceHolders();
+                // flatten an simplify
+                processOptimizations();
+                // substitutions and extensions
                 processSubstitutions();
+                // ws
                 processWhitespacePolicy();
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 return Thrower.doThrow(e);
@@ -225,10 +234,10 @@ public abstract class Grammar$ implements Grammar, Initializable {
     public java.util.Optional<Rule> mainRule() {
         if (this.mainRule == null) {
             // works on init() grammars only
-            this.mainRule =
-                fields()
+            this.mainRule = fields()
                 .filter(f -> f.getAnnotation(MainRule.class) != null)
-                .map(f -> getRule(f))
+                .map(f -> (Rule) safeCall(() -> f.get(null)))
+                .map(this::adoption) // if it comes from an inherited grammar
                 .findFirst();
         }
         return this.mainRule;
@@ -248,11 +257,12 @@ public abstract class Grammar$ implements Grammar, Initializable {
     public Rule tokenizer() {
         if (this.tokenizer == null) {
             // works on init() grammars only
-            Stream<Token> tokens =
-                fields()
+            Stream<Token> tokens = fields()
                 .filter(f ->   Token.class.isAssignableFrom(f.getType()) // keep tokens
                             && f.getAnnotation(Fragment.class) == null)  // that ARE NOT fragments
-                .map(f -> (Token) getRule(f));
+                .map(f -> (Token) safeCall(() -> f.get(null)))
+                .map(this::adoption) // if it comes from an inherited grammar
+                .map(t -> (Token) t);
             this.tokenizer = new Choice(tokens).zeroOrMore();
         }
         return this.tokenizer;
@@ -260,28 +270,10 @@ public abstract class Grammar$ implements Grammar, Initializable {
 
     // =============== UTILITIES
 
-    // convenient method that do the job without taking care of exceptions
-    private static Rule getRule(Field field) {
-        try {
-            return (Rule) field.get(null);
-        } catch (IllegalArgumentException | IllegalAccessException e) {
-            return Thrower.doThrow(e);
-        }
-    }
-
-    // convenient method that do the job without taking care of exceptions
-    private static Rule cloneRule(Rule rule) {
-        try {
-            return (Rule) rule.clone();
-        } catch (CloneNotSupportedException e) {
-            return Thrower.doThrow(e);
-        }
-    }
-
-    private static void addSubstitution(Map<Rule, Rule> substitutions, Field from, Rule to) {
-        try {
+    private void addSubstitution(Field from, Rule to) {
+        try {                            // from is a static field
             Rule fromRule = (Rule) from.get(from.getDeclaringClass());
-            substitutions.put(fromRule, to);
+            this.substitutions.put(fromRule, to);
         } catch (IllegalArgumentException | IllegalAccessException e) {
             Thrower.doThrow(e);
         }
@@ -296,21 +288,18 @@ public abstract class Grammar$ implements Grammar, Initializable {
      *
      * @return A function that filters out Unicode codepoints.
      */
-    public static java.util.Optional<Predicate<Integer>> getWhitespacePolicy(WhitespacePolicy whitespacePolicy,
-            Supplier<java.util.Optional<Predicate<Integer>>> defaultValue)
+    static java.util.Optional<Predicate<Integer>> getWhitespacePolicy(
+        WhitespacePolicy whitespacePolicy,
+        Supplier<java.util.Optional<Predicate<Integer>>> defaultValue)
     {
         if (whitespacePolicy == null) {
             return defaultValue.get();
         } else if (whitespacePolicy.preserve()) {
             return java.util.Optional.empty();
         } else {
-            try {
-                return java.util.Optional.of(
-                    whitespacePolicy.isWhitespace().newInstance()
-                );
-            } catch (InstantiationException | IllegalAccessException e) {
-                return Thrower.doThrow(e);
-            }
+            return java.util.Optional.of(
+                safeCall(() -> whitespacePolicy.isWhitespace().newInstance())
+            );
         }
     }
 
@@ -356,12 +345,11 @@ public abstract class Grammar$ implements Grammar, Initializable {
             .filter(o -> o != null);
     }
 
-    // just the fields declared by this grammar and its interfaces
+    // the fields declared by this grammar and its interfaces
     private Stream<Field> fields() {
-        Stream<Field> fields = Stream.concat(
-            Arrays.asList(this.grammar.getDeclaredFields()).stream(),
-            Arrays.asList(this.grammar.getInterfaces()).stream()
-                .flatMap(c -> Arrays.asList(c.getDeclaredFields()).stream()))
+        Stream<Field> fields = ClassUtil.getClasses(this.grammar)
+            .filter(g -> g != Grammar.class)
+            .flatMap(c -> Arrays.asList(c.getDeclaredFields()).stream())
             .filter(f -> ! "$any".equals(f.getName()) && ! "$empty".equals(f.getName()));
         return fields;
     }
@@ -370,26 +358,27 @@ public abstract class Grammar$ implements Grammar, Initializable {
 
     private void processFields() throws IllegalArgumentException, IllegalAccessException {
         getRuleFields().forEach(rf -> {
-            if (rf.rule().isGrammarField()) {
+            Rule rule = rf.rule();
+            if (rule.isGrammarField()) {
                 throw new IllegalArgumentException("The field \"" + rf.field.getName()
                         + "\" is a direct reference of an existing named rule."
                         + "\nPlease correct your grammar by defining your field as a proxy :"
-                        + "\nRule " + rf.field.getName() + " = is(" + rf.rule().getName() + ");");
+                        + "\nRule " + rf.field.getName() + " = is(" + rule.getName() + ");");
             }
             // set the name of the rule with the name it has in the interface
             String name = rf.field.getName();
-            rf.rule().setName(name);
+            rule.setName(name);
             if (rf.field.getAnnotation(Fragment.class) == null) {
-                rf.rule().setFragment(false);
+                rule.setFragment(false);
             } else { // assume true by default
-                rf.rule().setFragment(true);
+                rule.setFragment(true);
             }
 
             // set fields declaration that are proxies
-            if (rf.rule() instanceof Proxy) {
+            if (rule instanceof Proxy) {
                 // lookup for a method that has the same name as the field
                 // Proxy foo = proxy();
-                Proxy proxy = ((Proxy) rf.rule());
+                Proxy proxy = ((Proxy) rule);
                 try {
                     // static Rule foo() {
                     //     return SomeRule.zeroOrMore();
@@ -398,9 +387,9 @@ public abstract class Grammar$ implements Grammar, Initializable {
                     try {
                         // call the method
                         // Rule rule = foo();
-                        Rule rule = (Rule) method.invoke(proxy);
+                        Rule r = (Rule) method.invoke(proxy);
                         // set it to the proxy
-                        proxy.is(rule);
+                        proxy.is(r);
                     } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
                         Thrower.doThrow(e);
                     }
@@ -412,9 +401,9 @@ public abstract class Grammar$ implements Grammar, Initializable {
                         try {
                             // get the field and get the rule
                             @SuppressWarnings("unchecked")
-                            Rule rule = ((Supplier<Rule>) field.get(null)).get();
+                            Rule r = ((Supplier<Rule>) field.get(null)).get();
                             // set it to the proxy
-                            proxy.is(rule);
+                            proxy.is(r);
                         } catch (IllegalArgumentException | IllegalAccessException e1) {
                             Thrower.doThrow(e);
                         }
@@ -423,16 +412,15 @@ public abstract class Grammar$ implements Grammar, Initializable {
                     }
                 }
             }
-            if (rf.rule() instanceof Initializable) {
-                ((Initializable) rf.rule()).init();
+            if (rule instanceof Initializable) {
+                ((Initializable) rule).init();
             }
         });
     }
 
-    private void processSubstitutions() throws IllegalArgumentException, IllegalAccessException {
-        Map<Rule, Rule> substitutions = new HashMap<>();
+    // resolve placeholders $self and $("namedRule")
+    private void processPlaceHolders() {
         getRuleFields().forEach(rf -> {
-            // resolve placeholders $self and $("namedRule")
             BiFunction<Rule, Rule, Rule> placeholderResolver = (hostRule, rule) -> {
                 if (rule == Grammar.$self) {
                     rule = hostRule;
@@ -451,29 +439,54 @@ public abstract class Grammar$ implements Grammar, Initializable {
                 }
                 return rule;
             };
-            rf.rule().traverse(rf.rule(),
-                    new HashSet<Rule>(),
-                    placeholderResolver,
-                    r -> r); // apply the changes directly
+            rf.rule().traverse(
+                rf.rule(),
+                new HashSet<Rule>(),
+                placeholderResolver,
+                r -> r  // apply the changes directly
+            );
+        });
+    }
 
-            // collect the replacements
+    // flatten sequences or choices of unnamed rules
+    // flatten CharToken even on named tokens, but with rewrite capability on substitution
+    // (it is useless to run optimizations after substitution because other new grammar
+    //  extensions can occur far after)
+    private void processOptimizations() {
+        // flatten when possible
+        getRuleFields().forEach(rf -> {
+            Rule r = rf.rule();
+            if (r instanceof ComposedRule) {
+                ((ComposedRule<?>) r).flatten();
+            }
+        });
+    }
+
+    // when a grammar extends another grammar and extend or overload some fields
+    private void processSubstitutions() throws IllegalArgumentException, IllegalAccessException {
+        // 1) collect the substitutions
+        getRuleFields().forEach(rf -> {
+            // a substitution is either declared explicitly by @Replace
+            // or because a field has the same name of a field in an inherited grammar
             Grammar.Replace replace = rf.field.getAnnotation(Grammar.Replace.class);
             if (replace == null) { // field override ?
                 // find a rule with the same name in the inherited interfaces
-                Arrays.asList(this.grammar.getInterfaces()).stream()
+                ClassUtil.getClasses(this.grammar)
+                    .filter(i -> i != this.grammar && i != Grammar.class)
                     .flatMap(c -> Arrays.asList(c.getDeclaredFields()).stream())
                     .filter(f -> rf.rule().isGrammarField()
                             && f.getName().equals(rf.rule().getName())
-                            && f.getType().isAssignableFrom(Rule.class))
+                            && Rule.class.isAssignableFrom(f.getType()))
                     .findFirst()
-                    .ifPresent(f -> addSubstitution(substitutions, f, rf.rule()));
+                    .ifPresent(f -> addSubstitution(f, rf.rule()));
                     // else it is not a replacement... go on
-            } else {
+            } else if (! replace.disable()) {
                 // @Replace was set
                 Stream<Class<?>> interfaces;
                 if (replace.grammar() == Grammar.class) { // means : not specified
                     // find a rule with the given name in the inherited interfaces
-                    interfaces = Arrays.asList(this.grammar.getInterfaces()).stream();
+                    interfaces = ClassUtil.getClasses(this.grammar)
+                        .filter(i -> i != this.grammar && i != Grammar.class);
                 } else {
                     // find a rule with the given name in the given interface
                     interfaces = Stream.of(replace.grammar());
@@ -481,65 +494,79 @@ public abstract class Grammar$ implements Grammar, Initializable {
                 Field source = interfaces
                     .flatMap(c -> Arrays.asList(c.getDeclaredFields()).stream())
                     .filter(f -> f.getName().equals(replace.field())
-                            && f.getType().isAssignableFrom(Rule.class))
+                            && Rule.class.isAssignableFrom(f.getType()))
                     .findFirst() // with @Replace, we MUST find one
                     .orElseThrow(() -> new NoSuchFieldError("Substitution not found "
-                                    + replace + " in " + this.grammar.getClass()));
-                addSubstitution(substitutions, source, rf.rule());
-            }
+                                    + replace + " in " + this.grammar.getName()));
+                addSubstitution(source, rf.rule());
+            } // else it is not a substitution
         });
 
-        // apply the substitutions to all fields
-        if (! substitutions.isEmpty()) {
-            BiFunction<Rule, Rule, Rule> substitutionsResolver = (h, from) -> {
-                Rule to = substitutions.get(from);
-// TODO ????????? how to deal with mutal refs ????
-                if (to == null || h == to) { // don't loop to the host !!!
-                    return from; // unchanged
-                } else {
-                    return to; // from -> to
-                }
-            };
-            Set<Rule> substituted = new HashSet<>();
-            getRuleFields().forEach(rf -> {
-                Rule replace = rf.rule().traverse(
-                    rf.rule(),
-                    substituted,
-                    substitutionsResolver,
-//                    r -> cloneRule(r)); // keep intact the original rule
-                        r -> { if (r == rf.rule()) {
-                                    return  r;
-                                } else { // keep intact the original rule
-                                    return cloneRule(r); } }
-                );
-                if (rf.rule() != replace) {
-                    try {
-                        Field modifField = Field.class.getDeclaredField("modifiers");
-                        modifField.setAccessible(true);
-                        final int modifiers = rf.field.getModifiers();
-                        modifField.setInt(rf.field, modifiers & ~Modifier.FINAL);
-                        rf.field.setAccessible(true);
-                        rf.field.set(this.grammar, replace);
-                        modifField.setInt(rf.field,modifiers);
-                    } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
-                        Thrower.doThrow(e);
+        // 2) apply the substitutions to all fields
+        if (! this.substitutions.isEmpty()) {
+            Set<Rule> traversed = new HashSet<>();
+            getRuleFields()
+                .filter(rf -> rf.field.getAnnotation(MainRule.class) == null)
+                .forEach(rf -> {
+                    Rule rule = rf.rule();
+                    Rule replace = rule.traverse(
+                        rule,
+                        traversed,
+                        this.substitutionsResolver,
+                        r -> r == rule
+                            ? r // FIXME : just explain why ???
+                            : (Rule) safeCall(r::clone) // keep intact the original rule
+                    );
+                    if (rule != replace) {
+                        // set the new rule in the field
+                        try {
+                            Field modifField = Field.class.getDeclaredField("modifiers");
+                            modifField.setAccessible(true);
+                            final int modifiers = rf.field.getModifiers();
+                            modifField.setInt(rf.field, modifiers & ~Modifier.FINAL);
+                            rf.field.setAccessible(true);
+                            rf.field.set(this.grammar, replace);
+                            modifField.setInt(rf.field, modifiers);
+                        } catch (IllegalArgumentException | IllegalAccessException
+                                | NoSuchFieldException | SecurityException e)
+                        {
+                            Thrower.doThrow(e);
+                        }
                     }
-                }
             });
+
             // apply the substitutions to the main rule
+            // FIXME : explain WHY it can't be performed by the previous loop ???
             java.util.Optional<Rule> main = mainRule();
             main.ifPresent(mainRule -> {
                 this.mainRule = java.util.Optional.of(
                     mainRule.traverse(
                         mainRule,
-                        substituted,
-                        substitutionsResolver,
-                        r -> cloneRule(r)) // keep intact the original rule
+                        traversed,
+                        this.substitutionsResolver,
+                        r -> (Rule) safeCall(r::clone)) // keep intact the original rule
                 );
             });
         }
     }
 
+    private BiFunction<Rule, Rule, Rule> substitutionsResolver = (host, from) -> {
+        if (host == from) {
+            return from;
+        }
+        Rule to = this.substitutions.get(from);
+        if (to == null
+            || host == to) // prevent substitution on extension
+                           // e.g.  Grammar g1 extends g2 {
+                           //          Rule r = g2.r.asToken(...);
+        {   // unchanged
+            return from;
+        } else {
+            return to; // from -> to
+        }
+    };
+
+    @SuppressWarnings("unchecked")
     private void processWhitespacePolicy() throws IllegalArgumentException, IllegalAccessException {
         java.util.Optional<Predicate<Integer>> globalWhitespacePolicy = getWhitespacePolicy(
                 this.grammar.getAnnotation(Grammar.WhitespacePolicy.class),
@@ -584,8 +611,16 @@ public abstract class Grammar$ implements Grammar, Initializable {
 //        });
         // don't try to mix this loop with the one above
         HashSet<Rule> traversed = new HashSet<>();
-        getRuleFields().map(rf -> rf.rule()).forEach(rule -> {
+        getRuleFields()
+        .map(rf -> rf.rule())
+
+// can't optimize on NAMED rules, it cause fail when replaced
+//.filter(r -> false)
+
+
+        .forEach(rule -> {
             // optimize for Choice : if all items have the same WSP, remove it and apply it on the choice
+            // TODO : if we have a named rule, should we allow to change that on substitution ???
             rule.traverse(rule,
                 traversed,
                 (hostRule, r) -> {
@@ -599,7 +634,6 @@ public abstract class Grammar$ implements Grammar, Initializable {
                             // get the first WSP that is the referent for comparing others
                             wsp.ifPresent(p -> {
                                 // the predicate is defined by a class in @WhitespacePolicy
-                                @SuppressWarnings("unchecked")
                                 Class<Predicate<Integer>> isWhitespace =
                                     (Class<Predicate<Integer>>) p.getClass();
                                 // all items have the same WSP ?
@@ -623,7 +657,8 @@ public abstract class Grammar$ implements Grammar, Initializable {
                                         // because it may be reused elsewhere (with a different
                                         // inherited WSP)
                                         if (cr.isGrammarField()) {
-                                            cr = cloneRule(cr);
+                                            cr = (Rule) safeCall(cr::clone);
+//                                            cr = cloneRule(cr);
                                         }
                                         ((HasWhitespacePolicy) cr)
                                               .setWhitespacePolicy(java.util.Optional.empty());
@@ -637,6 +672,42 @@ public abstract class Grammar$ implements Grammar, Initializable {
                 },
                 r -> r); // apply the changes directly
         });
+    }
+
+    /**
+     * Adopt a rule of another grammar, that is to say apply the
+     * relevant substitutions if any.
+     *
+     * @param rule The original rule, should be a rule of this
+     *      grammar or an inherited grammar.
+     * @return The same rule if no modifications were expected,
+     *      a new rule otherwise.
+     */
+    public Rule adopt(Rule rule) {
+        if (rule == this.tokenizer) { // || rule == this.mainRule.orElse(null)) {
+            return rule;
+        }
+        if (rule.isGrammarField()) {
+            try {
+                getClass().getDeclaredField(rule.getName());
+                return rule; // rule already in grammar
+            } catch (NoSuchFieldException | SecurityException e) {
+                return adoption(rule);
+            }
+        } else {
+            throw new IllegalArgumentException("Unable to adopt a rule that is not a grammar field");
+        }
+    }
+
+    private Rule adoption(Rule rule) {
+        return this.adopted.computeIfAbsent(rule, rul ->
+            rul.traverse(
+                rul,
+                new HashSet<>(),
+                this.substitutionsResolver,
+                r -> (Rule) safeCall(r::clone) // keep intact the original rule
+            )
+        );
     }
 
 }

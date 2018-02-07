@@ -1,6 +1,6 @@
 package ml.alternet.parser.step1;
 
-import static ml.alternet.parser.tests.CalcGrammar.*;
+import static ml.alternet.parser.tests.Calculator.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
@@ -75,20 +75,20 @@ public class CalcTest {
 
     @Test
     public void calcGrammar_Should_consumeTokens() throws IOException {
-        List<String> res = parseToAcc("sin(x)*(1+var_12)", Calc.class, C.tokenizer());
+        List<String> res = parseToAcc("sin(x)*(1+var_12)", Calc.class, Calc.$.tokenizer());
         assertThat(res).containsExactly("Function:sin", "String:(", "String:x", "String:)", "Multiplicative:*",
                                 "String:(", "Number:1", "Additive:+", "String:var_12", "String:)");
     }
 
     @Test
     public void calcGrammar_Should_consumeFunctionCall() throws IOException {
-        List<String> res = parseToAcc("sin(x)", Calc.class, C.tokenizer());
+        List<String> res = parseToAcc("sin(x)", Calc.class, Calc.$.tokenizer());
         assertThat(res).containsExactly("Function:sin", "String:(", "String:x", "String:)");
     }
 
     @Test
     public void calcGrammar_Should_consumeMult() throws IOException {
-        List<String> res = parseToAcc("*", Calc.class, C.tokenizer());
+        List<String> res = parseToAcc("*", Calc.class, Calc.$.tokenizer());
         assertThat(res).containsExactly("Multiplicative:*");
     }
 

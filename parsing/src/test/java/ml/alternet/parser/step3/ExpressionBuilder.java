@@ -17,6 +17,7 @@ import ml.alternet.parser.step3.Expression.Product;
 import ml.alternet.parser.step3.Expression.Sum;
 import ml.alternet.parser.step3.Expression.Term;
 import ml.alternet.parser.step3.Expression.Variable;
+import ml.alternet.parser.step4.NumericExpression;
 import ml.alternet.scan.Scanner;
 
 /**
@@ -175,10 +176,21 @@ public class ExpressionBuilder extends TreeHandler<Expression> {
             public Expression asExpression(TokenValue<?> token, Deque<Value<Expression>> next) {
                 // e.g. a + b
                 Additive op = token.getValue(); // + | -
-                // + is always followed by an argument
-                Expression arg = next.pollFirst().getTarget(); // b argument
-                Term<Additive> term = new Term<>(op, arg);
-                return term;
+                if (next.isEmpty()) { // in SignedTerm and SignedFactor, the ADDITIVE term
+                                      // is within an optional term therefore always alone,
+                                      // it is the optional term that is followed by a Product term
+                                      // or Factor term, not the ADDITIVE term
+                                      // When the next terms list is empty, we are in this situation
+                    // SignedTerm   ::= ADDITIVE? Product
+                    // SignedFactor ::= ADDITIVE? Factor
+                    return null; // raw value Additive
+                } else {
+                    // + is always followed by an argument
+                    // Sum ::= SignedTerm (ADDITIVE Product)*
+                    Expression arg = next.pollFirst().getTarget(); // b argument
+                    Term<Additive> term = new Term<>(op, arg);
+                    return term;
+                }
             }
         },
         MULTIPLICATIVE {

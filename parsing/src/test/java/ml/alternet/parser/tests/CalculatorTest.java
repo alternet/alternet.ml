@@ -1,6 +1,6 @@
 package ml.alternet.parser.tests;
 
-import static ml.alternet.parser.tests.CalcGrammar.*;
+import static ml.alternet.parser.tests.Calculator.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
@@ -16,15 +16,15 @@ import ml.alternet.parser.handlers.HandlerAccumulator;
 import ml.alternet.scan.Scanner;
 import ml.alternet.scan.StringScanner;
 
-public class CalcTest {
+public class CalculatorTest {
 
     @Test
     public void calcGrammarSingleton_ShouldBe_generated() {
         System.out.println("calcGrammarSingleton_ShouldBe_generated");
-        CalcGrammar g = CalcGrammar.C;
-        assertThat(g).isInstanceOf(CalcGrammar.class);
+        Calculator g = Calculator.C;
+        assertThat(g).isInstanceOf(Calculator.class);
         assertThat(g).isInstanceOf(Grammar.class);
-        CalcGrammar g2 = Grammar.$(CalcGrammar.class);
+        Calculator g2 = Grammar.$(Calculator.class);
         assertThat(g).isSameAs(g2);
         System.out.println("calcGrammarSingleton_ShouldBe_generated");
     }
@@ -58,7 +58,7 @@ public class CalcTest {
     @Test
     public void calcGrammar_Should_consumeTokens() throws IOException {
         System.out.println("calcGrammar_Should_consumeTokens");
-        List<String> res = parseToAcc("sin(x)*(1+var_12)", CalcGrammar.class, C.tokenizer());
+        List<String> res = parseToAcc("sin(x)*(1+var_12)", Calculator.class, C.tokenizer());
         assertThat(res).containsExactly("Function:sin", "String:(", "String:x", "String:)", "Multiplicative:*",
                                 "String:(", "Number:1", "Additive:+", "String:var_12", "String:)");
         System.out.println("calcGrammar_Should_consumeTokens");
@@ -67,7 +67,7 @@ public class CalcTest {
     @Test
     public void calcGrammar_Should_consumeFunctionCall() throws IOException {
         System.out.println("calcGrammar_Should_consumeFunctionCall");
-        List<String> res = parseToAcc("sin(x)", CalcGrammar.class, C.tokenizer());
+        List<String> res = parseToAcc("sin(x)", Calculator.class, C.tokenizer());
         assertThat(res).containsExactly("Function:sin", "String:(", "String:x", "String:)");
         System.out.println("calcGrammar_Should_consumeFunctionCall");
     }
@@ -75,9 +75,20 @@ public class CalcTest {
     @Test
     public void calcGrammar_Should_consumeMult() throws IOException {
         System.out.println("calcGrammar_Should_consumeMult");
-        List<String> res = parseToAcc("*", CalcGrammar.class, C.tokenizer());
+        List<String> res = parseToAcc("*", Calculator.class, C.tokenizer());
         assertThat(res).containsExactly("Multiplicative:*");
         System.out.println("calcGrammar_Should_consumeMult");
+    }
+
+    @Test
+    public void mathGrammarSingleton_ShouldBe_generated() {
+        System.out.println("mathGrammarSingleton_ShouldBe_generated");
+        Math g = Math.M;
+        assertThat(g).isInstanceOf(Math.class);
+        assertThat(g).isInstanceOf(Grammar.class);
+        Math g2 = Grammar.$(Math.class);
+        assertThat(g).isSameAs(g2);
+        System.out.println("mathGrammarSingleton_ShouldBe_generated");
     }
 
 }

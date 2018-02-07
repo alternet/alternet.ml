@@ -53,7 +53,7 @@ public interface Calc extends Grammar {
     enum Additive {
         PLUS("+"), MINUS("-");
         Additive(String str) {
-            replace(Additive.class, this, s -> str);
+            replace(this, s -> str);
         }
     }
     Token ADDITIVE = is(Additive.class);
@@ -62,7 +62,7 @@ public interface Calc extends Grammar {
     enum Multiplicative {
         MULT("*"), DIV("/");
         Multiplicative(String str) {
-            replace(Multiplicative.class, this, s -> str);
+            replace(this, s -> str);
         }
     }
     Token MULTIPLICATIVE = is(Multiplicative.class);
@@ -104,10 +104,8 @@ public interface Calc extends Grammar {
     @Fragment Rule Argument = ( FUNCTION.seq($self) ).or(Value).or( LBRACKET.seq( Expression, RBRACKET ) );
 
     // SignedFactor ::= ADDITIVE? Factor
-    @Fragment Rule SignedFactor = $();
-    @Fragment Rule SignedFactor_ = $(() ->
-                                ADDITIVE.optional().seq(Calc.Factor)
-    );
+    @Fragment Rule SignedFactor = $(() -> ADDITIVE.optional().seq(Calc.Factor));
+
     // Factor ::= Argument ('^' SignedFactor)?
     Rule Factor = Argument.seq( RAISED.seq(SignedFactor).optional() );
 
@@ -116,15 +114,6 @@ public interface Calc extends Grammar {
 
     // SignedTerm ::= ADDITIVE? Product
     @Fragment Rule SignedTerm = ADDITIVE.optional().seq(Product);
-
-
-    // SignedFactor ::= ADDITIVE? Factor
-    static Rule SignedFactor() {
-        return ADDITIVE.optional().seq(Factor);
-    }
-
-    // SignedFactor ::= ADDITIVE? Factor
-    Supplier<Rule> $Signed_Factor = () -> ADDITIVE.optional().seq(Factor);
 
     Calc $ = $();
 
