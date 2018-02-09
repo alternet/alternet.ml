@@ -50,6 +50,8 @@ import ml.alternet.util.StringBuilderUtil;
 /**
  * Base interface for defining grammars.
  *
+ * @see <a href="http://alternet.ml/alternet-libs/parsing/parsing.html">http://alternet.ml/alternet-libs/parsing/parsing.html</a>
+ *
  * <h1>Skeleton</h1>
  *
  * <pre>import static ml.alternet.parser.Grammar.*;

@@ -69,7 +69,7 @@ or :
 ```
 
 Then, given an interface `SomeInterface`, we can get an instance of that interface, despite no known 
-implementation is available :
+implementation is available (or if the interface class is in a variable) :
 
 ```java
 SomeInterface instance = BYTECODE_FACTORY.newInstance(SomeInterface.class);
