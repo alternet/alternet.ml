@@ -695,16 +695,13 @@ If the new field have the same name as an existing field in the other grammar, i
     // same name than in Calc grammar -> automatic replacement
     Token MULTIPLICATIVE = is(MathMultiplicative.class);
 
-    //   Argument ::= FUNCTION      LBRACKET  Argument RBRACKET  |   Value   |   LBRACKET      Expression  RBRACKET
+    //   Argument ::= FUNCTION      LBRACKET  Argument RBRACKET   |   Value   |   LBRACKET      Expression  RBRACKET
     // same name than in Calc grammar -> automatic replacement
     Rule Argument =   FUNCTION.seq( LBRACKET, $self,   RBRACKET ).or( Value ).or( LBRACKET.seq( Expression, RBRACKET ) );
 ```
 
 If the new field has another name, we have to specify with the
-[`@Replace`](apidocs/ml/alternet/parser/Grammar.Replace.html) annotation which one it is replacing.
-Below, everywhere `UPPERCASE` appears in the `Calc` grammar, it will
-be replaced by `UPPERCASE_VARIABLE` in the `Math` grammar (and stay unchanged
-in the `Calc` grammar) :
+[`@Replace`](apidocs/ml/alternet/parser/Grammar.Replace.html) annotation which one it is replacing. Below, everywhere `VARIABLE` appears in the `Calc` grammar, it will be replaced by `UPPERCASE_VARIABLE` in the `Math` grammar (and of course stay unchanged in the `Calc` grammar) :
 
 ```java
     // VARIABLE ::= [A-Z] ([A-Z] | DIGIT | '_')*
@@ -722,7 +719,21 @@ in this case, you also have to specify the appropriate grammar in the annotation
     enum MathFunction {
         sin, cos, exp, ln, sqrt, asin, acos;
     }
-    @Replace(field="FUNCTION", grammar=Calc.class)
+    @Replace(grammar=Calc.class, field="FUNCTION")    // replace Calc.FUNCTION
+    Token ADVANCED_FUNCTION = is(MathFunction.class);
+```
+
+A nice helper tool also allows to extend enums :
+
+```java
+    // FUNCTION ::= 'sin' | 'cos' | 'exp' | 'ln' | 'sqrt' | 'asin' | 'acos'
+    enum MathFunction {
+        asin, acos;
+        static {
+            EnumUtil.extend(Calc.Function.class);
+        }
+    }
+    @Replace(grammar=Calc.class, field="FUNCTION")    // replace Calc.FUNCTION
     Token ADVANCED_FUNCTION = is(MathFunction.class);
 ```
 
@@ -735,7 +746,9 @@ Here is a parsing example with each grammar :
     Math.$.parse(Scanner.of("asin( X ) × ( 1 + VAR_12 )"), handler);
 ```
 
-Sometimes, you may tend to use tokens directly in rules without defining named token in the grammar. Using named tokens allow global replacements without needing to rewrite each rule that use them. In our grammar, since we have names for the parenthesis, it is very easy to design a new grammar that just change the parenthesis with, say, curly braces :
+(more about parsing later)
+
+Sometimes, you may tend to use tokens directly in rules without defining **named** tokens in the grammar. Using named tokens allow global replacements without needing to rewrite each rule that use them. In our grammar, since we have names for the parenthesis, it is very easy to design a new grammar that just change the parenthesis with, say, square brackets :
 
 ```java
 public interface CalcCurly extends Calc { // 👈 look here, we extend Calc
@@ -756,11 +769,11 @@ In the next section we will learn how to build a custom data model.
 
 ### Grammar with custom token types
 
-A **token value** represent the input characters that are parsed. We have seen before that a token value may have various types :
+A **token value** represents the input characters that are parsed. We have seen before that a token value may have various types :
 
 * **a single character** : this is the default behaviour. E.g. `"("`
 * **a string** : this is also the default behaviour when a sequence of characters is matched. E.g. `"var_12"`
-* **a number** : when it is specified by [`.asNumber()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asNumber--). E.g. `123.45`
+* **a number** : when the token is defined with [`.asNumber()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asNumber--). E.g. `123.45`
 * **an enum value** : when the token is defined with an enum class. E.g. `Axis.ancestor_or_self`
 
 It is also possible to specify in the grammar :
@@ -784,9 +797,7 @@ WWW-Authenticate: Basic realm="FooCorp"
 WWW-Authenticate: Bearer realm="FooCorp", error=invalid_token, error_description="The \"access token\" has expired"
 </pre></div>
 
-We will design our `WAuth` grammar and our custom result objects, say
-the `Challenge` class for the global result and the `Parameter` class
-for each {name, value} pair.
+We will design our `WAuth` grammar and our custom result objects (for the part after "WWW-Authenticate:"), say the `Challenge` class for the global result and the `Parameter` class for each {name, value} pair.
 
 <a name="targetClasses"></a>
 
@@ -854,14 +865,14 @@ Let's start the Java grammar :
 ```java
 public interface WAuth extends Grammar {
 
-    @Fragment Token SEPARATORS = isOneOf("()<>@,;:\\\"/[]?={} \t");
+    @Fragment Token SEPARATORS = isOneOf("()<>@,;:\\\"/[]?={} \t"); // '\', '"' and TAB are escaped with \ in Java
     @Fragment Token CTRLS = range(0, 31).union(127); // octets 0 - 31 and DEL (127)
 
     @WhitespacePolicy(preserve=true)
     @Fragment Token TOKEN_CHAR = isNot(SEPARATORS, CTRLS);
 
     @WhitespacePolicy
-    Token TOKEN = TOKEN_CHAR.oneOrMore()
+    Token TOKEN = TOKEN_CHAR.oneOrMore()   // we have a Token called TOKEN, why not...
             .asToken();
 
     @Fragment Token DOUBLE_QUOTE = is('"');
@@ -869,7 +880,7 @@ public interface WAuth extends Grammar {
             .drop();
 
     @WhitespacePolicy(preserve=true)
-    @Fragment Token QuotedPair = BACKSLASH.seq($any).asToken();
+    @Fragment Token QuotedPair = BACKSLASH.seq( $any ).asToken();
 
     // other tokens here
 
@@ -912,9 +923,9 @@ Instead of having `String`s or `Numbers`s, we expect having our types (yes, fiel
 | `Parameters`    | `List<Parameter>` |
 | `Challenge`     | `Challenge`       |
 
-We already used [`.asNumber()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asNumber--) for getting a number value and [`.asToken()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asToken--) for turning a rule to a token ; now we will use [`.asToken(mapper)`](apidocs/ml/alternet/parser/Grammar.Rule.html#asToken-java.util.function.Function-) to turn the tokens of a rule to a custom object. Actually, we expect our `Parameter` object, and we have a special type for the counterpart definition : [`TypedToken<Parameter>`](apidocs/ml/alternet/parser/Grammar.TypedToken.html). The mapper is just a function that takes as argument the `List` of tokens parsed by the rule and that returns a value that can be consumed by the enclosing rule.
+We already used [`.asNumber()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asNumber--) for getting a number value and [`.asToken()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asToken--) for turning a rule to a token ; now we will use [`.asToken(mapper)`](apidocs/ml/alternet/parser/Grammar.Rule.html#asToken-java.util.function.Function-) to turn the tokens of a rule to a custom object. Actually, we expect our `Parameter` object, and we have a special type for the counterpart definition : [`TypedToken<T>`](apidocs/ml/alternet/parser/Grammar.TypedToken.html), in our case [`TypedToken<Parameter>`](apidocs/ml/alternet/parser/Grammar.TypedToken.html). The mapper is just a function that takes as argument the `List` of tokens parsed by the rule and that returns a value that can be consumed by the enclosing rule.
 
-Below, the rule will match `aName = aValue` in 3 tokens (`aName`, `=`, and `aValue`), and we produce a `Parameter` object with the **first** and the **last** tokens ; the `=` token is ignored, no need to use [`.drop()`](apidocs/ml/alternet/parser/Grammar.Rule.html#drop--) on it (but you could, it wouldn't change anything).
+Below, the rule will match `aName = aValue` in 3 tokens (`aName` then `=` then `aValue`), and we produce a `Parameter` object with the **first** and the **last** tokens because the `=` token is useless ; we could use [`.drop()`](apidocs/ml/alternet/parser/Grammar.Rule.html#drop--) on it, but it wouldn't change anything because we are just ignoring it.
 
 ```java
     //                    Parameter ::= TOKEN     EQUAL  ParameterValue
@@ -926,7 +937,7 @@ Below, the rule will match `aName = aValue` in 3 tokens (`aName`, `=`, and `aVal
         ));
 ```
 
-Similarly, a list of parameters can be produced easily, but since we don't know how many tokens will be available in that list, we are streaming the list of tokens. Since the <tt>Parameter<b>s</b></tt> rule is made of `Parameter` rules that create new instances of our `Parameter` POJO (yes, we have the same name for a rule and our POJO), we can safely cast the token value. Below, instead of dropping the `COMMA` token, as an alternative we filter it while processing the stream :
+Similarly, a list of parameters –`List<Parameter>`– can be produced easily, but since we don't know how many tokens will be available in that list, we are streaming the list of tokens. Since the <tt>Parameter<b>s</b></tt> rule is made of `Parameter` rules that create new instances of our `Parameter` POJO (yes, we have the same name for a rule and our POJO), we can safely cast the token value. Below, instead of dropping the `COMMA` token, as an alternative we filter it while processing the stream (but both technique would work) :
 
 ```java
     @WhitespacePolicy
@@ -944,25 +955,21 @@ Similarly, a list of parameters can be produced easily, but since we don't know 
 
 It's worth to mention that the tokens available in the list are instances of [`TokenValue<V>`](apidocs/ml/alternet/parser/EventsHandler.TokenValue.html) from which you can extract the rule/token that matched the input ([`.getRule()`](apidocs/ml/alternet/parser/EventsHandler.RuleEvent.html#getRule--)) and the actual value ([`.getValue()`](apidocs/ml/alternet/parser/EventsHandler.TokenValue.html#getValue--)). You can also retrieve the type of the value or set a new value.
 
-Finally, the production of the `Challenge` is obvious,
-and it is marked as the main rule of our grammar :
+Finally, the production of the `Challenge` is obvious, and it is marked as the main rule of our grammar (more about `@MainRule` on the next section) :
 
 ```java
     //                    Challenge ::= TOKEN     Parameters
     @MainRule
     TypedToken<Challenge> Challenge =   TOKEN.seq(Parameters)
         .asToken(tokens -> new Challenge(
-            tokens.removeFirst().getValue(), // TOKEN
-            tokens.removeFirst().getValue()) // Parameters
+            tokens.removeFirst().getValue(), // TOKEN,      as String
+            tokens.removeFirst().getValue()) // Parameters, as List<Parameter>
         );
 ```
 
-In a nutshell, the line #3 that defines the rule refers to other rules or tokens.
-The lines #4 to #7 that create an object refers to other objects previsouly created.
+In a nutshell, the line #3 that defines the rule refers to other rules or tokens. The lines #4 to #7 that create an object refers to other objects previsouly created.
 
-Now we can create a parser (outside of our grammar), to get
-optionally our challenge (it is optional because the parsing may
-fail) :
+Now we can create a parser (outside of our grammar), to get optionally our challenge (it is optional because the parsing may fail) :
 
 ```java
 public class WAuthParser {
@@ -982,6 +989,10 @@ We are using the [`NodeBuilder<T>`](apidocs/ml/alternet/parser/ast/NodeBuilder.h
 ### Separating the raw grammar and the augmented grammar
 
 In the previous example, we made an augmented grammar as a whole ("augmented" means augmented with our custom classes). Imagine that somebody want to use our grammar but using its own classes ; he had to rewrite all the augmented rules + its own mappings, whereas it would be better if he had to write only its own mappings. We need a clean separation of the "raw" grammar that only deal with scalar and enum values, and the "augmented" grammar that uses our objects.
+
+<div class="alert alert-info" role="alert">
+A "raw grammar" should supply only scalar values (Strings, Numbers, booleans) and enum values, but sometimes basic objects such as <code>LocalDate</code> or <code>URI</code> might be acceptable.
+</div>
 
 First, let's clean the grammar in order to get back a raw grammar :
 
@@ -1058,7 +1069,7 @@ Now that your grammar is well designed, you are able to parse your data.
 
 An input can be parsed :
 
-* on a special rule that stands for the main rule
+* on a special rule that stands for the main rule (this is the more useful case)
 * on any of the token rules
 * on a given rule
 
@@ -1072,7 +1083,7 @@ From that instance, we can parse with [`Calc.$.parse()`](apidocs/index.html?ml/a
         Scanner.of(input),  // scan a String or a character stream
         handler,            // more about handlers later
         Calc.Expression,    // main rule in our grammar
-        true);              // true to consume all the input
+        true);              // true to expect consume all the input
 ```
 
 The [Handler](apidocs/ml/alternet/parser/Handler.html) is the component that accept low-level parsing events (more about that on see next section). We will see that out-of-the-box sophisticated handler implementations are available.
@@ -1084,7 +1095,7 @@ If we consider that the field `Expression` is the [main rule](apidocs/ml/alterne
     Rule Expression = SignedTerm.seq(SumOp);
 ```
 
-If the `parse()` method is invoked without specifying any rule, the **main rule** will be used :
+If the `parse()` method is invoked without specifying any rule, that **main rule** will be used :
 
 ```java
     Handler handler = ...;
@@ -1303,7 +1314,7 @@ public class Term<T> implements NumericExpression {
         return (this.operation == Additive.MINUS) ?
             - term.eval(variables).doubleValue() :
             + term.eval(variables).doubleValue();
-        // can have +a or -a but can't have *a or /a
+        // alone, a term can have +a or -a but can't have *a or /a
     }
 }
 ```
@@ -1443,7 +1454,7 @@ The more often the stack doesn't serve the transformation but sometimes it may h
 * The last parameter contains all the values that are either the **arguments** of the rule to transform, or all the values coming **next** from the token to transform in the context of its enclosed rule. That values can be raw values or transformed values, according to how you process them individually.
 In fact `Value<NumericExpression>` is a wrapper around an object that can be either the raw token or a `NumericExpression`. You are free to supply tokens left as-is or transformed ones, and to get the raw value with [`.getSource()`](apidocs/ml/alternet/parser/util/Dual.html#getSource--) or the transformed one with [`.getTarget()`](apidocs/ml/alternet/parser/util/Dual.html#getTarget--).
 
-For example, if a rule defines a comma-separated list of digits, that the input is `"1,2,3,4"`, and that the current **token** is `"2"`, then the **next** elements are `",3,4"` and the stack is `"1,"`. Some elements may be consumed during the production of the target node.
+For example, if a rule defines a comma-separated list of digits such as "`1,2,3,4`", that the input is `"i=**1,2,3,4**;"`, and that the current **token** is `"2"`, then the **next** elements are `",3,4"` (note that `;` is outside of the rule considered and **not** within the next elements) and the stack is `"i=1,"` (note that `i=` are tokens outside of the scope of the rule considered, but **present** in the stack). Some elements may be consumed during the production of the target node.
 
 <a name="tokenMappers"></a>
 
@@ -1503,10 +1514,7 @@ Now we can write the mappers inside `enum CalcTokens`, starting with the simples
     },
 ```
 
-* the `RAISED` token is a little special because it uses the previous item and the next one.
-Unfortunately, the previous item is not yet transformed to a `NumericExpression`, therefore
-we can't do something useful in that mapper : we must delegate the mapping to the counterpart
-rule mapper `Factor` (see later) :
+* the `RAISED` token is a little special because it uses the previous item and the next one. Unfortunately, the previous item (which is in the stack) is not yet transformed to a `NumericExpression`, therefore we can't do something useful in that mapper : we must delegate the mapping to the counterpart rule mapper `Factor` (see later) :
 
 ```java
     RAISED { // mapper for : Token RAISED = is('^');
@@ -1542,7 +1550,7 @@ rule mapper `Factor` (see later) :
     },
 ```
 
-* `Calc.Additive` is slightly different because it always appears alone in `SignedTerm` and `SignedFactor`. Both rules are wrapping the additive term **within** an optional rule, which means that **nothing** comes next in that rule (`Product` or `Factor` are after the optional rule, **not after** the `ADDITIVE` term) :
+* `Calc.Additive` is slightly different because it always appears alone in `SignedTerm` and `SignedFactor`. Both rules are wrapping the additive term **within** an optional rule, which means that **nothing** comes next in that rule (below `Product` or `Factor` are after the optional rule, **not after** the `ADDITIVE` term, which means that we have to consider just `ADDITIVE?` as the enclosed rule) :
 
 ```
 SignedTerm   ::= ADDITIVE? Product
@@ -1787,3 +1795,4 @@ java.lang.IllegalArgumentException: No enum constant ml.alternet.parser.step4.Ex
 ```
 
 ➡ Ensure to declare a mapping for`Argument` in your node builder or to annotate it with `@Fragment` in the grammar.
+
