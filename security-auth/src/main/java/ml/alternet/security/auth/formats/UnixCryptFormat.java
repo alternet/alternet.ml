@@ -26,7 +26,7 @@ import ml.alternet.security.auth.hashers.UnixHashers;
 public class UnixCryptFormat implements CryptFormat {
 
     @Override
-    public Optional<Hasher.Builder> resolve(String crypt) {
+    public Optional<Hasher> resolve(String crypt) {
         if (crypt.length() == 13) {
             // unix crypt
             return Optional.of(UnixHashers.UNIX_CRYPT.get());

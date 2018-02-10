@@ -18,7 +18,7 @@ import ml.alternet.security.binary.BytesEncoder;
  *
  * @author Philippe Poulard
  */
-public enum UnixHashers implements Supplier<Hasher.Builder> {
+public enum UnixHashers implements Supplier<Hasher> {
 
     /**
      * DES, the traditional UnixCrypt algorithm.
@@ -26,11 +26,12 @@ public enum UnixHashers implements Supplier<Hasher.Builder> {
      */
     UNIX_CRYPT {
         @Override
-        public Hasher.Builder get() {
-            return Hasher.builder()
+        public Hasher get() {
+            return Hasher.Builder.builder()
                 .setClass(UnixCryptHasher.class)
                 .setFormatter(UnixCryptHasher.UNIXCRYPT_FORMATTER)
-                .setEncoding(BytesEncoder.h64);
+                .setEncoding(BytesEncoder.h64)
+                .build();
         }
     },
 
@@ -39,12 +40,13 @@ public enum UnixHashers implements Supplier<Hasher.Builder> {
      */
     MD5 {
         @Override
-        public Hasher.Builder get() {
-            return Hasher.builder()
+        public Hasher get() {
+            return Hasher.Builder.builder()
                 .setClass(MessageHasher.class)
                 .setAlgorithm("MD5")
                 .setEncoding(BytesEncoder.hexa)
-                .setFormatter(CryptParts.CRYPT_FORMATTER);
+                .setFormatter(CryptParts.CRYPT_FORMATTER)
+                .build();
         }
     };
 

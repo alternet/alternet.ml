@@ -25,14 +25,15 @@ import ml.alternet.security.binary.BytesEncoding;
 @Singleton
 public class PlainTextCryptFormat implements CryptFormat {
 
-    public static Hasher.Builder get() {
-        return Hasher.builder()
+    public static Hasher get() {
+        return Hasher.Builder.builder()
             .setClass(PlainTextHasher.class)
-            .setFormatter(PLAIN_FORMATTER);
+            .setFormatter(PLAIN_FORMATTER)
+            .build();
     }
 
     @Override
-    public Optional<Hasher.Builder> resolve(String crypt) {
+    public Optional<Hasher> resolve(String crypt) {
         return Optional.of(get());
     }
 
@@ -105,10 +106,12 @@ public class PlainTextCryptFormat implements CryptFormat {
                 return encoding.encode(parts.hash);
             }
         }
-		@Override
-		public CryptFormat getCryptFormat() {
-			return new PlainTextCryptFormat();
-		}
+
+        @Override
+        public CryptFormat getCryptFormat() {
+            return new PlainTextCryptFormat();
+        }
+
     };
 
     /**

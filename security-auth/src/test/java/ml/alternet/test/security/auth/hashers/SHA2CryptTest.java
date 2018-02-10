@@ -40,12 +40,12 @@ public class SHA2CryptTest extends CryptTestBase<SHA2Hasher, WorkFactorSaltedPar
 
     @Override
     protected SHA2Hasher newHasher() {
-        return (SHA2Hasher) ModularCryptFormatHashers.$5$.get().build();
+        return (SHA2Hasher) ModularCryptFormatHashers.$5$.get();
     }
 
     @Override
     protected SHA2Hasher newHasher(String salt) {
-      return (SHA2Hasher) resolve(salt).build();
+      return (SHA2Hasher) resolve(salt);
     }
 
     @Override

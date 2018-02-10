@@ -26,7 +26,6 @@ import java.util.Arrays;
 import ml.alternet.misc.WtfException;
 import ml.alternet.security.Password;
 import ml.alternet.security.binary.SafeBuffer;
-import ml.alternet.util.BytesUtil;
 
 /**
  * SHA2-based Unix crypt implementation.

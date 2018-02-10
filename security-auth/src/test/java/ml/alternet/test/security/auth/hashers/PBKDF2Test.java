@@ -1,5 +1,6 @@
 package ml.alternet.test.security.auth.hashers;
 
+import java.security.InvalidAlgorithmParameterException;
 import java.util.function.Predicate;
 
 import ml.alternet.security.auth.Hasher;
@@ -22,8 +23,8 @@ public class PBKDF2Test extends CryptTestBase<PBKDF2Hasher, WorkFactorSaltedPart
           };
 
     @Override
-    protected Hasher.Builder resolve(String crypt) {
-        return newHasher().getBuilder();
+    protected Hasher resolve(String crypt) {
+        return newHasher();
     }
 
     @Override
@@ -38,7 +39,7 @@ public class PBKDF2Test extends CryptTestBase<PBKDF2Hasher, WorkFactorSaltedPart
 
     @Override
     protected PBKDF2Hasher newHasher() {
-        return (PBKDF2Hasher) Hasher.builder()
+        return (PBKDF2Hasher) Hasher.Builder.builder()
                 .setClass(PBKDF2Hasher.class)
                 .setAlgorithm("PBKDF2WithHmacSHA1")
                 .setEncoding(BytesEncoder.hexa)
@@ -67,6 +68,14 @@ public class PBKDF2Test extends CryptTestBase<PBKDF2Hasher, WorkFactorSaltedPart
     @Override
     protected boolean altCheck(String plain, String expected) {
         return false;
+    }
+
+    @Override
+    public void crypts_should_match(String plain, String salt, String expected)
+            throws InvalidAlgorithmParameterException {
+        // this explain why we should NOT check crypts, but rather bytes
+        super.crypts_should_match(plain, salt.toLowerCase(),
+                "PBKDF2" + expected.substring("PBKDF2".length()).toLowerCase());
     }
 
 }

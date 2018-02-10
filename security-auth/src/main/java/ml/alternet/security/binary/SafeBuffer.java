@@ -109,6 +109,36 @@ public final class SafeBuffer {
     }
 
     /**
+     * Append a byte to a buffer ; if the buffer is too small,
+     * a new array is allocated and the previous one is cleared.
+     *
+     * @param bb The buffer.
+     * @param by The byte to append.
+     *
+     * @return The buffer.
+     */
+    public static ByteBuffer append(ByteBuffer bb, byte by) {
+        int requiredSize = bb.limit() + 1;
+        if (requiredSize <= bb.capacity()) {
+            bb.mark();
+            bb.position(bb.limit());
+            bb.limit(requiredSize);
+            bb.put(by);
+            bb.reset();
+        } else { // need reallocation
+            byte[] b = bb.array();
+            int pos = bb.position();
+            int len = bb.limit();
+            bb = ByteBuffer.allocate(requiredSize);
+            bb.put(b, 0, len);
+            Arrays.fill(b, (byte) 0);
+            bb.put(by);
+            bb.position(pos);
+        }
+        return bb;
+    }
+
+    /**
      * Get the actual bytes from a buffer ; if the capacity
      * of this buffer is larger than the actual bytes, a new
      * array is allocated and the previous one is cleared.
@@ -126,6 +156,86 @@ public final class SafeBuffer {
             Arrays.fill(bb.array(), (byte) 0);
         }
         return bytes;
+    }
+
+    /**
+     * Append some chars to a buffer ; if the buffer is too small,
+     * a new array is allocated and the previous one is cleared.
+     *
+     * @param cb The buffer.
+     * @param chars The chars to append.
+     *
+     * @return The buffer.
+     */
+    public static CharBuffer append(CharBuffer cb, char[] chars) {
+        int requiredSize = cb.limit() + chars.length;
+        if (requiredSize <= cb.capacity()) {
+            cb.mark();
+            cb.position(cb.limit());
+            cb.limit(requiredSize);
+            cb.put(chars);
+            cb.reset();
+        } else { // need reallocation
+            char[] c = cb.array();
+            int pos = cb.position();
+            int len = cb.limit();
+            cb = CharBuffer.allocate(requiredSize);
+            cb.put(c, 0, len);
+            Arrays.fill(c, (char) 0);
+            cb.put(chars);
+            cb.position(pos);
+        }
+        return cb;
+    }
+
+    /**
+     * Append a single char to a buffer ; if the buffer is too small,
+     * a new array is allocated and the previous one is cleared.
+     *
+     * @param cb The buffer.
+     * @param ch The char to append.
+     *
+     * @return The buffer.
+     */
+    public static CharBuffer append(CharBuffer cb, char ch) {
+        int requiredSize = cb.limit() + 1;
+        if (requiredSize <= cb.capacity()) {
+            cb.mark();
+            cb.position(cb.limit());
+            cb.limit(requiredSize);
+            cb.put(ch);
+            cb.reset();
+        } else { // need reallocation
+            char[] c = cb.array();
+            int pos = cb.position();
+            int len = cb.limit();
+            cb = CharBuffer.allocate(requiredSize);
+            cb.put(c, 0, len);
+            Arrays.fill(c, (char) 0);
+            cb.put(ch);
+            cb.position(pos);
+        }
+        return cb;
+    }
+
+    /**
+     * Get the actual chars from a buffer ; if the capacity
+     * of this buffer is larger than the actual chars, a new
+     * array is allocated and the previous one is cleared.
+     *
+     * @param cc The buffer.
+     * @return The actual chars.
+     */
+    public static char[] getData(CharBuffer cc) {
+        char[] chars;
+        if (cc.remaining() == cc.capacity()) {
+            chars = cc.array();
+        } else { // larger than necessary
+            chars = new char[cc.remaining()];
+            cc.get(chars);
+            Arrays.fill(cc.array(), (char) 0);
+        }
+        return chars;
     }
 
 }

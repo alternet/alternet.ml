@@ -15,7 +15,7 @@ import ml.alternet.security.auth.hashers.UnixHashers;
 
 public class UnixCryptTest {
 
-    Hasher UNIX_CRYPT = UnixHashers.UNIX_CRYPT.get().build();
+    Hasher UNIX_CRYPT = UnixHashers.UNIX_CRYPT.get();
 
     @DataProvider(name="pwd")
     public String[][] getPasswords() {
