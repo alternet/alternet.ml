@@ -24,7 +24,7 @@ import ml.alternet.util.EnumUtil;
  *
  * @author Philippe Poulard
  */
-public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher.Builder> {
+public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher> {
 
     /**
      * LDAP’s plain MD5 format.
@@ -33,12 +33,13 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher.Builder> {
      */
     MD5 {
         @Override
-        public Builder get() {
-            return Hasher.builder()
+        public Hasher get() {
+            return Hasher.Builder.builder()
                 .setClass(MessageHasher.class)
                 .setAlgorithm("MD5")
                 .setEncoding(BytesEncoder.base64)
-                .setFormatter(CurlyBracesCryptFormat.CryptFormatter.INSTANCE);
+                .setFormatter(CurlyBracesCryptFormat.CryptFormatter.INSTANCE)
+                .build();
         }
     },
 
@@ -49,12 +50,13 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher.Builder> {
      */
     SHA {
         @Override
-        public Builder get() {
-            return Hasher.builder()
+        public Hasher get() {
+            return Hasher.Builder.builder()
                 .setClass(MessageHasher.class)
                 .setAlgorithm("SHA1")
                 .setEncoding(BytesEncoder.base64)
-                .setFormatter(CurlyBracesCryptFormat.CryptFormatter.INSTANCE);
+                .setFormatter(CurlyBracesCryptFormat.CryptFormatter.INSTANCE)
+                .build();
         }
     },
 
@@ -65,13 +67,14 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher.Builder> {
      */
     SMD5 {
         @Override
-        public Builder get() {
-            return Hasher.builder()
+        public Hasher get() {
+            return Hasher.Builder.builder()
                 .setClass(SaltedMessageHasher.class)
                 .setAlgorithm("MD5")
                 .setEncoding(BytesEncoder.base64)
                 .setSaltByteSize(4)
-                .setFormatter(CurlyBracesCryptFormat.SaltedCryptFormatter.INSTANCE);
+                .setFormatter(CurlyBracesCryptFormat.SaltedCryptFormatter.INSTANCE)
+                .build();
         }
     },
 
@@ -82,13 +85,14 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher.Builder> {
      */
     SSHA {
         @Override
-        public Builder get() {
-            return Hasher.builder()
+        public Hasher get() {
+            return Hasher.Builder.builder()
                 .setClass(SaltedMessageHasher.class)
                 .setAlgorithm("SHA1")
                 .setEncoding(BytesEncoder.base64)
                 .setSaltByteSize(4)
-                .setFormatter(CurlyBracesCryptFormat.SaltedCryptFormatter.INSTANCE);
+                .setFormatter(CurlyBracesCryptFormat.SaltedCryptFormatter.INSTANCE)
+                .build();
         }
     },
 
@@ -99,33 +103,36 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher.Builder> {
      */
     PBKDF2 {
         @Override
-        public Builder get() {
-            return Hasher.builder()
+        public Hasher get() {
+            return Hasher.Builder.builder()
                 .setClass(PBKDF2Hasher.class)
                 .setAlgorithm("PBKDF2WithHmacSHA1")
                 .setEncoding(BytesEncoder.abase64)
                 .setSaltByteSize(24)
                 .setHashByteSize(20)
                 .setIterations(29000)
-                .setFormatter(CurlyBracesCryptFormat.IterativeSaltedFormatter.INSTANCE);
+                .setFormatter(CurlyBracesCryptFormat.IterativeSaltedFormatter.INSTANCE)
+                .build();
         }
     },
 
     PBKDF2_SHA256 {
         @Override
-        public Builder get() {
-            return PBKDF2.get()
+        public Hasher get() {
+            return PBKDF2.get().getBuilder()
                 .setHashByteSize(32)
-                .setAlgorithm("PBKDF2WithHmacSHA256");
+                .setAlgorithm("PBKDF2WithHmacSHA256")
+                .build();
         }
     },
 
     PBKDF2_SHA512 {
         @Override
-        public Builder get() {
-            return PBKDF2.get()
+        public Hasher get() {
+            return PBKDF2.get().getBuilder()
                 .setHashByteSize(64)
-                .setAlgorithm("PBKDF2WithHmacSHA512");
+                .setAlgorithm("PBKDF2WithHmacSHA512")
+                .build();
         }
     },
 
@@ -136,15 +143,15 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher.Builder> {
     plaintext {
         @SuppressWarnings({ "rawtypes", "unchecked" })
         @Override
-        public Builder get() {
-            Builder b = PlainTextCryptFormat.get();
+        public Hasher get() {
+            Builder b = PlainTextCryptFormat.get().getBuilder();
             b.setFormatter(new CryptFormatterWrapper(b.getFormatter()));
-            return b;
+            return b.build();
         }
     };
 
     @Override
-    public abstract Hasher.Builder get();
+    public abstract Hasher get();
 
     private CurlyBracesCryptFormatHashers() {
         EnumUtil.replace(this, s -> s.replace("_", "-"));

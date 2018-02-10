@@ -60,10 +60,10 @@ public interface CryptFormat {
      * Get the hasher bound to a crypt.
      *
      * @param crypt The candidate crypt.
-     * @return A configurable hasher builder if the given crypt
+     * @return A hasher if the given crypt
      *      matches this crypt format.
      */
-    Optional<Hasher.Builder> resolve(String crypt);
+    Optional<Hasher> resolve(String crypt);
 
     /**
      * The name of the family of crypt format.

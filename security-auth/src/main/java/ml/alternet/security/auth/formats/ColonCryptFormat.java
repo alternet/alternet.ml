@@ -29,7 +29,7 @@ import ml.alternet.util.StringUtil;
 public class ColonCryptFormat implements CryptFormat {
 
     @Override
-    public Optional<Hasher.Builder> resolve(String crypt) {
+    public Optional<Hasher> resolve(String crypt) {
         String[] parts = crypt.split(":");
         Hasher.Builder b = null;
         if (parts.length > 0) {
@@ -46,14 +46,14 @@ public class ColonCryptFormat implements CryptFormat {
             if (b == null) {
                 try {
                     b = CurlyBracesCryptFormatHashers.valueOf(scheme)
-                            .get()
-                            .setFormatter(COLON_CRYPT_FORMATTER);
+                        .get().getBuilder()
+                        .setFormatter(COLON_CRYPT_FORMATTER);
                 } catch (Exception e) {
                     LOGGER.fine("No crypt format found for " + scheme + " for " + family());
                 }
             }
         }
-        return Optional.ofNullable(b);
+        return Optional.ofNullable(b).map(Hasher.Builder::build);
     }
 
     /**

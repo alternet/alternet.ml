@@ -63,7 +63,7 @@ public class AltCredentialHandler implements CredentialHandler {
     public Hasher getHasher() {
         if (this.hasher == null) {
 //            this.hasher = Hasher.getDefault();
-            this.hasher = ModularCryptFormatHashers.$2$.get().build(); // TODO Hasher conf
+            this.hasher = ModularCryptFormatHashers.$2$.get(); // TODO Hasher conf
         }
         return this.hasher;
     }

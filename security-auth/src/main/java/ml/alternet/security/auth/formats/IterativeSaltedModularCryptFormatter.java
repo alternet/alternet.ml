@@ -35,12 +35,17 @@ public class IterativeSaltedModularCryptFormatter implements CryptFormatter<Work
         buf.append('$');
         buf.append(parts.hr.getConfiguration().getAlgorithm());
         buf.append('$');
+        if (parts.workFactor != 5000) {
+            buf.append("rounds=")
+               .append(parts.workFactor);
+        }
+        buf.append('$');
         buf.append(parts.hr.getConfiguration().getEncoding().encode(parts.salt));
         buf.append('$');
         buf.append(parts.hr.getConfiguration().getEncoding().encode(parts.hash));
         return buf.toString();
     }
-    
+
     @Override
     public CryptFormat getCryptFormat() {
     		return new ModularCryptFormat();

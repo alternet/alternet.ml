@@ -30,14 +30,14 @@ import ml.alternet.security.binary.BytesEncoding;
 public class CurlyBracesCryptFormat implements CryptFormat {
 
     @Override
-    public Optional<Hasher.Builder> resolve(String crypt) {
+    public Optional<Hasher> resolve(String crypt) {
         Hasher.Builder b = null;
         SchemePart schemePart = null;
         try {
             schemePart = new SchemePart(crypt);
             if ("CRYPT".equals(schemePart.scheme)) {
                 String mcfPart = crypt.substring(schemePart.rcb + 1);
-                b = new ModularCryptFormat().resolve(mcfPart).get();
+                b = new ModularCryptFormat().resolve(mcfPart).get().getBuilder();
                 b.setFormatter(new CryptFormatterWrapper<>(b.getFormatter()));
             } else if (schemePart.scheme != null) {
                 String lookupKey = Hasher.Builder.class.getCanonicalName() + "/" + family() + "/" + schemePart.scheme;
@@ -52,7 +52,7 @@ public class CurlyBracesCryptFormat implements CryptFormat {
                 if (b == null) {
                     try {
                         b = CurlyBracesCryptFormatHashers.valueOf(schemePart.scheme)
-                                .get();
+                            .get().getBuilder();
                     } catch (Exception e) {
                         LOGGER.fine("No crypt format found for " + schemePart.scheme + " for " + family());
                     }
@@ -69,7 +69,7 @@ public class CurlyBracesCryptFormat implements CryptFormat {
                 LOGGER.fine("No crypt format found for " + schemePart.scheme + " for " + family());
             }
         }
-        return Optional.ofNullable(b);
+        return Optional.ofNullable(b).map(Hasher.Builder::build);
     }
 
     /**

@@ -29,12 +29,12 @@ public class Argon2Test extends CryptTestBase<Argon2Hasher, Argon2Hasher.Argon2P
 
     @Override
     protected Argon2Hasher newHasher() {
-        return (Argon2Hasher) ModularCryptFormatHashers.$argon2i$.get().build();
+        return (Argon2Hasher) ModularCryptFormatHashers.$argon2i$.get();
     }
 
     @Override
     protected Argon2Hasher newHasher(String salt) {
-        return (Argon2Hasher) resolve(salt).build();
+        return (Argon2Hasher) resolve(salt);
     }
 
     @Override

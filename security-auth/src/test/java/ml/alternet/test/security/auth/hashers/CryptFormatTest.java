@@ -70,7 +70,7 @@ public class CryptFormatTest {
         Assertions.assertThat(
             cf.newInstance()
                 .resolve(crypt)
-                .get().build()
+                .get()
                 .check(
                     Credentials.fromPassword(password.toCharArray()),
                     crypt)
@@ -82,7 +82,7 @@ public class CryptFormatTest {
         Assertions.assertThat(
             cf.newInstance()
                 .resolve(crypt)
-                .get().build()
+                .get()
                 .check(
                     Credentials.fromPassword("\\^/rongP@zzw0r|)".toCharArray()),
                     crypt)

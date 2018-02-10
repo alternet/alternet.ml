@@ -38,7 +38,7 @@ import ml.alternet.util.StringUtil;
 public class ModularCryptFormat implements CryptFormat {
 
     @Override
-    public Optional<Hasher.Builder> resolve(String crypt) {
+    public Optional<Hasher> resolve(String crypt) {
         String[] parts = crypt.split("\\$");
         Hasher.Builder b = null;
         if (parts.length > 1 && StringUtil.isVoid(parts[0])) {
@@ -55,7 +55,7 @@ public class ModularCryptFormat implements CryptFormat {
             if (b == null) {
                 try {
                     b = ModularCryptFormatHashers.valueOf('$' + scheme + '$')
-                            .get();
+                        .get().getBuilder();
                 } catch (Exception e) {
                     LOGGER.fine("No crypt format found for " + scheme + " for " + family());
                 }
@@ -64,7 +64,7 @@ public class ModularCryptFormat implements CryptFormat {
         if (b != null) {
             b.use(crypt);
         }
-        return Optional.ofNullable(b);
+        return Optional.ofNullable(b).map(Hasher.Builder::build);
     }
 
     /**

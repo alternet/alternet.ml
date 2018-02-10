@@ -4,7 +4,6 @@ import java.util.Optional;
 
 import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
-import ml.alternet.security.auth.Hasher.Builder;
 import ml.alternet.security.auth.hashers.UnixHashers;
 import ml.alternet.security.binary.BytesEncoding;
 
@@ -58,7 +57,7 @@ public class CryptParts {
         public CryptFormat getCryptFormat() {
             return new CryptFormat() {
                 @Override
-                public Optional<Builder> resolve(String crypt) {
+                public Optional<Hasher> resolve(String crypt) {
                     return Optional.of(UnixHashers.MD5.get());
                 }
                 @Override

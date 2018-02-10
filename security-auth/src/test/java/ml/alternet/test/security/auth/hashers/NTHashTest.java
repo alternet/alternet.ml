@@ -30,12 +30,12 @@ public class NTHashTest extends CryptTestBase<MessageHasher, CryptParts> {
 
     @Override
     protected MessageHasher newHasher() {
-        return (MessageHasher) ModularCryptFormatHashers.$3$.get().build();
+        return (MessageHasher) ModularCryptFormatHashers.$3$.get();
     }
 
     @Override
     protected MessageHasher newHasher(String salt) {
-      return (MessageHasher) resolve(salt).build();
+      return (MessageHasher) resolve(salt);
     }
 
     @Override

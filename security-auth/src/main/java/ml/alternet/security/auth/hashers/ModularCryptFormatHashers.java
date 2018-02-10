@@ -11,6 +11,7 @@ import ml.alternet.security.auth.hashers.impl.Argon2Hasher;
 import ml.alternet.security.auth.hashers.impl.BCryptHasher;
 import ml.alternet.security.auth.hashers.impl.MD5BasedHasher;
 import ml.alternet.security.auth.hashers.impl.MessageHasher;
+import ml.alternet.security.auth.hashers.impl.PBKDF2Hasher;
 import ml.alternet.security.auth.hashers.impl.SHA2Hasher;
 import ml.alternet.security.binary.BytesEncoder;
 import ml.alternet.util.EnumUtil;
@@ -25,7 +26,7 @@ import ml.alternet.util.EnumUtil;
  *
  * @author Philippe Poulard
  */
-public enum ModularCryptFormatHashers implements Supplier<Hasher.Builder> {
+public enum ModularCryptFormatHashers implements Supplier<Hasher> {
 
 //    __("_"),
 
@@ -34,12 +35,13 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher.Builder> {
      */
     $apr1$ {
         @Override
-        public Hasher.Builder get() {
-            return Hasher.builder()
+        public Hasher get() {
+            return Hasher.Builder.builder()
                 .setClass(MD5BasedHasher.class)
                 .setVariant("apr1")
                 .setEncoding(BytesEncoder.h64)
-                .setFormatter(MD5BasedHasher.MD5CRYPT_FORMATTER);
+                .setFormatter(MD5BasedHasher.MD5CRYPT_FORMATTER)
+                .build();
         }
     },
 
@@ -48,12 +50,13 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher.Builder> {
      */
     $1$ {
         @Override
-        public Hasher.Builder get() {
-            return Hasher.builder()
+        public Hasher get() {
+            return Hasher.Builder.builder()
                 .setClass(MD5BasedHasher.class)
                 .setVariant("1")
                 .setEncoding(BytesEncoder.h64)
-                .setFormatter(MD5BasedHasher.MD5CRYPT_FORMATTER);
+                .setFormatter(MD5BasedHasher.MD5CRYPT_FORMATTER)
+                .build();
         }
     },
 
@@ -62,14 +65,15 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher.Builder> {
      */
     $2$ {
         @Override
-        public Hasher.Builder get() {
-            return Hasher.builder()
+        public Hasher get() {
+            return Hasher.Builder.builder()
                 .setClass(BCryptHasher.class)
                 .setVariant("2")
                 .setEncoding(BytesEncoder.bcrypt64)
                 .setFormatter(BCryptHasher.BCRYPT_FORMATTER)
                 .setSaltByteSize(BCrypt.BCRYPT_SALT_LEN)
-                .setLogRounds(Hasher.HasherBuilder.DEFAULT_GENSALT_LOG2_ROUNDS);
+                .setLogRounds(Hasher.HasherBuilder.DEFAULT_GENSALT_LOG2_ROUNDS)
+                .build();
         }
     },
 
@@ -80,14 +84,15 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher.Builder> {
      */
     $2a$ {
         @Override
-        public Hasher.Builder get() {
-            return Hasher.builder()
+        public Hasher get() {
+            return Hasher.Builder.builder()
                 .setClass(BCryptHasher.class)
                 .setVariant("2a")
                 .setEncoding(BytesEncoder.bcrypt64)
                 .setFormatter(BCryptHasher.BCRYPT_FORMATTER)
                 .setSaltByteSize(BCrypt.BCRYPT_SALT_LEN)
-                .setLogRounds(Hasher.HasherBuilder.DEFAULT_GENSALT_LOG2_ROUNDS);
+                .setLogRounds(Hasher.HasherBuilder.DEFAULT_GENSALT_LOG2_ROUNDS)
+                .build();
         }
     },
 
@@ -96,7 +101,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher.Builder> {
      */
     $2b$ {
         @Override
-        public Hasher.Builder get() {
+        public Hasher get() {
             return $2a$.get();
         }
     },
@@ -106,7 +111,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher.Builder> {
      */
     $2y$ {
         @Override
-        public Hasher.Builder get() {
+        public Hasher get() {
             return $2a$.get();
         }
     },
@@ -118,14 +123,15 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher.Builder> {
      */
     $3$ {
         @Override
-        public Hasher.Builder get() {
-            return Hasher.builder()
+        public Hasher get() {
+            return Hasher.Builder.builder()
                 .setClass(MessageHasher.class)
                 .setAlgorithm("MD4")
                 .setVariant("3")
                 .setEncoding(BytesEncoder.hexa)
                 .setCharset(StandardCharsets.UTF_16LE)
-                .setFormatter(SaltlessModularCryptFormatter.INSTANCE);
+                .setFormatter(SaltlessModularCryptFormatter.INSTANCE)
+                .build();
         }
     },
 
@@ -136,13 +142,14 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher.Builder> {
      */
     $5$ {
         @Override
-        public Hasher.Builder get() {
-            return Hasher.builder()
+        public Hasher get() {
+            return Hasher.Builder.builder()
                 .setClass(SHA2Hasher.class)
                 .setVariant("5")
                 .setAlgorithm("SHA-256")
                 .setEncoding(BytesEncoder.h64be)
-                .setFormatter(SHA2Hasher.SHA2CRYPT_FORMATTER);
+                .setFormatter(SHA2Hasher.SHA2CRYPT_FORMATTER)
+                .build();
         }
     },
     /**
@@ -152,75 +159,126 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher.Builder> {
      */
     $6$ {
         @Override
-        public Hasher.Builder get() {
-            return Hasher.builder()
+        public Hasher get() {
+            return Hasher.Builder.builder()
                 .setClass(SHA2Hasher.class)
                 .setVariant("6")
                 .setAlgorithm("SHA-512")
                 .setEncoding(BytesEncoder.h64be)
-                .setFormatter(SHA2Hasher.SHA2CRYPT_FORMATTER);
+                .setFormatter(SHA2Hasher.SHA2CRYPT_FORMATTER)
+                .build();
         }
     },
 
     $md5$ {
         @Override
-        public Hasher.Builder get() {
-            return Hasher.builder()
+        public Hasher get() {
+            return Hasher.Builder.builder()
                 .setClass(MessageHasher.class)
-                .setAlgorithm("MD5");
+                .setAlgorithm("MD5")
+                .build();
         }
     },
-    $md5_("md,"),
+//    $md5_("$md$,"),
 
     $sha1$,
 
+    $bcrypt_sha256$("$bcrypt-sha256$") {
+        @Override
+        public Hasher get() {
+            return $2a$.get().getBuilder()
+                .setClass(BCryptHasher.Digest.class)
+                .setAlgorithm("SHA-256")
+                .build();
+        }
+    },
 
-    $bcrypt_sha256$("bcrypt-sha256"),
+    $bcrypt_sha512$("$bcrypt-sha512$") {
+        @Override
+        public Hasher get() {
+            return $2a$.get().getBuilder()
+                .setClass(BCryptHasher.Digest.class)
+                .setAlgorithm("SHA-512")
+                .build();
+        }
+    },
 
-    $pbkdf2$,
-    $pbkdf2_sha256$("pbkdf2-sha256"),
-    $pbkdf2_sha512$("pbkdf2-sha512"),
+    $pbkdf2_sha1$("$pbkdf2-sha1$") {
+        @Override
+        public Hasher get() {
+            return Hasher.Builder.builder()
+                .setClass(PBKDF2Hasher.class)
+                .setAlgorithm("PBKDF2WithHmacSHA1")
+                .setEncoding(BytesEncoder.abase64)
+                .setSaltByteSize(16)
+                .setHashByteSize(20)
+                .setIterations(29000)
+                .setFormatter(PBKDF2Hasher.MCF_FORMATTER)
+                .build();
+        }
+    },
+
+    $pbkdf2_sha256$("$pbkdf2-sha256$") {
+        @Override
+        public Hasher get() {
+            return $pbkdf2_sha1$.get().getBuilder()
+                .setAlgorithm("PBKDF2WithHmacSHA256")
+                .setHashByteSize(32)
+                .build();
+        }
+    },
+
+    $pbkdf2_sha512$("$pbkdf2-sha512$") {
+        @Override
+        public Hasher get() {
+            return $pbkdf2_sha1$.get().getBuilder()
+                .setAlgorithm("PBKDF2WithHmacSHA512")
+                .setHashByteSize(64)
+                .build();
+        }
+    },
 
     $argon2i$ {
         @Override
-        public Hasher.Builder get() {
-            return Hasher.builder()
+        public Hasher get() {
+            return Hasher.Builder.builder()
                 .setClass(Argon2Hasher.class)
                 .setVariant("argon2i")
                 .setAlgorithm("Blake2b") // because it is its name
                 .setHashByteSize(32)
                 .setSaltByteSize(16)
                 .setEncoding(BytesEncoder.base64_no_padding)
-                .setFormatter(Argon2Hasher.ARGON2_FORMATTER);
+                .setFormatter(Argon2Hasher.ARGON2_FORMATTER)
+                .build();
         }
     },
 
     $argon2d$ {
         @Override
-        public Hasher.Builder get() {
-            return $argon2i$.get()
-                    .setVariant("argon2d");
+        public Hasher get() {
+            return $argon2i$.get().getBuilder()
+                .setVariant("argon2d")
+                .build();
         }
     },
 
     $argon2id$ {
         @Override
-        public Hasher.Builder get() {
-            return $argon2i$.get()
-                    .setVariant("argon2id");
+        public Hasher get() {
+            return $argon2i$.get().getBuilder()
+                .setVariant("argon2id")
+                .build();
         }
     };
 
-    ModularCryptFormatHashers() {
-        EnumUtil.replace(this, s -> s.replace("\\$", ""));
-    }
+    ModularCryptFormatHashers() { }
 
     ModularCryptFormatHashers(String name) {
         EnumUtil.replace(this, s -> name);
     }
 
     @Override
-    public Hasher.Builder get() {
+    public Hasher get() {
         throw new TodoException();
     }
 

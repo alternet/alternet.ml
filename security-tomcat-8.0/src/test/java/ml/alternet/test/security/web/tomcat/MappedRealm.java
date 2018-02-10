@@ -14,7 +14,7 @@ import org.apache.catalina.realm.RealmBase;
 
 class MappedRealm extends RealmBase {
 
-    Hasher hr = ModularCryptFormatHashers.$2$.get().build(); // TODO Hasher conf
+    Hasher hr = ModularCryptFormatHashers.$2$.get(); // TODO Hasher conf
 
     private final Map<String,GenericPrincipal> principals = new HashMap<>();
 

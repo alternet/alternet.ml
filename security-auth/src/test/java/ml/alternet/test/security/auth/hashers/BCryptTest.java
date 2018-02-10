@@ -117,7 +117,13 @@ public class BCryptTest extends CryptTestBase<BCryptHasher, WorkFactorSaltedPart
                 "$2b$08$YkG5/ze2FPw8C6vuAs7WHuF3ECZado/tsSXGiF08J4Wa.ZrwE.eTe"},
             { "비밀번호",
                 "$2b$08$YkG5/ze2FPw8C6vuAs7WHu",
-                "$2b$08$YkG5/ze2FPw8C6vuAs7WHu0Sh0l821Y32X4qFDZAkWBVqKQDeayVG"}
+                "$2b$08$YkG5/ze2FPw8C6vuAs7WHu0Sh0l821Y32X4qFDZAkWBVqKQDeayVG"},
+            { "password",
+                "$bcrypt-sha256$2a,12$LrmaIX5x4TRtAwEfwJZa1.$",
+                "$bcrypt-sha256$2a,12$LrmaIX5x4TRtAwEfwJZa1.$2ehnw6LvuIUTM0iz4iz9hTxv21B6KFO"},
+            { "password",
+                "$bcrypt-sha256$2b,13$Mant9jKTadXYyFh7xp1W5.$",
+                "$bcrypt-sha256$2b,13$Mant9jKTadXYyFh7xp1W5.$J8xpPZR/HxH7f1vRCNUjBI7Ev1al0hu"}
     };
 
     @Override
@@ -146,12 +152,12 @@ public class BCryptTest extends CryptTestBase<BCryptHasher, WorkFactorSaltedPart
 
     @Override
     protected BCryptHasher newHasher() {
-        return (BCryptHasher) ModularCryptFormatHashers.$2a$.get().build();
+        return (BCryptHasher) ModularCryptFormatHashers.$2a$.get();
     }
 
     @Override
     protected BCryptHasher newHasher(String salt) {
-        return (BCryptHasher) resolve(salt).build();
+        return (BCryptHasher) resolve(salt);
     }
 
     /**
@@ -196,7 +202,7 @@ public class BCryptTest extends CryptTestBase<BCryptHasher, WorkFactorSaltedPart
     @Test(dataProvider="goodCreds")
     public void checkPassword_should_success(String plain, String expected) throws InvalidAlgorithmParameterException {
         Credentials cred = Credentials.fromPassword(plain.toCharArray());
-        Hasher hr = resolve(expected).build();
+        Hasher hr = resolve(expected);
         Assertions.assertThat(hr.check(cred, expected)).isTrue();
 
         if (expected.startsWith("$2a$")) {
@@ -211,7 +217,7 @@ public class BCryptTest extends CryptTestBase<BCryptHasher, WorkFactorSaltedPart
      */
     @Test(dataProvider="pwdWithLogRounds")
     public void logRound_should_affectCrypt(int logRounds, String plain) throws InvalidAlgorithmParameterException {
-        Hasher hr = ModularCryptFormatHashers.$2a$.get().setLogRounds(logRounds).build();
+        Hasher hr = ModularCryptFormatHashers.$2a$.get().getBuilder().setLogRounds(logRounds).build();
         Credentials cred = Credentials.fromPassword(plain.toCharArray());
         String hashed1 = hr.encrypt(cred);
         String hashed2 = encrypt(cred, hashed1);

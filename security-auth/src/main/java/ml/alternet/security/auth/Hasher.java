@@ -31,7 +31,7 @@ import ml.alternet.security.binary.BytesEncoding;
  * <p>{@link CredentialsChecker} supply several means to find a hasher or
  * to check a password.</p>
  *
- * <p>This class defines 6 standard parameters.</p>
+ * <p>A hasher is immutable, to reconfigure it, use its builder with {@link #getBuilder()}.</p>
  *
  * @see CryptFormat
  * @see Credentials
@@ -41,38 +41,11 @@ import ml.alternet.security.binary.BytesEncoding;
 public interface Hasher extends Credentials.Checker {
 
     /**
-     * Get the default builder according to the configuration.
-     *
-     * @return A default builder.
-     *
-     * @see DiscoveryService#lookup(String)
-     */
-    static Builder builder() {
-        try {
-            Class<Builder> clazz = DiscoveryService.lookup(Builder.class.getCanonicalName());
-            return clazz.newInstance();
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-            return Thrower.doThrow(e);
-        }
-    }
-
-    /**
      * Get the scheme of this hasher.
      *
      * @return The scheme.
      */
     String getScheme();
-
-    /**
-     * Some hasher may use properties for computing a crypt ;
-     * a hasher usually doesn't need properties to check a password.
-     *
-     * @param properties The properties used to configure this hasher.
-     *
-     * @throws InvalidAlgorithmParameterException When a property is
-     *      not supported by this hasher.
-     */
-//    void configure(Properties properties) throws InvalidAlgorithmParameterException;
 
     /**
      * Return the current settings of this hasher.
@@ -86,7 +59,9 @@ public interface Hasher extends Credentials.Checker {
     /**
      * Return the builder used for creating this hasher.
      * Changes made to this builder doesn't affect the
-     * configuration of this hasher.
+     * configuration of this hasher. Since a hasher is
+     * immutable, use this method to create a new hasher
+     * based on the settings of this hasher.
      *
      * @return The builder used to create this hasher.
      */
@@ -187,7 +162,7 @@ public interface Hasher extends Credentials.Checker {
                 .map(f -> f.resolve(crypt))
                 .filter(o -> o.isPresent())
                 .findFirst()
-                .map(o -> o.get().build());
+                .map(o -> o.get());
     }
 
     /**
@@ -235,6 +210,22 @@ public interface Hasher extends Credentials.Checker {
      * @author Philippe Poulard
      */
     public static interface Builder extends Configuration {
+
+        /**
+         * Get the default builder according to the configuration.
+         *
+         * @return A default builder.
+         *
+         * @see DiscoveryService#lookup(String)
+         */
+        static Builder builder() {
+            try {
+                Class<Builder> clazz = DiscoveryService.lookup(Builder.class.getCanonicalName());
+                return clazz.newInstance();
+            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+                return Thrower.doThrow(e);
+            }
+        }
 
         /**
          * The standard property name "algorithm"

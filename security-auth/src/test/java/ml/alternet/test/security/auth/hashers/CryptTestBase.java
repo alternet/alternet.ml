@@ -10,7 +10,6 @@ import org.testng.annotations.Test;
 
 import ml.alternet.misc.Thrower;
 import ml.alternet.security.auth.Credentials;
-import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.formats.CryptFormatter;
 import ml.alternet.security.auth.formats.CryptParts;
@@ -103,7 +102,7 @@ public abstract class CryptTestBase<H extends HasherBase<C>,C extends CryptParts
         return cred;
     }
 
-    protected Hasher.Builder resolve(String crypt) {
+    protected Hasher resolve(String crypt) {
         return new ModularCryptFormat().resolve(crypt).get();
     }
 
@@ -188,7 +187,7 @@ public abstract class CryptTestBase<H extends HasherBase<C>,C extends CryptParts
     @Test(dataProvider="goodCreds")
     public void checkPassword_should_success(String plain, String expected) throws InvalidAlgorithmParameterException {
         Credentials cred = Credentials.fromPassword(plain.toCharArray());
-        Hasher hr = resolve(expected).build();
+        Hasher hr = resolve(expected);
         Assertions.assertThat(hr.check(cred, expected)).isTrue();
 
         if (altAlgo()) {
@@ -205,7 +204,7 @@ public abstract class CryptTestBase<H extends HasherBase<C>,C extends CryptParts
     @Test(dataProvider="wrongCreds")
     public void checkPassword_should_fail(String plain, String expected) throws InvalidAlgorithmParameterException {
         Credentials cred = Credentials.fromPassword(plain.toCharArray());
-        Hasher hr = resolve(expected).build();
+        Hasher hr = resolve(expected);
         Assertions.assertThat(hr.check(cred, expected)).isFalse();
 
         if (altAlgo()) {

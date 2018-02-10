@@ -119,7 +119,7 @@ public class FormAuthTest extends FormAuthServerTestHarness<Server> {
                 PlainTextCryptFormat.class.getName()
         );
         // store a user with its crypt
-        String crypt = ModularCryptFormatHashers.$2$.get().build()
+        String crypt = ModularCryptFormatHashers.$2$.get()
             .encrypt(unsafePwd.toCharArray());
         loginService.putUser(userName, crypt, new String[] {"admin"});
 
