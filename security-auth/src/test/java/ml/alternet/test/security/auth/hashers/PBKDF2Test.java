@@ -4,9 +4,9 @@ import java.security.InvalidAlgorithmParameterException;
 import java.util.function.Predicate;
 
 import ml.alternet.security.auth.Hasher;
+import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
 import ml.alternet.security.auth.formats.ColonCryptFormat;
-import ml.alternet.security.auth.formats.WorkFactorSaltedParts;
-import ml.alternet.security.auth.hashers.impl.PBKDF2Hasher;
+import ml.alternet.security.auth.hasher.PBKDF2Hasher;
 import ml.alternet.security.binary.BytesEncoder;
 
 public class PBKDF2Test extends CryptTestBase<PBKDF2Hasher, WorkFactorSaltedParts> {

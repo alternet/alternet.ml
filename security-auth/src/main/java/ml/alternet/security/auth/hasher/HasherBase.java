@@ -1,4 +1,4 @@
-package ml.alternet.security.auth.hashers.impl;
+package ml.alternet.security.auth.hasher;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.util.logging.Logger;
@@ -6,8 +6,8 @@ import java.util.logging.Logger;
 import ml.alternet.misc.Thrower;
 import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.Hasher;
+import ml.alternet.security.auth.crypt.CryptParts;
 import ml.alternet.security.auth.formats.CryptFormatter;
-import ml.alternet.security.auth.formats.CryptParts;
 
 /**
  * Convenient base class for hasher implementations.

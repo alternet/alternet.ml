@@ -7,6 +7,7 @@ import javax.inject.Singleton;
 import ml.alternet.discover.DiscoveryService;
 import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
+import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
 import ml.alternet.security.auth.hashers.CurlyBracesCryptFormatHashers;
 import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
 import ml.alternet.security.binary.BytesEncoding;

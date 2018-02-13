@@ -1,4 +1,4 @@
-package ml.alternet.security.auth.hashers.impl;
+package ml.alternet.security.auth.hasher;
 
 import java.nio.CharBuffer;
 import java.security.MessageDigest;
@@ -9,7 +9,7 @@ import ml.alternet.misc.Thrower;
 import ml.alternet.security.Password;
 import ml.alternet.security.algorithms.MD4;
 import ml.alternet.security.auth.Credentials;
-import ml.alternet.security.auth.formats.CryptParts;
+import ml.alternet.security.auth.crypt.CryptParts;
 import ml.alternet.security.binary.SafeBuffer;
 
 /**

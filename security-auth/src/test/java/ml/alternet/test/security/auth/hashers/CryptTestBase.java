@@ -11,10 +11,10 @@ import org.testng.annotations.Test;
 import ml.alternet.misc.Thrower;
 import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.Hasher;
+import ml.alternet.security.auth.crypt.CryptParts;
 import ml.alternet.security.auth.formats.CryptFormatter;
-import ml.alternet.security.auth.formats.CryptParts;
 import ml.alternet.security.auth.formats.ModularCryptFormat;
-import ml.alternet.security.auth.hashers.impl.HasherBase;
+import ml.alternet.security.auth.hasher.HasherBase;
 
 /**
  * Crypt test harness

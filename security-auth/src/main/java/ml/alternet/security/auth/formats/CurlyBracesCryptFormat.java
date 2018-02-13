@@ -7,9 +7,13 @@ import javax.inject.Singleton;
 import ml.alternet.discover.DiscoveryService;
 import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
+import ml.alternet.security.auth.crypt.CryptParts;
+import ml.alternet.security.auth.crypt.SaltedParts;
+import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
 import ml.alternet.security.auth.hashers.CurlyBracesCryptFormatHashers;
 import ml.alternet.security.binary.BytesEncoder;
 import ml.alternet.security.binary.BytesEncoding;
+import ml.alternet.util.StringUtil;
 
 /**
  * The scheme of this format appears in curly braces.
@@ -277,6 +281,13 @@ public class CurlyBracesCryptFormat implements CryptFormat {
             StringBuffer buf = new StringBuffer();
             buf.append('{');
             buf.append(parts.hr.getConfiguration().getScheme());
+            String algo = parts.hr.getConfiguration().getAlgorithm();
+            if (! StringUtil.isVoid(algo) && algo.startsWith("PBKDF2WithHmac")) {
+                algo = algo.substring("PBKDF2WithHMac".length());
+                if (! "SHA1".equals(algo)) {
+                    buf.append('-').append(algo);
+                }
+            }
             buf.append('}');
             buf.append(parts.workFactor);
             buf.append('$');

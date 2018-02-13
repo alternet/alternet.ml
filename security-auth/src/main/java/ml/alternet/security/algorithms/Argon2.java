@@ -17,8 +17,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import ml.alternet.security.algorithms.Argon2.Constants.Constraints;
-import ml.alternet.security.auth.hashers.impl.Argon2Hasher.Argon2Bridge;
-import ml.alternet.security.auth.hashers.impl.Argon2Hasher.Argon2Bridge.Type;
+import ml.alternet.security.auth.hasher.Argon2Hasher.Argon2Bridge;
+import ml.alternet.security.auth.hasher.Argon2Hasher.Argon2Bridge.Type;
 import ml.alternet.security.binary.LittleEndian;
 import ml.alternet.util.StringUtil;
 

@@ -2,8 +2,8 @@ package ml.alternet.test.security.auth.hashers;
 
 import java.util.function.Predicate;
 
+import ml.alternet.security.auth.hasher.Argon2Hasher;
 import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
-import ml.alternet.security.auth.hashers.impl.Argon2Hasher;
 
 public class Argon2Test extends CryptTestBase<Argon2Hasher, Argon2Hasher.Argon2Parts> {
 

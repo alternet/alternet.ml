@@ -4,9 +4,9 @@ import java.util.function.Predicate;
 
 import org.testng.annotations.Test;
 
-import ml.alternet.security.auth.formats.CryptParts;
+import ml.alternet.security.auth.crypt.CryptParts;
+import ml.alternet.security.auth.hasher.MessageHasher;
 import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
-import ml.alternet.security.auth.hashers.impl.MessageHasher;
 
 @Test
 public class NTHashTest extends CryptTestBase<MessageHasher, CryptParts> {

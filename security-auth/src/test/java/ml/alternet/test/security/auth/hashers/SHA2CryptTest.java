@@ -5,9 +5,9 @@ import java.util.function.Predicate;
 import org.apache.commons.codec.digest.Crypt;
 import org.testng.annotations.Test;
 
-import ml.alternet.security.auth.formats.WorkFactorSaltedParts;
+import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
+import ml.alternet.security.auth.hasher.SHA2Hasher;
 import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
-import ml.alternet.security.auth.hashers.impl.SHA2Hasher;
 
 @Test
 public class SHA2CryptTest extends CryptTestBase<SHA2Hasher, WorkFactorSaltedParts> {

@@ -1,4 +1,4 @@
-package ml.alternet.security.auth.hashers.impl;
+package ml.alternet.security.auth.hasher;
 
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -7,9 +7,9 @@ import ml.alternet.security.algorithms.MD5Crypt;
 import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
+import ml.alternet.security.auth.crypt.SaltedParts;
 import ml.alternet.security.auth.formats.CryptFormatter;
 import ml.alternet.security.auth.formats.ModularCryptFormat;
-import ml.alternet.security.auth.formats.SaltedParts;
 import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
 import ml.alternet.security.binary.BytesEncoder;
 import ml.alternet.util.StringUtil;

@@ -7,12 +7,12 @@ import ml.alternet.misc.TodoException;
 import ml.alternet.security.algorithms.BCrypt;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.formats.SaltlessModularCryptFormatter;
-import ml.alternet.security.auth.hashers.impl.Argon2Hasher;
-import ml.alternet.security.auth.hashers.impl.BCryptHasher;
-import ml.alternet.security.auth.hashers.impl.MD5BasedHasher;
-import ml.alternet.security.auth.hashers.impl.MessageHasher;
-import ml.alternet.security.auth.hashers.impl.PBKDF2Hasher;
-import ml.alternet.security.auth.hashers.impl.SHA2Hasher;
+import ml.alternet.security.auth.hasher.Argon2Hasher;
+import ml.alternet.security.auth.hasher.BCryptHasher;
+import ml.alternet.security.auth.hasher.MD5BasedHasher;
+import ml.alternet.security.auth.hasher.MessageHasher;
+import ml.alternet.security.auth.hasher.PBKDF2Hasher;
+import ml.alternet.security.auth.hasher.SHA2Hasher;
 import ml.alternet.security.binary.BytesEncoder;
 import ml.alternet.util.EnumUtil;
 

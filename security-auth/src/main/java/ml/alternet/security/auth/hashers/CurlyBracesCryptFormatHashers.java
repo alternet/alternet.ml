@@ -7,9 +7,9 @@ import ml.alternet.security.auth.Hasher.Builder;
 import ml.alternet.security.auth.formats.CurlyBracesCryptFormat;
 import ml.alternet.security.auth.formats.PlainTextCryptFormat;
 import ml.alternet.security.auth.formats.CurlyBracesCryptFormat.CryptFormatterWrapper;
-import ml.alternet.security.auth.hashers.impl.MessageHasher;
-import ml.alternet.security.auth.hashers.impl.PBKDF2Hasher;
-import ml.alternet.security.auth.hashers.impl.SaltedMessageHasher;
+import ml.alternet.security.auth.hasher.MessageHasher;
+import ml.alternet.security.auth.hasher.PBKDF2Hasher;
+import ml.alternet.security.auth.hasher.SaltedMessageHasher;
 import ml.alternet.security.binary.BytesEncoder;
 import ml.alternet.util.EnumUtil;
 
@@ -122,6 +122,11 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher> {
         }
     },
 
+    /**
+     * PBKDF2 with SHA256 algorithm.
+     *
+     * <p>"<tt>password</tt>" -&gt; "<tt></tt>"</p>
+     */
     PBKDF2_SHA256 {
         @Override
         public Hasher get() {

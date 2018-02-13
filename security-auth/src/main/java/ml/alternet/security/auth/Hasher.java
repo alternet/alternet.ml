@@ -14,8 +14,8 @@ import ml.alternet.discover.LookupKey;
 import ml.alternet.misc.Thrower;
 import ml.alternet.misc.WtfException;
 import ml.alternet.security.Password;
+import ml.alternet.security.auth.crypt.CryptParts;
 import ml.alternet.security.auth.formats.CryptFormatter;
-import ml.alternet.security.auth.formats.CryptParts;
 import ml.alternet.security.binary.BytesEncoder;
 import ml.alternet.security.binary.BytesEncoding;
 
@@ -483,7 +483,9 @@ public interface Hasher extends Credentials.Checker {
         interface Extension {
 
             /**
-             * If a new hasher is built, its builder MUST unset its crypt.
+             * If a new hasher is built, its builder MUST unset its crypt
+             * (otherwise it would configure itself with that crypt and
+             * loop here).
              *
              * @see Builder#use(String)
              *

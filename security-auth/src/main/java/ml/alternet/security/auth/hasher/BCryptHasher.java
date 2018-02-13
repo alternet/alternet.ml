@@ -1,4 +1,4 @@
-package ml.alternet.security.auth.hashers.impl;
+package ml.alternet.security.auth.hasher;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -12,9 +12,9 @@ import ml.alternet.security.algorithms.BCrypt;
 import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
+import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
 import ml.alternet.security.auth.formats.CryptFormatter;
 import ml.alternet.security.auth.formats.ModularCryptFormat;
-import ml.alternet.security.auth.formats.WorkFactorSaltedParts;
 import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
 import ml.alternet.security.binary.BytesEncoder;
 import ml.alternet.security.binary.BytesEncoding;

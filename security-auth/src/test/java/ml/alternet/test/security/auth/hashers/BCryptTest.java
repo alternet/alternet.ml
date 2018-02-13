@@ -24,9 +24,9 @@ import org.testng.annotations.Test;
 import jodd.util.BCrypt;
 import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.Hasher;
-import ml.alternet.security.auth.formats.WorkFactorSaltedParts;
+import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
+import ml.alternet.security.auth.hasher.BCryptHasher;
 import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
-import ml.alternet.security.auth.hashers.impl.BCryptHasher;
 
 /**
  * unit tests for BCrypt routines

@@ -1,4 +1,4 @@
-package ml.alternet.security.auth.formats;
+package ml.alternet.security.auth.crypt;
 
 import java.security.SecureRandom;
 
