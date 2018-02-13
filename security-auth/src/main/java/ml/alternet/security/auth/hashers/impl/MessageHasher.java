@@ -34,11 +34,6 @@ public class MessageHasher extends HasherBase<CryptParts> {
     }
 
     @Override
-    public String getScheme() {
-        return getConfiguration().getAlgorithm();
-    }
-
-    @Override
     public byte[] encrypt(Credentials credentials, CryptParts parts) {
         MessageDigest md = lookup(getConfiguration().getAlgorithm());
         try (Password.Clear clear = credentials.getPassword().getClearCopy()) {

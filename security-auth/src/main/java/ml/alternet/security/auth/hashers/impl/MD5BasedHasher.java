@@ -40,11 +40,6 @@ public class MD5BasedHasher extends HasherBase<SaltedParts> {
     }
 
     @Override
-    public String getScheme() {
-        return "MD5";
-    }
-
-    @Override
     public byte[] encrypt(Credentials credentials, SaltedParts parts) {
         byte b[] = MD5Crypt.encrypt(credentials.getPassword(), parts.salt, isApacheVariant(parts.hr));
 
@@ -148,10 +143,10 @@ public class MD5BasedHasher extends HasherBase<SaltedParts> {
             return buf.toString();
         }
 
-		@Override
-		public CryptFormat getCryptFormat() {
-			return new ModularCryptFormat();
-		}
+        @Override
+        public CryptFormat getCryptFormat() {
+            return new ModularCryptFormat();
+        }
 
     };
 

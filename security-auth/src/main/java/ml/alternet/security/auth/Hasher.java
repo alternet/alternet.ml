@@ -41,13 +41,6 @@ import ml.alternet.security.binary.BytesEncoding;
 public interface Hasher extends Credentials.Checker {
 
     /**
-     * Get the scheme of this hasher.
-     *
-     * @return The scheme.
-     */
-    String getScheme();
-
-    /**
      * Return the current settings of this hasher.
      *
      * @return The current properties, including the default values.
@@ -228,6 +221,11 @@ public interface Hasher extends Credentials.Checker {
         }
 
         /**
+         * The standard property name "scheme"
+         */
+        public static String SCHEME_PROPERTY_NAME = "scheme";
+
+        /**
          * The standard property name "algorithm"
          */
         public static String ALGORITHM_PROPERTY_NAME = "algorithm";
@@ -297,6 +295,15 @@ public interface Hasher extends Credentials.Checker {
          * @return A snapshot configuration.
          */
         Configuration getConfiguration();
+
+        /**
+         * Setter for the scheme ; the scheme is the name
+         * under which is registered the underlying hasher.
+         *
+         * @param scheme The name of the scheme.
+         * @return This builder.
+         */
+        Builder setScheme(String scheme);
 
         /**
          * Setter for the algorithm.
@@ -453,6 +460,7 @@ public interface Hasher extends Credentials.Checker {
          */
         Class<? extends Builder> getBuilder();
         Properties asProperties();
+        String getScheme();
         String getAlgorithm();
         String getVariant();
         Charset getCharset();
@@ -466,7 +474,9 @@ public interface Hasher extends Credentials.Checker {
 
         /**
          * A hasher can extend this configuration extension
-         * when a crypt can be used for configuration.
+         * when a crypt can be used for configuration, typically
+         * by using it as a template in order to extract a parameter
+         * such as the workfactor.
          *
          * @author Philippe Poulard
          */
@@ -509,6 +519,7 @@ public interface Hasher extends Credentials.Checker {
 
             private Class<? extends Builder> builder;
             private Class<? extends Hasher> clazz;
+            private String scheme;
             private String algorithm;
             private String variant;
             private Charset charset = DEFAULT_CHARSET;
@@ -560,6 +571,11 @@ public interface Hasher extends Credentials.Checker {
             }
 
             @Override
+            public String getScheme() {
+                return this.scheme;
+            }
+
+            @Override
             public String getAlgorithm() {
                 return this.algorithm;
             }
@@ -588,6 +604,9 @@ public interface Hasher extends Credentials.Checker {
                 }
                 if (this.logRounds != -1) {
                     props.put(LOG_ROUNDS_PROPERTY_NAME, this.logRounds);
+                }
+                if (this.scheme != null) {
+                    props.setProperty(SCHEME_PROPERTY_NAME, this.scheme);
                 }
                 if (this.algorithm != null) {
                     props.setProperty(ALGORITHM_PROPERTY_NAME, this.algorithm);
@@ -641,6 +660,17 @@ public interface Hasher extends Credentials.Checker {
         @Override
         public Builder setClass(String clazz) throws ClassNotFoundException {
             this.conf.clazz = (Class<? extends Hasher>) Class.forName(clazz);
+            return this;
+        }
+
+        @Override
+        public String getScheme() {
+            return this.conf.scheme;
+        }
+
+        @Override
+        public Builder setScheme(String scheme) {
+            this.conf.scheme = scheme;
             return this;
         }
 

@@ -75,11 +75,6 @@ public class Argon2Hasher extends HasherBase<Argon2Hasher.Argon2Parts> implement
         return parts;
     }
 
-    @Override
-    public String getScheme() {
-        return "Argon2";
-    }
-
     /**
      * Return the secret bound to the given key.
      *

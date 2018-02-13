@@ -107,11 +107,10 @@ public class MD5Crypt {
                 /* Then something really weird... */
                 for (int i = pwd.get().length; i != 0; i >>>=1) {
                     if ((i & 1) != 0) {
-                        ctx.update(fs, 0, 1);
+                        ctx.update((byte) 0);
                     } else {
                         pwdBuf.reset();
-                        ctx.update(pwdBuf.get());
-                        // ctx.update(password.getBytes(), 0, 1);
+                        ctx.update(pwdBuf.get(pwdBuf.position()));
                     }
                 }
             }

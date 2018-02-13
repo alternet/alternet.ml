@@ -34,30 +34,17 @@ public class PBKDF2Hasher extends HasherBase<WorkFactorSaltedParts> {
         super(config);
     }
 
-    /**
-     * By default, return "PBKDF2".
-     *
-     * @return This hasher's scheme.
-     */
-    @Override
-    public String getScheme() {
-        return "PBKDF2";
-    }
-
-    /**
-     * By default, return "PBKDF2WithHmacSHA1".
-     *
-     * @return The algorithm used by this implementation.
-     */
-    protected String getAlgorithm() {
-        return "PBKDF2WithHmacSHA1";
-    }
-
     @Override
     public byte[] encrypt(Credentials credentials, WorkFactorSaltedParts parts) {
         int hashByteSize = parts.hr.getConfiguration().getHashByteSize();
         try {
-            return PBKDF2.hash(credentials.getPassword(), parts.salt, getAlgorithm(), parts.workFactor, hashByteSize);
+            return PBKDF2.hash(
+                credentials.getPassword(),
+                parts.salt,
+                parts.hr.getConfiguration().getAlgorithm(),
+                parts.workFactor,
+                hashByteSize
+            );
         } catch (InvalidAlgorithmParameterException e) {
             return Thrower.doThrow(e);
         }

@@ -75,11 +75,6 @@ public class UnixCryptHasher extends HasherBase<SaltedParts> {
     };
 
     @Override
-    public String getScheme() {
-        return "CRYPT";
-    }
-
-    @Override
     public byte[] encrypt(Credentials credentials, SaltedParts parts) {
         long keyword = 0L;
         int salt = (parts.salt[1] << 6) | parts.salt[0];

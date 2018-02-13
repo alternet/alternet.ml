@@ -27,7 +27,7 @@ public enum BytesEncoder implements BytesEncoding {
     base64_no_padding(new Base64(ValueSpace.base64, Base64.PaddingMode.NO_PADDING)),
 
     /** Adapted base 64 represent bytes in base 64 string, except that it uses . instead of +, and omits trailing padding = and whitespace. */
-    abase64(new Base64(ValueSpace.abase64, Base64.PaddingMode.PADDING)),
+    abase64(new Base64(ValueSpace.abase64, Base64.PaddingMode.NO_PADDING)),
 
     /** Represent bytes in BCrypt's base 64 string. */
     bcrypt64(new Base64(ValueSpace.bcrypt64, Base64.PaddingMode.NO_PADDING)),

@@ -37,11 +37,6 @@ public class SaltedMessageHasher extends HasherBase<SaltedParts> {
     }
 
     @Override
-    public String getScheme() {
-        return getConfiguration().getAlgorithm();
-    }
-
-    @Override
     public byte[] encrypt(Credentials credentials, SaltedParts parts) {
         MessageDigest md = MessageHasher.lookup(getConfiguration().getAlgorithm());
         try (Password.Clear clear = credentials.getPassword().getClearCopy()) {

@@ -28,6 +28,7 @@ public class PlainTextCryptFormat implements CryptFormat {
     public static Hasher get() {
         return Hasher.Builder.builder()
             .setClass(PlainTextHasher.class)
+            .setScheme("[CLEAR PASSWORD]")
             .setFormatter(PLAIN_FORMATTER)
             .build();
     }
@@ -46,10 +47,6 @@ public class PlainTextCryptFormat implements CryptFormat {
     public static class PlainTextHasher extends HasherBase<CryptParts> {
         public PlainTextHasher(Configuration conf) {
             super(conf);
-        }
-        @Override
-        public String getScheme() {
-            return "[CLEAR PASSWORD]";
         }
         @Override
         public byte[] encrypt(Credentials credentials, CryptParts parts) {

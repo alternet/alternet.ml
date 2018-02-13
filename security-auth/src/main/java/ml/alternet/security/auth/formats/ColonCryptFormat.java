@@ -103,7 +103,7 @@ public class ColonCryptFormat implements CryptFormat {
         public String format(WorkFactorSaltedParts parts) {
             StringBuffer crypt = new StringBuffer(60);
             BytesEncoding encoding = parts.hr.getConfiguration().getEncoding();
-            crypt.append(parts.hr.getScheme())
+            crypt.append(parts.hr.getConfiguration().getScheme())
                 .append(':')
                 .append(Integer.toString(parts.workFactor))
                 .append(':')

@@ -38,7 +38,7 @@ public class CurlyBracesCryptFormat implements CryptFormat {
             if ("CRYPT".equals(schemePart.scheme)) {
                 String mcfPart = crypt.substring(schemePart.rcb + 1);
                 b = new ModularCryptFormat().resolve(mcfPart).get().getBuilder();
-                b.setFormatter(new CryptFormatterWrapper<>(b.getFormatter()));
+                b.setFormatter(new CryptFormatterWrapper<>(b.getFormatter(), "CRYPT"));
             } else if (schemePart.scheme != null) {
                 String lookupKey = Hasher.Builder.class.getCanonicalName() + "/" + family() + "/" + schemePart.scheme;
                 try {
@@ -153,7 +153,7 @@ public class CurlyBracesCryptFormat implements CryptFormat {
         public String format(CryptParts parts) {
             StringBuffer buf = new StringBuffer();
             buf.append('{');
-            buf.append(parts.hr.getConfiguration().getAlgorithm());
+            buf.append(parts.hr.getConfiguration().getScheme());
             String variant = parts.hr.getConfiguration().getVariant();
             if ("withEncoding".equals(variant)) {
                 BytesEncoding encoding = parts.hr.getConfiguration().getEncoding();
@@ -224,7 +224,7 @@ public class CurlyBracesCryptFormat implements CryptFormat {
         public String format(SaltedParts parts) {
             StringBuffer buf = new StringBuffer();
             buf.append('{');
-            buf.append(parts.hr.getConfiguration().getAlgorithm());
+            buf.append(parts.hr.getConfiguration().getScheme());
             String variant = parts.hr.getConfiguration().getVariant();
             if ("withEncoding".equals(variant)) {
                 BytesEncoding encoding = parts.hr.getConfiguration().getEncoding();
@@ -240,7 +240,7 @@ public class CurlyBracesCryptFormat implements CryptFormat {
                 byte[] bytes = new byte[parts.hash.length + parts.salt.length];
                 System.arraycopy(parts.hash, 0, bytes, 0, parts.hash.length);
                 System.arraycopy(parts.salt, 0, bytes, parts.hash.length, parts.salt.length);
-                buf.append(parts.hr.getConfiguration().getEncoding().encode(parts.hash));
+                buf.append(parts.hr.getConfiguration().getEncoding().encode(bytes));
             }
             return buf.toString();
         }
@@ -276,7 +276,7 @@ public class CurlyBracesCryptFormat implements CryptFormat {
         public String format(WorkFactorSaltedParts parts) {
             StringBuffer buf = new StringBuffer();
             buf.append('{');
-            buf.append(parts.hr.getConfiguration().getAlgorithm());
+            buf.append(parts.hr.getConfiguration().getScheme());
             buf.append('}');
             buf.append(parts.workFactor);
             buf.append('$');
@@ -303,10 +303,12 @@ public class CurlyBracesCryptFormat implements CryptFormat {
      */
     public static class CryptFormatterWrapper<T extends CryptParts> implements ml.alternet.security.auth.formats.CryptFormatter<T> {
 
-        private ml.alternet.security.auth.formats.CryptFormatter<T> cf;
+        ml.alternet.security.auth.formats.CryptFormatter<T> cf;
+        String scheme;
 
-        public CryptFormatterWrapper(ml.alternet.security.auth.formats.CryptFormatter<T> cf) {
+        public CryptFormatterWrapper(ml.alternet.security.auth.formats.CryptFormatter<T> cf, String scheme) {
             this.cf = cf;
+            this.scheme = scheme;
         }
 
         @Override
@@ -318,7 +320,7 @@ public class CurlyBracesCryptFormat implements CryptFormat {
 
         @Override
         public String format(T parts) {
-            return "{CRYPT}" + cf.format(parts);
+            return "{" + this.scheme + "}" + cf.format(parts);
         }
 
         @Override

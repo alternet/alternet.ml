@@ -17,6 +17,7 @@ import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.security.auth.hashers.impl.HasherBase;
 
 /**
+ * Crypt test harness
  *
  * @author Philippe Poulard
  */

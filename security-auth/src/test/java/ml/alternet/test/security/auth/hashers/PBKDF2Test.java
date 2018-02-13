@@ -41,6 +41,7 @@ public class PBKDF2Test extends CryptTestBase<PBKDF2Hasher, WorkFactorSaltedPart
     protected PBKDF2Hasher newHasher() {
         return (PBKDF2Hasher) Hasher.Builder.builder()
                 .setClass(PBKDF2Hasher.class)
+                .setScheme("PBKDF2")
                 .setAlgorithm("PBKDF2WithHmacSHA1")
                 .setEncoding(BytesEncoder.hexa)
                 .setSaltByteSize(24)

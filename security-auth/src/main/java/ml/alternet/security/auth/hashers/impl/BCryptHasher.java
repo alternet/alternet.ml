@@ -179,11 +179,6 @@ public class BCryptHasher extends HasherBase<WorkFactorSaltedParts> {
         return parts;
     }
 
-    @Override
-    public String getScheme() {
-        return "Blowfish";
-    }
-
     /**
      * BCrypt truncate passwords to 72 bytes, and some other minor quirks. This class works around that
      * issue by first running the password through a digest such as SHA2-256.

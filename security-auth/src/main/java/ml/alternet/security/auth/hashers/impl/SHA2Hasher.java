@@ -100,11 +100,6 @@ public class SHA2Hasher extends HasherBase<WorkFactorSaltedParts> {
         super(config);
     }
 
-    @Override
-    public String getScheme() {
-        return getConfiguration().getAlgorithm();
-    }
-
     static final byte[] SHA_256_ORDER = {
         0, 10, 20,
         21,  1, 11,
@@ -316,10 +311,10 @@ public class SHA2Hasher extends HasherBase<WorkFactorSaltedParts> {
             return buf.toString();
         }
 
-		@Override
-		public CryptFormat getCryptFormat() {
-			return new ModularCryptFormat();
-		}
+        @Override
+        public CryptFormat getCryptFormat() {
+            return new ModularCryptFormat();
+        }
     };
 
 }

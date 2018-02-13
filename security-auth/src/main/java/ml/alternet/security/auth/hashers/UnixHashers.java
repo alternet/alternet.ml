@@ -29,6 +29,7 @@ public enum UnixHashers implements Supplier<Hasher> {
         public Hasher get() {
             return Hasher.Builder.builder()
                 .setClass(UnixCryptHasher.class)
+                .setScheme("CRYPT")
                 .setFormatter(UnixCryptHasher.UNIXCRYPT_FORMATTER)
                 .setEncoding(BytesEncoder.h64)
                 .build();

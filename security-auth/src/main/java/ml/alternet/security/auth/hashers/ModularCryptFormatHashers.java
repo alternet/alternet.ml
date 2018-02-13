@@ -38,8 +38,9 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         public Hasher get() {
             return Hasher.Builder.builder()
                 .setClass(MD5BasedHasher.class)
+                .setScheme("MD5")
                 .setVariant("apr1")
-                .setEncoding(BytesEncoder.h64)
+                .setEncoding(BytesEncoder.h64be)
                 .setFormatter(MD5BasedHasher.MD5CRYPT_FORMATTER)
                 .build();
         }
@@ -53,8 +54,9 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         public Hasher get() {
             return Hasher.Builder.builder()
                 .setClass(MD5BasedHasher.class)
+                .setScheme("MD5")
                 .setVariant("1")
-                .setEncoding(BytesEncoder.h64)
+                .setEncoding(BytesEncoder.h64be)
                 .setFormatter(MD5BasedHasher.MD5CRYPT_FORMATTER)
                 .build();
         }
@@ -68,6 +70,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         public Hasher get() {
             return Hasher.Builder.builder()
                 .setClass(BCryptHasher.class)
+                .setScheme("Blowfish")
                 .setVariant("2")
                 .setEncoding(BytesEncoder.bcrypt64)
                 .setFormatter(BCryptHasher.BCRYPT_FORMATTER)
@@ -87,6 +90,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         public Hasher get() {
             return Hasher.Builder.builder()
                 .setClass(BCryptHasher.class)
+                .setScheme("Blowfish")
                 .setVariant("2a")
                 .setEncoding(BytesEncoder.bcrypt64)
                 .setFormatter(BCryptHasher.BCRYPT_FORMATTER)
@@ -126,6 +130,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         public Hasher get() {
             return Hasher.Builder.builder()
                 .setClass(MessageHasher.class)
+                .setScheme("MD4")
                 .setAlgorithm("MD4")
                 .setVariant("3")
                 .setEncoding(BytesEncoder.hexa)
@@ -145,6 +150,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         public Hasher get() {
             return Hasher.Builder.builder()
                 .setClass(SHA2Hasher.class)
+                .setScheme("SHA-256")
                 .setVariant("5")
                 .setAlgorithm("SHA-256")
                 .setEncoding(BytesEncoder.h64be)
@@ -162,6 +168,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         public Hasher get() {
             return Hasher.Builder.builder()
                 .setClass(SHA2Hasher.class)
+                .setScheme("SHA-512")
                 .setVariant("6")
                 .setAlgorithm("SHA-512")
                 .setEncoding(BytesEncoder.h64be)
@@ -175,6 +182,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         public Hasher get() {
             return Hasher.Builder.builder()
                 .setClass(MessageHasher.class)
+                .setScheme("MD5")
                 .setAlgorithm("MD5")
                 .build();
         }
@@ -208,6 +216,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         public Hasher get() {
             return Hasher.Builder.builder()
                 .setClass(PBKDF2Hasher.class)
+                .setScheme("PBKDF2")
                 .setAlgorithm("PBKDF2WithHmacSHA1")
                 .setEncoding(BytesEncoder.abase64)
                 .setSaltByteSize(16)
@@ -243,6 +252,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         public Hasher get() {
             return Hasher.Builder.builder()
                 .setClass(Argon2Hasher.class)
+                .setScheme("Argon2")
                 .setVariant("argon2i")
                 .setAlgorithm("Blake2b") // because it is its name
                 .setHashByteSize(32)

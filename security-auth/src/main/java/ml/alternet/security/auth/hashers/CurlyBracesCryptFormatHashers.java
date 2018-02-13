@@ -14,8 +14,9 @@ import ml.alternet.security.binary.BytesEncoder;
 import ml.alternet.util.EnumUtil;
 
 /**
- * LDAP hash formats specified by RFC 2307 including standard formats {MD5}, {SMD5}, {SHA}, {SSHA}
- * and extensions. These schemes range from somewhat to very insecure, and should not be used except when required.
+ * LDAP hash formats specified by <a href="https://tools.ietf.org/html/rfc2307.html">RFC 2307</a>
+ * including standard formats {MD5}, {SMD5}, {SHA}, {SSHA} and extensions. These schemes range
+ * from somewhat to very insecure, and should not be used except when required.
  *
  * <h1>Configuration</h1>
  *
@@ -36,6 +37,7 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher> {
         public Hasher get() {
             return Hasher.Builder.builder()
                 .setClass(MessageHasher.class)
+                .setScheme("MD5")
                 .setAlgorithm("MD5")
                 .setEncoding(BytesEncoder.base64)
                 .setFormatter(CurlyBracesCryptFormat.CryptFormatter.INSTANCE)
@@ -53,6 +55,7 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher> {
         public Hasher get() {
             return Hasher.Builder.builder()
                 .setClass(MessageHasher.class)
+                .setScheme("SHA")
                 .setAlgorithm("SHA1")
                 .setEncoding(BytesEncoder.base64)
                 .setFormatter(CurlyBracesCryptFormat.CryptFormatter.INSTANCE)
@@ -70,6 +73,7 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher> {
         public Hasher get() {
             return Hasher.Builder.builder()
                 .setClass(SaltedMessageHasher.class)
+                .setScheme("SMD5")
                 .setAlgorithm("MD5")
                 .setEncoding(BytesEncoder.base64)
                 .setSaltByteSize(4)
@@ -88,6 +92,7 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher> {
         public Hasher get() {
             return Hasher.Builder.builder()
                 .setClass(SaltedMessageHasher.class)
+                .setScheme("SSHA")
                 .setAlgorithm("SHA1")
                 .setEncoding(BytesEncoder.base64)
                 .setSaltByteSize(4)
@@ -106,6 +111,7 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher> {
         public Hasher get() {
             return Hasher.Builder.builder()
                 .setClass(PBKDF2Hasher.class)
+                .setScheme("PBKDF2")
                 .setAlgorithm("PBKDF2WithHmacSHA1")
                 .setEncoding(BytesEncoder.abase64)
                 .setSaltByteSize(24)
@@ -145,7 +151,7 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher> {
         @Override
         public Hasher get() {
             Builder b = PlainTextCryptFormat.get().getBuilder();
-            b.setFormatter(new CryptFormatterWrapper(b.getFormatter()));
+            b.setFormatter(new CryptFormatterWrapper(b.getFormatter(), "plaintext"));
             return b.build();
         }
     };
