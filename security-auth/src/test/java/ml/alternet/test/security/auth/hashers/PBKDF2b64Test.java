@@ -9,17 +9,17 @@ import ml.alternet.security.auth.formats.WorkFactorSaltedParts;
 import ml.alternet.security.auth.hashers.impl.PBKDF2Hasher;
 import ml.alternet.security.binary.BytesEncoder;
 
-public class PBKDF2Test extends CryptTestBase<PBKDF2Hasher, WorkFactorSaltedParts> {
+public class PBKDF2b64Test extends CryptTestBase<PBKDF2Hasher, WorkFactorSaltedParts> {
 
     static final String UNSAFE_PASSWORD = "Da_actu@L pazzw0r|) !";
 
     String data[][] = {
         { UNSAFE_PASSWORD,
-            "PBKDF2:99:66A402BDE5CFE340A1411C9221524C0F34A9A27E0B0805AE",
-            "PBKDF2:99:66A402BDE5CFE340A1411C9221524C0F34A9A27E0B0805AE:C9BB3D469D7C7F599EA35ED956E0D9F2C282EC96A38EA91C"},
+            "PBKDF2:1000:4s6LCkD3z89vs5Qfjngam2X+QpbkLzgi",
+            "PBKDF2:1000:4s6LCkD3z89vs5Qfjngam2X+QpbkLzgi:zGl3/rbAv5CqxGwLHBR/K7370Sofua3Z"},
         { UNSAFE_PASSWORD,
-            "PBKDF2:999:0314E17362D0D966C8F999A66045210DBE7EA897F024E07F",
-            "PBKDF2:999:0314E17362D0D966C8F999A66045210DBE7EA897F024E07F:3AE344F7AB5AA17308A49FDAD997105340DD6E348FDF5623"}
+            "PBKDF2:1000:uGWNzmy5WSU7dlwF6WQp0oFysI6bbnXD",
+            "PBKDF2:1000:uGWNzmy5WSU7dlwF6WQp0oFysI6bbnXD:u+BetVYiks7q3Gu9SR6B4i+8ccTMTq2/"},
         };
 
     @Override
@@ -43,7 +43,7 @@ public class PBKDF2Test extends CryptTestBase<PBKDF2Hasher, WorkFactorSaltedPart
                 .setClass(PBKDF2Hasher.class)
                 .setScheme("PBKDF2")
                 .setAlgorithm("PBKDF2WithHmacSHA1")
-                .setEncoding(BytesEncoder.hexa)
+                .setEncoding(BytesEncoder.base64)
                 .setSaltByteSize(24)
                 .setHashByteSize(24)
                 .setIterations(29000)
@@ -69,14 +69,6 @@ public class PBKDF2Test extends CryptTestBase<PBKDF2Hasher, WorkFactorSaltedPart
     @Override
     protected boolean altCheck(String plain, String expected) {
         return false;
-    }
-
-    @Override
-    public void crypts_should_match(String plain, String salt, String expected)
-            throws InvalidAlgorithmParameterException {
-        // this explain why we should NOT check crypts, but rather bytes
-        super.crypts_should_match(plain, salt.toLowerCase(),
-                "PBKDF2" + expected.substring("PBKDF2".length()).toLowerCase());
     }
 
 }
