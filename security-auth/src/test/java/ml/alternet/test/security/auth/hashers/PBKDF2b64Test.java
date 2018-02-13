@@ -1,6 +1,5 @@
 package ml.alternet.test.security.auth.hashers;
 
-import java.security.InvalidAlgorithmParameterException;
 import java.util.function.Predicate;
 
 import ml.alternet.security.auth.Hasher;

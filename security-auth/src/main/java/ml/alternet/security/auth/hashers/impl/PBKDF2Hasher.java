@@ -70,17 +70,17 @@ public class PBKDF2Hasher extends HasherBase<WorkFactorSaltedParts> {
         public WorkFactorSaltedParts parse(String crypt, Hasher hr) {
             // $pbkdf2-digest$rounds$salt$checksum
             String[] fields = crypt.split("\\$");
-            String[] digest = fields[0].split("-");
+            String[] digest = fields[1].split("-");
             String algo = "PBKDF2WithHmac" + digest[1].toUpperCase(); // PBKDF2WithHmacSHA1
             WorkFactorSaltedParts parts = new WorkFactorSaltedParts(hr);
             if (! algo.equals(parts.hr.getConfiguration().getAlgorithm())) {
                 hr = parts.hr.getBuilder().setAlgorithm(algo).build();
                 parts.hr = hr;
             }
-            parts.workFactor = Integer.parseInt(fields[1]);
+            parts.workFactor = Integer.parseInt(fields[2]);
             BytesEncoding encoding = hr.getConfiguration().getEncoding();
-            parts.salt = encoding.decode(fields[2]);
-            parts.hash = encoding.decode(fields[3]);
+            parts.salt = encoding.decode(fields[3]);
+            parts.hash = encoding.decode(fields[4]);
             return parts;
         }
 
@@ -90,7 +90,9 @@ public class PBKDF2Hasher extends HasherBase<WorkFactorSaltedParts> {
             buf.append('$');
             buf.append("pbkdf2-");
             String algo = parts.hr.getConfiguration().getAlgorithm(); // PBKDF2WithHmacSHA1
-            buf.append(algo.substring("PBKDF2WithHmac".length()));
+            buf.append(algo.substring("PBKDF2WithHmac".length()).toLowerCase());
+            buf.append('$');
+            buf.append(parts.workFactor);
             buf.append('$');
             buf.append(parts.hr.getConfiguration().getEncoding().encode(parts.salt));
             buf.append('$');

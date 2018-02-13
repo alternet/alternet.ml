@@ -22,6 +22,18 @@ public class CryptFormatTest {
     public Object[][] getData() {
         return new Object[][] {
             {   "password",
+                    "{PBKDF2-SHA256}29000$bi3FuPcewzhnjBGi1FqLcQ$XxCvGSouMoOmuy27dcdn4XkjaF0YScsvwN8rrLnk9EM",
+                    CurlyBracesCryptFormat.class},
+            {   "password",
+                    "$pbkdf2-sha256$29000$bi3FuPcewzhnjBGi1FqLcQ$XxCvGSouMoOmuy27dcdn4XkjaF0YScsvwN8rrLnk9EM",
+                    ModularCryptFormat.class},
+            {   "password",
+                    "$pbkdf2-sha256$6400$0ZrzXitFSGltTQnBWOsdAw$Y11AchqV4b0sUisdZd0Xr97KWoymNE0LNNrnEgY4H9M",
+                    ModularCryptFormat.class},
+            {   "password",
+                    "$pbkdf2-sha256$6400$.6UI/S.nXIk8jcbdHx3Fhg$98jZicV16ODfEsEZeYPGHU3kbrUrvUEXOPimVSQDD44",
+                    ModularCryptFormat.class},
+            {   "password",
                     "$1$5pZSV9va$azfrPr6af3Fc7dLblQXVa0",
                     ModularCryptFormat.class},
             {   "secret",
