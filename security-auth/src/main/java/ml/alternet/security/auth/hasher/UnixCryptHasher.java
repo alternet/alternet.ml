@@ -24,12 +24,6 @@ import ml.alternet.security.binary.SafeBuffer;
 public class UnixCryptHasher extends HasherBase<SaltedParts> {
 
     /**
-     * The builder for this hasher.
-     *
-     * @return The Unix Crypt hasher builder.
-     */
-
-    /**
      * UnixCryptHasher constructor.
      *
      * @param config The configuration of this hasher.
