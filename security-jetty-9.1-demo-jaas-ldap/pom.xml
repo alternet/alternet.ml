@@ -40,6 +40,11 @@
             <artifactId>jetty-jaas</artifactId>
             <version>${version.org.eclipse.jetty}</version>
         </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.el</artifactId>
+            <version>3.0.1-b09</version>
+        </dependency>
     </dependencies>
 
     <build>

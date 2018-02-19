@@ -66,9 +66,9 @@ Also allow to generate the target class(es), and run that generator as a Maven p
 
 Many Java applications are configured with external parameters that have to be loaded by the application from "`.properties`" files. Once loaded, those parameters are exposed as `String`s, and the keys to access them are also `String`s.
 
-* The **property binder** allow to populate a configuration class within which fields are the counterpart keys, and values are typed values.
+* The **properties binder** allow to populate a configuration class within which fields are the counterpart keys, and values are typed values.
 
-* The **property generator** allow to generate such configuration class from a template property file. A Maven plugin allow to do it automatically.
+* The **properties class generator** allow to generate such configuration class from a template property file. A Maven plugin allow to do it automatically.
 
 <a name="binder"></a>
 
