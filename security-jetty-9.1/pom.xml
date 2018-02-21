@@ -14,7 +14,7 @@
 
     <name>Alternet Jetty Security</name>
     <description>Enhance security on passwords handled in Jetty 9.1 and 9.2.</description>
-    <url>http://alternet.ml/alternet-libs/security-jetty/security-jetty.html</url>
+    <url>http://alternet.ml/alternet-libs/security-jetty-9.1/security-jetty.html</url>
 
     <properties>
         <shortName>security-jetty-9.1</shortName>

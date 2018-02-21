@@ -94,3 +94,8 @@ a:hover:before, a:hover:after, a:focus:before, a:focus:after {
 div.navbar a:before, div.navbar a:after {
     background-color: transparent;
 }
+
+a.externalLink[href^=https] {
+    background: url(../images/internet-web-browser.png) right center no-repeat;
+    padding-right: 18px;
+}
