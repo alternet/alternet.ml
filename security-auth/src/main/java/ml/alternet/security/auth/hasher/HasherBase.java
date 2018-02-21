@@ -31,8 +31,8 @@ public abstract class HasherBase<T extends CryptParts> implements Hasher {
      *
      * @param conf The configuration of this hasher.
      */
-    public HasherBase(Configuration conf) {
-        this.conf = conf;
+    public HasherBase(Builder conf) {
+        this.conf = conf.getConfiguration();
     }
 
     @Override

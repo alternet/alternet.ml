@@ -32,7 +32,7 @@ public class Argon2Hasher extends HasherBase<Argon2Hasher.Argon2Parts> implement
      *
      * @param config The configuration of this hasher.
      */
-    public Argon2Hasher(Configuration config) {
+    public Argon2Hasher(Builder config) {
         super(config);
     }
 

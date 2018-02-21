@@ -29,7 +29,7 @@ public class MessageHasher extends HasherBase<CryptParts> {
      *
      * @param config The configuration of this hasher.
      */
-    public MessageHasher(Configuration config) {
+    public MessageHasher(Builder config) {
         super(config);
     }
 

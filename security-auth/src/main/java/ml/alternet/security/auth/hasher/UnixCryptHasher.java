@@ -28,7 +28,7 @@ public class UnixCryptHasher extends HasherBase<SaltedParts> {
      *
      * @param config The configuration of this hasher.
      */
-    public UnixCryptHasher(Configuration config) {
+    public UnixCryptHasher(Builder config) {
         super(config);
     }
 

@@ -96,7 +96,7 @@ public class SHA2Hasher extends HasherBase<WorkFactorSaltedParts> {
      *
      * @param config The settings to use.
      */
-    public SHA2Hasher(Configuration config) {
+    public SHA2Hasher(Builder config) {
         super(config);
     }
 

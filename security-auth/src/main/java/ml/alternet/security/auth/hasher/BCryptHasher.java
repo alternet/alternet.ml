@@ -33,7 +33,7 @@ public class BCryptHasher extends HasherBase<WorkFactorSaltedParts> {
      *
      * @param config The configuration of this hasher.
      */
-    public BCryptHasher(Configuration config) {
+    public BCryptHasher(Builder config) {
         super(config);
     }
 
@@ -192,7 +192,7 @@ public class BCryptHasher extends HasherBase<WorkFactorSaltedParts> {
          *
          * @param config The configuration of this hasher.
          */
-        public Digest(Configuration config) {
+        public Digest(Builder config) {
             super(config);
         }
 

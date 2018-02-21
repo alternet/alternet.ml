@@ -30,7 +30,7 @@ public class PBKDF2Hasher extends HasherBase<WorkFactorSaltedParts> {
      *
      * @param config The configuration of this hasher.
      */
-    public PBKDF2Hasher(Configuration config) {
+    public PBKDF2Hasher(Builder config) {
         super(config);
     }
 

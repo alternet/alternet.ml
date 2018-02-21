@@ -35,7 +35,7 @@ public class MD5BasedHasher extends HasherBase<SaltedParts> {
         return APR1.equals(hr.getConfiguration().getVariant());
     }
 
-    public MD5BasedHasher(Configuration config) {
+    public MD5BasedHasher(Builder config) {
         super(config);
     }
 

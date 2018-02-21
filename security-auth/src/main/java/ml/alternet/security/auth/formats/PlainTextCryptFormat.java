@@ -46,7 +46,7 @@ public class PlainTextCryptFormat implements CryptFormat {
      * @author Philippe Poulard
      */
     public static class PlainTextHasher extends HasherBase<CryptParts> {
-        public PlainTextHasher(Configuration conf) {
+        public PlainTextHasher(Builder conf) {
             super(conf);
         }
         @Override

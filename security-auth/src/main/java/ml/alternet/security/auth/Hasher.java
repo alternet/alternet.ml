@@ -1011,8 +1011,8 @@ public interface Hasher extends Credentials.Checker {
         @Override
         public Hasher build() {
             try {
-                Hasher hr = this.conf.clazz.getConstructor(Configuration.class)
-                        .newInstance(getConfiguration());
+                Hasher hr = this.conf.clazz.getConstructor(Builder.class)
+                        .newInstance(this);
                 if (this.conf.getCrypt() != null && hr instanceof Configuration.Extension) {
                     hr = ((Configuration.Extension) hr).configureWithCrypt(this.conf.getCrypt());
                 }

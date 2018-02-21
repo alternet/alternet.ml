@@ -32,7 +32,7 @@ public class SaltedMessageHasher extends HasherBase<SaltedParts> {
      *
      * @param config The configuration of this hasher.
      */
-    public SaltedMessageHasher(Configuration config) {
+    public SaltedMessageHasher(Builder config) {
         super(config);
     }
 
@@ -55,8 +55,14 @@ public class SaltedMessageHasher extends HasherBase<SaltedParts> {
 
     @Override
     public SaltedParts initializeParts() {
+        int min = 4;
+        int max = 16;
         SaltedParts parts = new SaltedParts(this);
-        parts.generateSalt(4, 16);
+        int saltSize = getConfiguration().getSaltByteSize();
+        if (saltSize < min || saltSize > max) {
+            throw new IllegalArgumentException("Invalid salt size " + saltSize + " ; must be between " + min + " and " + max + " bytes.");
+        }
+        parts.generateSalt();
         return parts;
     }
 
