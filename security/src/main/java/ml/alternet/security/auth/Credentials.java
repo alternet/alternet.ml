@@ -208,7 +208,11 @@ public class Credentials implements Destroyable {
      */
     @SuppressWarnings("unchecked")
     public <T> T get(String field) {
-        return (T) this.fields.get(field);
+        if (this.fields == null) {
+            return null;
+        } else {
+            return (T) this.fields.get(field);
+        }
     }
 
     /**
