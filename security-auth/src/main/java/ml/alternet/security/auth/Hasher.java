@@ -449,6 +449,11 @@ public interface Hasher extends Credentials.Checker {
 
     }
 
+    /**
+     * Read-only configuration of a hasher.
+     *
+     * @author Philippe Poulard
+     */
     public interface Configuration {
 
         /**
@@ -459,17 +464,90 @@ public interface Hasher extends Credentials.Checker {
          * @return The builder.
          */
         Class<? extends Builder> getBuilder();
+
+        /**
+         * Export all the configuration.
+         *
+         * @return The configuration as properties.
+         */
         Properties asProperties();
+
+        /**
+         * Return the scheme of the underlying hasher.
+         *
+         * @return The scheme, e.g. "SHA"
+         */
         String getScheme();
+
+        /**
+         * Return the algorithm of the underlying hasher.
+         *
+         * @return The algorithm, e.g. "SHA1"
+         */
         String getAlgorithm();
+
+        /**
+         * Return the variant of the underlying hasher.
+         *
+         * @return The variant, for example "apr1" for the Apache
+         *      variant (apr1) of the MD5 based BSD password algorithm 1
+         */
         String getVariant();
+
+        /**
+         * The charset used to encode passwords.
+         *
+         * @return The charset
+         */
         Charset getCharset();
+
+        /**
+         * The encoding for representing bytes.
+         *
+         * @return The encoding
+         */
         BytesEncoding getEncoding();
+
+        /**
+         * The formatter used to breakdown a cypt in parts, or to format parts in a crypt.
+         *
+         * @return The formatter.
+         */
         <T> CryptFormatter<? extends CryptParts> getFormatter();
+
+        /**
+         * Get the log rounds
+         *
+         * @return The log rounds
+         */
         int getLogRounds();
+
+        /**
+         * Get the hash byte size
+         *
+         * @return The hash byte size
+         */
         int getHashByteSize();
+
+        /**
+         * Get the salt byte size
+         *
+         * @return The salt byte size
+         */
         int getSaltByteSize();
+
+        /**
+         * Get the number of iterations
+         *
+         * @return The number of iterations
+         */
         int getIterations();
+
+        /**
+         * Get the crypt template
+         *
+         * @return The crypt template
+         */
         String getCrypt();
 
         /**

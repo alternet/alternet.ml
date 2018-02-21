@@ -36,6 +36,11 @@ public interface CryptFormatter<T extends CryptParts> {
      */
     String format(T parts);
 
+    /**
+     * The general format of this formatter.
+     *
+     * @return The crypt format family.
+     */
     CryptFormat getCryptFormat();
 
 }
