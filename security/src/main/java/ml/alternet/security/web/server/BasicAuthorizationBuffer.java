@@ -1,7 +1,9 @@
 package ml.alternet.security.web.server;
 
-import java.util.Base64;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 
+import ml.alternet.encode.BytesEncoder;
 import ml.alternet.security.Password;
 import ml.alternet.security.PasswordManager;
 import ml.alternet.security.auth.Credentials;
@@ -208,43 +210,48 @@ public abstract class BasicAuthorizationBuffer {
      * @return The credentials with the captured password and the user name.
      */
     public Credentials replace(PasswordManager passwordManager) {
-        Credentials credentials = new Credentials();
-        byte[] encodedCred = new byte[credEnd - credStart];
-        for (int i = 0 ; i < encodedCred.length ; i++) {
-            encodedCred[i] = get(credStart + i);
+        class State {
+            int i = 0; // in index
+            int p = 0; // pwd index
+            int outi = 0; // out index
+            StringBuffer user = new StringBuffer();
+            char[] password;
         }
-        byte[] decodedCred = Base64.getDecoder().decode(encodedCred);
-        // "encodedCred" will be cleaned later
-
-        char[] password = null;
-        int pwdStart = -1;
-        for (int i = 0 ; i < decodedCred.length ; i++) {
-            if (pwdStart == -1) {
-                if (decodedCred[i] == ':') {
-                    credentials.withUser(new String(decodedCred, 0, i));
-                    pwdStart = i + 1;
-                    password = new char[decodedCred.length - pwdStart];
+        State s = new State();
+        BytesEncoder.base64.encode( // reencode...
+            BytesEncoder.base64.decode( // ...what was decoded
+                IntStream.generate(() -> get(credStart + s.i++))
+                    .mapToObj(c -> (char) (c & 0xff)) // as char
+                    .limit(credEnd - credStart)
+            ).map(c -> {
+                if (s.password == null) { // capture user
+                    if (c == ':') {
+                        s.password = new char[credEnd - credStart - s.i];
+                    } else {
+                        s.user.append((char) c);
+                    }
+                    return c; // unchanged
+                } else { // capture pwd
+                    s.password[s.p++] = (char) c;
+                    return '*';
+                    // this is the pwd value that will be available later in HttpField
                 }
-            } else {
-                password[i - pwdStart] = (char) decodedCred[i];
-                decodedCred[i] = '*';
-                // this is the pwd value that will be available later in HttpField
-            }
+            })
+        ).forEach(c -> set(credStart + s.outi++, (byte) (char) c));
+        // not sure whether the reencoded Cred has the same length of the encoded Cred
+        while (credStart + s.outi < credEnd) {
+            set(credStart + s.outi++, (byte) ' ');
         }
-        byte[] reEncodedCred = Base64.getEncoder().encode(decodedCred);
-        // not sure whether "reEncodedCred" has the same length of "encodedCred"
-        for (int i = 0 ; i < encodedCred.length ; i++) {
-            encodedCred[i] = ' '; // clean intermediate data
-            byte b = ' '; // fill with blanks if "reEncodedCred" was too short
-            if (i < reEncodedCred.length) {
-                b = reEncodedCred[i];
-            }
-            set(credStart + i, b);
+        if (s.password.length > s.p) {
+            // adjust size
+            char[] pwd = Arrays.copyOf(s.password, s.p);
+            Arrays.fill(s.password, ' ');
+            s.password = pwd;
         }
         debug("HTTP Headers successfully parsed");
         // now, we have it, and the buffer is filled with "*****" instead
-        Password pwd = passwordManager.newPassword(password);
-        credentials.withPassword(pwd);
+        Password pwd = passwordManager.newPassword(s.password);
+        Credentials credentials = Credentials.fromUserPassword(s.user.toString(), pwd);
         return credentials;
     }
 
