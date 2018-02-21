@@ -5,7 +5,9 @@ package ml.alternet.security.binary;
  *
  * @author Philippe Poulard
  */
-public class LittleEndian {
+public final class LittleEndian {
+
+    private LittleEndian() { }
 
     public static int readInt(final byte[] b, int off) {
         int v0

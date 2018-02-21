@@ -2,11 +2,11 @@ package ml.alternet.security.auth.hashers;
 
 import java.util.function.Supplier;
 
+import ml.alternet.encode.BytesEncoder;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.CryptParts;
 import ml.alternet.security.auth.hasher.MessageHasher;
 import ml.alternet.security.auth.hasher.UnixCryptHasher;
-import ml.alternet.security.binary.BytesEncoder;
 
 /**
  * Unix algorithms.

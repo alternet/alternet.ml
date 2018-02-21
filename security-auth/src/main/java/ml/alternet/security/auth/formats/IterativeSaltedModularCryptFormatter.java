@@ -1,9 +1,9 @@
 package ml.alternet.security.auth.formats;
 
+import ml.alternet.encode.BytesEncoding;
 import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
-import ml.alternet.security.binary.BytesEncoding;
 
 /**
  * <tt>password</tt> -&gt; <tt>$5$rounds=80000$wnsT7Yr92oJoP28r$cKhJImk5mfuSKV9b3mumNzlbstFUplKtQXXMo4G6Ep5</tt>

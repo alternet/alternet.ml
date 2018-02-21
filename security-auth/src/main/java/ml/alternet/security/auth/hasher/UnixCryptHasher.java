@@ -4,6 +4,8 @@ import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 
+import ml.alternet.encode.BytesEncoder;
+import ml.alternet.encode.BytesEncoding;
 import ml.alternet.security.Password;
 import ml.alternet.security.algorithms.UnixCrypt;
 import ml.alternet.security.auth.Credentials;
@@ -12,8 +14,6 @@ import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.SaltedParts;
 import ml.alternet.security.auth.formats.CryptFormatter;
 import ml.alternet.security.auth.formats.UnixCryptFormat;
-import ml.alternet.security.binary.BytesEncoder;
-import ml.alternet.security.binary.BytesEncoding;
 import ml.alternet.security.binary.SafeBuffer;
 
 /**

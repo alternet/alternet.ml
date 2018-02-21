@@ -1,4 +1,4 @@
-package ml.alternet.security.binary;
+package ml.alternet.encode;
 
 import java.util.Iterator;
 import java.util.PrimitiveIterator.OfInt;
@@ -26,7 +26,9 @@ public enum BytesEncoder implements BytesEncoding {
     /** Represent bytes in base 64 string, without padding. */
     base64_no_padding(new Base64(ValueSpace.base64, Base64.PaddingMode.NO_PADDING)),
 
-    /** Adapted base 64 represent bytes in base 64 string, except that it uses . instead of +, and omits trailing padding = and whitespace. */
+    /** Adapted base 64 represent bytes in base 64 string, except that it uses . instead of +,
+     * and omits trailing padding = and whitespace.
+     */
     abase64(new Base64(ValueSpace.abase64, Base64.PaddingMode.NO_PADDING)),
 
     /** Represent bytes in BCrypt's base 64 string. */
@@ -41,10 +43,10 @@ public enum BytesEncoder implements BytesEncoding {
      */
     h64be(new Base64(ValueSpace.h64, Base64.PaddingMode.NO_PADDING_SKIP_HIGH_BITS)),
 
-    /** Represent bytes in uppercase hexa string. */
+    /** Represent bytes in uppercase hexa string (however decoding works with any case). */
     HEXA(new Hexa(true)),
 
-    /** Represent bytes in lowercase hexa string. */
+    /** Represent bytes in lowercase hexa string (however decoding works with any case). */
     hexa(new Hexa(false)),
 
     /**

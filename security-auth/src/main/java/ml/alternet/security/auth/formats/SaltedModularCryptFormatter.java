@@ -1,9 +1,9 @@
 package ml.alternet.security.auth.formats;
 
+import ml.alternet.encode.BytesEncoding;
 import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.SaltedParts;
-import ml.alternet.security.binary.BytesEncoding;
 import ml.alternet.util.StringUtil;
 
 /**

@@ -1,14 +1,14 @@
-package ml.alternet.security.binary;
+package ml.alternet.encode;
 
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import ml.alternet.encode.BytesEncoder.Base64;
+import ml.alternet.encode.BytesEncoder.ValueSpace;
 import ml.alternet.io.IOUtil;
 import ml.alternet.misc.CharRange;
-import ml.alternet.security.binary.BytesEncoder.Base64;
-import ml.alternet.security.binary.BytesEncoder.ValueSpace;
 
 /**
  * Encode/decode bytes to base 64 or hexa strings.
@@ -64,15 +64,6 @@ public interface BytesEncoding {
      */
     Stream<Character> encode(IntStream bytes);
 
-//    public Stream<Character> encode(IntStream bytes) {
-//        int[] ints = bytes.toArray();
-//        byte[] b = new byte[ints.length];
-//        for (int i = 0; i < ints.length; i++) {
-//            b[i] = (byte) ints[i];
-//        }
-//        return encode(b).chars().mapToObj(i -> (Character) (char) i);
-//    }
-
     /**
      * Decode a string representation of bytes to bytes
      *
@@ -109,16 +100,6 @@ public interface BytesEncoding {
       * @return The bytes.
       */
     IntStream decode(Stream<Character> data);
-
-//    public IntStream decode(Stream<Character> data) {
-//        byte[] bytes = decode(
-//                data.collect(
-//                        StringBuilder::new,
-//                        (sb, c) -> sb.append((char) c),
-//                        StringBuilder::append).toString()
-//                );
-//        return IntStream.range(0, bytes.length).map(i -> bytes[i]);
-//    }
 
     /**
      * Return the name of the encoding.

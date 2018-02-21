@@ -3,6 +3,7 @@ package ml.alternet.security.auth.hasher;
 import java.security.InvalidAlgorithmParameterException;
 import java.util.logging.Logger;
 
+import ml.alternet.encode.BytesEncoding;
 import ml.alternet.misc.Thrower;
 import ml.alternet.security.algorithms.PBKDF2;
 import ml.alternet.security.auth.Credentials;
@@ -12,7 +13,6 @@ import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
 import ml.alternet.security.auth.formats.CryptFormatter;
 import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
-import ml.alternet.security.binary.BytesEncoding;
 
 /**
  * A slightly modified PBKDF2 hasher, that erase intermediate data.

@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import javax.inject.Singleton;
 
+import ml.alternet.encode.BytesEncoding;
 import ml.alternet.security.Password;
 import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.CryptFormat;
@@ -13,7 +14,6 @@ import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.CryptParts;
 import ml.alternet.security.auth.hasher.HasherBase;
 import ml.alternet.security.binary.SafeBuffer;
-import ml.alternet.security.binary.BytesEncoding;
 
 /**
  * A fallback format for passwords stored in plain text ;

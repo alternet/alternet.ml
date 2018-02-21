@@ -23,6 +23,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import ml.alternet.encode.BytesEncoder;
 import ml.alternet.misc.CharRange.BoundRange;
 import ml.alternet.misc.CharRange.Reversible;
 import ml.alternet.misc.CharRange.UnboundRange;
@@ -137,7 +138,7 @@ class CharRange$ {
             return range.union(this);
         }
 
-        private static final char[] HEXES = "0123456789abcdef".toCharArray();
+        private static final char[] HEXES = BytesEncoder.ValueSpace.hexa.get();
 
         public static StringBuilder append(StringBuilder buf, int c) {
             if (Character.isISOControl(c)) {

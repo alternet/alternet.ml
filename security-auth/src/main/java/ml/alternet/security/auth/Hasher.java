@@ -11,13 +11,13 @@ import java.util.stream.Collectors;
 
 import ml.alternet.discover.DiscoveryService;
 import ml.alternet.discover.LookupKey;
+import ml.alternet.encode.BytesEncoder;
+import ml.alternet.encode.BytesEncoding;
 import ml.alternet.misc.Thrower;
 import ml.alternet.misc.WtfException;
 import ml.alternet.security.Password;
 import ml.alternet.security.auth.crypt.CryptParts;
 import ml.alternet.security.auth.formats.CryptFormatter;
-import ml.alternet.security.binary.BytesEncoder;
-import ml.alternet.security.binary.BytesEncoding;
 
 /**
  * Computes/checks a password to/with a crypt.

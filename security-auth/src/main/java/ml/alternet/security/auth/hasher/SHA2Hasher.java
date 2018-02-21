@@ -3,6 +3,8 @@ package ml.alternet.security.auth.hasher;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 
+import ml.alternet.encode.BytesEncoder;
+import ml.alternet.encode.BytesEncoding;
 import ml.alternet.security.algorithms.SHA2Crypt;
 import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.CryptFormat;
@@ -10,8 +12,6 @@ import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
 import ml.alternet.security.auth.formats.CryptFormatter;
 import ml.alternet.security.auth.formats.ModularCryptFormat;
-import ml.alternet.security.binary.BytesEncoder;
-import ml.alternet.security.binary.BytesEncoding;
 import ml.alternet.util.EnumUtil;
 
 /**

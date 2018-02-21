@@ -2,6 +2,7 @@ package ml.alternet.security.auth.hashers;
 
 import java.util.function.Supplier;
 
+import ml.alternet.encode.BytesEncoder;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.Hasher.Builder;
 import ml.alternet.security.auth.formats.CurlyBracesCryptFormat;
@@ -10,7 +11,6 @@ import ml.alternet.security.auth.formats.CurlyBracesCryptFormat.CryptFormatterWr
 import ml.alternet.security.auth.hasher.MessageHasher;
 import ml.alternet.security.auth.hasher.PBKDF2Hasher;
 import ml.alternet.security.auth.hasher.SaltedMessageHasher;
-import ml.alternet.security.binary.BytesEncoder;
 import ml.alternet.util.EnumUtil;
 
 /**

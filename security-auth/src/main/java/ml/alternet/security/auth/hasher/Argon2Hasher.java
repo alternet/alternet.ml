@@ -6,6 +6,7 @@ import java.util.Arrays;
 
 import ml.alternet.discover.DiscoveryService;
 import ml.alternet.discover.LookupKey;
+import ml.alternet.encode.BytesEncoding;
 import ml.alternet.misc.Thrower;
 import ml.alternet.security.Password;
 import ml.alternet.security.algorithms.Argon2;
@@ -16,7 +17,6 @@ import ml.alternet.security.auth.crypt.CryptParts;
 import ml.alternet.security.auth.crypt.SaltedParts;
 import ml.alternet.security.auth.formats.CryptFormatter;
 import ml.alternet.security.auth.formats.ModularCryptFormat;
-import ml.alternet.security.binary.BytesEncoding;
 import ml.alternet.security.binary.SafeBuffer;
 import ml.alternet.util.StringUtil;
 

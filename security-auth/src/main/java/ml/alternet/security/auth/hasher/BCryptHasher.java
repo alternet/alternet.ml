@@ -6,6 +6,8 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
+import ml.alternet.encode.BytesEncoder;
+import ml.alternet.encode.BytesEncoding;
 import ml.alternet.misc.Thrower;
 import ml.alternet.security.Password;
 import ml.alternet.security.algorithms.BCrypt;
@@ -16,8 +18,6 @@ import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
 import ml.alternet.security.auth.formats.CryptFormatter;
 import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
-import ml.alternet.security.binary.BytesEncoder;
-import ml.alternet.security.binary.BytesEncoding;
 import ml.alternet.security.binary.SafeBuffer;
 import ml.alternet.util.StringUtil;
 

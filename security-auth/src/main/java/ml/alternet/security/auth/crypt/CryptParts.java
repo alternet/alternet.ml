@@ -2,11 +2,11 @@ package ml.alternet.security.auth.crypt;
 
 import java.util.Optional;
 
+import ml.alternet.encode.BytesEncoding;
 import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.formats.CryptFormatter;
 import ml.alternet.security.auth.hashers.UnixHashers;
-import ml.alternet.security.binary.BytesEncoding;
 
 /**
  * Base class for crypt parts.
