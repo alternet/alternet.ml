@@ -281,12 +281,9 @@ In web applications, a password can be sent to the server :
 * For authentication (with HTTP Basic or Form authentications)
 * For other specific process, such as the registration of a new user account, or for changing a user password.
 
-Note that sending a form with a password (for login, for registration, for changing a
-user password or for any other purpose) have to be performed with HTTP POST ; sending
-a password with HTTP GET is **unsecure** and therefore not available with **Alternet Security**.
+Note that sending a form with a password (for login, for registration, for changing a user password or for any other purpose) have to be performed with HTTP POST ; sending a password with HTTP GET is **unsecure** and therefore not available with **Alternet Security**.
 
-The Web application have to be configured (`web.xml` file) with values that takes
-the shape of a path, as shown follow :
+The Web application have to be configured (`web.xml` file) with values that takes the shape of a path, as shown follow :
 
 ```XML
 <context-param>
@@ -412,7 +409,7 @@ The [Jetty tests](../security-jetty-9.1/surefire-report.html) show how a passwor
     <version>1.0</version>
 </dependency>]]>
 </pre>
-<p>Jetty 9.3 :</p>
+<p>Jetty 9.3 : (❌ not yet available)</p>
 <pre class="prettyprint"><![CDATA[
 <dependency>
     <groupId>ml.alternet</groupId>
@@ -437,9 +434,7 @@ The [Jetty tests](../security-jetty-9.1/surefire-report.html) show how a passwor
 
 Configuring Jetty is very simple :
 
-* set a parameter to the Web app context to tell
-which paths and form fields to intercept in the HTTP requests
-(like in the `web.xml` configuration file, see above),
+* set a parameter to the Web app context to tell which paths and form fields to intercept in the HTTP requests (like in the `web.xml` configuration file, see above),
 * create a [`AltHttpConnectionFactory`](../security-jetty-9.1/apidocs/ml/alternet/security/web/jetty/AltHttpConnectionFactory.html)
 * and bound it to the Jetty server connector.
 
@@ -559,13 +554,13 @@ ldap {
 };
 ```
 
-If `forceBindingLogin="true"`, it means that the LDAP server will perform the check
-of the credentials ; in that case the `ml.alternet.security.auth.CryptFormat` parameter may be omitted.
+If `forceBindingLogin="true"`, it means that the LDAP server will perform the check of the credentials ; in that case the `ml.alternet.security.auth.CryptFormat` parameter may be omitted.
 
-If `forceBindingLogin="false"`, it means that Jetty will retrieve the hash from the
-LDAP server and perform the check of the credentials ; in that case the `ml.alternet.security.auth.CryptFormat` parameter will contain a comma-separated
-list of concrete classes. Note that `ml.alternet.security.auth.formats.PlainTextCryptFormat` is used for plain text
-passwords stored not hashed in the LDAP server and **MUST NOT** be used in production environments.
+If `forceBindingLogin="false"`, it means that Jetty will retrieve the hash from the LDAP server and perform the check of the credentials ; in that case the `ml.alternet.security.auth.CryptFormat` parameter will contain a comma-separated list of concrete classes. Note that `ml.alternet.security.auth.formats.PlainTextCryptFormat` is used for plain text passwords stored not hashed in the LDAP server and **MUST NOT** be used in production environments.
+
+<div class="alert alert-warning" role="alert">
+It is certainly a good practice to let the <b>Web server</b> perform the check, instead of sending the clear password to the <b>LDAP server</b> : even if the communication between them was made through a secure channel, the story about sending/receiving the password is repeated and several clear representations of the password (characters, bytes, sometimes duplicated) may be created on both sides, which creates a flaw in the global system. Conversely, sending a hash from the LDAP server to the Web server is less risky.
+</div>
 
 <a name="tomcat"></a>
 
