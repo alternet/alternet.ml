@@ -45,13 +45,7 @@ public class PBKDF2 {
         try (Password.Clear pwd = password.getClearCopy()) {
             // the encoder take care of erasing intermediate data if necessary
             ByteBuffer bb = SafeBuffer.encode(CharBuffer.wrap(pwd.get()), StandardCharsets.UTF_8);
-            if (bb.limit() == bb.capacity()) {
-                pBytes = bb.array();
-            } else {
-                pBytes = new byte[bb.limit()];
-                bb.get(pBytes);
-                Arrays.fill(bb.array(), (byte) 0);
-            }
+            pBytes = SafeBuffer.getData(bb);
             final byte[] passwordBytes = pBytes;
             // HmacSHA1, HmacSHA224, HmacSHA256, HmacSHA384, HmacSHA512
             final Mac mac = Mac.getInstance(macAlgorith);

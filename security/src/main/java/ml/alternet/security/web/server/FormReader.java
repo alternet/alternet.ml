@@ -230,9 +230,9 @@ public abstract class FormReader {
      * @return The byte value of the character 0-16.
      */
     public static int convertHexDigit( int c ) {
-        int d= ((c & 0x1f) + ((c >> 6) * 0x19) - 0x10);
-        if (d<0 || d>15) {
-            throw new NumberFormatException("!hex "+c);
+        int d = ((c & 0x1f) + ((c >> 6) * 0x19) - 0x10);
+        if (d < 0 || d > 15) {
+            throw new NumberFormatException("!hex " + c);
         }
         return d;
     }

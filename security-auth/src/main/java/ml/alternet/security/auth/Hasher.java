@@ -221,53 +221,62 @@ public interface Hasher extends Credentials.Checker {
         }
 
         /**
-         * The standard property name "scheme"
+         * The standard property names
+         *
+         * @author Philippe Poulard
          */
-        public static String SCHEME_PROPERTY_NAME = "scheme";
+        public enum Field {
 
-        /**
-         * The standard property name "algorithm"
-         */
-        public static String ALGORITHM_PROPERTY_NAME = "algorithm";
+            /**
+             * The standard property name "scheme"
+             */
+            scheme,
 
-        /**
-         * The standard property name "variant"
-         */
-        public static String VARIANT_PROPERTY_NAME = "variant";
+            /**
+             * The standard property name "algorithm"
+             */
+            algorithm,
 
-        /**
-         * The standard property name "charset" ; default is "UTF-8"
-         */
-        public static String CHARSET_PROPERTY_NAME = "charset";
+            /**
+             * The standard property name "variant"
+             */
+            variant,
 
-        /**
-         * The standard property name "saltByteSize" ; the value must be an Integer
-         */
-        public static final String SALT_BYTE_SIZE_PROPERTY_NAME = "saltByteSize";
+            /**
+             * The standard property name "charset" ; default is "UTF-8"
+             */
+            charset,
 
-        /**
-         * The standard property name "hashByteSize" ; the value must be an Integer
-         */
-        public static final String HASH_BYTE_SIZE_PROPERTY_NAME = "hashByteSize";
+            /**
+             * The standard property name "saltByteSize" ; the value must be an Integer
+             */
+            saltByteSize,
 
-        /**
-         * The standard property name "iterations" ; the value must be an Integer
-         */
-        public static final String ITERATIONS_PROPERTY_NAME = "iterations";
+            /**
+             * The standard property name "hashByteSize" ; the value must be an Integer
+             */
+            hashByteSize,
 
-        /**
-         * The standard property name "encoding" ; the value must be "base64", "hexa",
-         * "auto" (base64 for encoding, and automatic detection for decoding) or
-         * "none" (to get the UTF-8 bytes).
-         */
-        public static final String ENCODING_PROPERTY_NAME = "encoding";
+            /**
+             * The standard property name "iterations" ; the value must be an Integer
+             */
+            iterations,
 
-        /**
-         * The standard property name "logRounds" (for BCrypt only) ;
-         * the log2 of the number of rounds of hashing to apply - the work
-         * factor therefore increases as 2**log_rounds.
-         */
-        public static final String LOG_ROUNDS_PROPERTY_NAME = "logRounds";
+            /**
+             * The standard property name "encoding" ; the value must be "base64", "hexa",
+             * "auto" (base64 for encoding, and automatic detection for decoding) or
+             * "none" (to get the UTF-8 bytes).
+             */
+            encoding,
+
+            /**
+             * The standard property name "logRounds" (for BCrypt only) ;
+             * the log2 of the number of rounds of hashing to apply - the work
+             * factor therefore increases as 2**log_rounds.
+             */
+            logRounds
+
+        }
 
         /**
          * Build a concrete configured hasher.
@@ -347,30 +356,12 @@ public interface Hasher extends Credentials.Checker {
         Builder setSaltByteSize(int saltByteSize);
 
         /**
-         * Set the default salt byte size.
-         *
-         * @return This builder.
-         *
-         * @see HasherBuilder#DEFAULT_SALT_BYTE_SIZE
-         */
-        Builder setSaltByteSize();
-
-        /**
          * Setter for the hash byte size.
          *
          * @param hashByteSize Value.
          * @return This builder.
          */
         Builder setHashByteSize(int hashByteSize);
-
-        /**
-         * Set the default hash byte size.
-         *
-         * @return This builder.
-         *
-         * @see HasherBuilder#DEFAULT_HASH_BYTE_SIZE
-         */
-        Builder setHashByteSize();
 
         /**
          * Setter for iterations count.
@@ -391,23 +382,6 @@ public interface Hasher extends Credentials.Checker {
         Builder setLogRounds(int logRounds);
 
         /**
-         * Set the default log rounds for BCrypt.
-         * @return This builder.
-         *
-         * @see HasherBuilder#DEFAULT_GENSALT_LOG2_ROUNDS
-         */
-        Builder setLogRounds();
-
-        /**
-         * Set the default iterations count.
-         *
-         * @return This builder.
-         *
-         * @see HasherBuilder#DEFAULT_ITERATIONS
-         */
-        Builder setIterations();
-
-        /**
          * Setter for encoding.
          *
          * @param encoding non-<code>null</code> encoding.
@@ -418,7 +392,7 @@ public interface Hasher extends Credentials.Checker {
         /**
          * Setter for encoding.
          *
-         * @param encoding encoding.
+         * @param encoding encoding class name.
          * @return This builder.
          * @throws ClassNotFoundException When the encoding class doesn't exist.
          * @throws IllegalAccessException When the encoding class can't be accessed.
@@ -426,14 +400,50 @@ public interface Hasher extends Credentials.Checker {
          */
         Builder setEncoding(String encoding) throws InstantiationException, IllegalAccessException, ClassNotFoundException;
 
+        /**
+         * Setter for encoding, by encoder name.
+         *
+         * The name is looked up in {@link BytesEncoder}, and if not found
+         * with the lookup mechanism for the {@link BytesEncoding} class
+         * and the given encoder name as the variant.
+         *
+         * @param encoder The name of the encoder.
+         * @return This builder.
+         *
+         * @see DiscoveryService
+         */
         Builder setEncoder(String encoder);
 
+        /**
+         * Set the hasher class
+         *
+         * @param clazz The hasher class
+         * @return This builder.
+         */
         Builder setClass(Class<? extends Hasher> clazz);
 
+        /**
+         * Set the hasher class
+         *
+         * @param clazz The hasher class name
+         * @return This builder.
+         */
         Builder setClass(String clazz) throws ClassNotFoundException;
 
+        /**
+         * Set the crypt formatter
+         *
+         * @param cryptFormatter The crypt formatter
+         * @return This builder.
+         */
         Builder setFormatter(CryptFormatter<? extends CryptParts> cryptFormatter);
 
+        /**
+         * Replace the current configuration by a copy the given configuration
+         *
+         * @param configuration The configuration to set
+         * @return This builder.
+         */
         Builder setConfiguration(Configuration configuration);
 
         /**
@@ -587,12 +597,6 @@ public interface Hasher extends Credentials.Checker {
     @LookupKey(forClass = Builder.class, byDefault = true)
     public static class HasherBuilder implements Builder, Configuration {
 
-        public static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
-        public static final int DEFAULT_SALT_BYTE_SIZE = 24;
-        public static final int DEFAULT_HASH_BYTE_SIZE = 24;
-        public static final int DEFAULT_ITERATIONS = 1000;
-        public static final int DEFAULT_GENSALT_LOG2_ROUNDS = 10;
-
         Conf conf = new Conf();
 
         static class Conf implements Configuration, Cloneable {
@@ -602,7 +606,7 @@ public interface Hasher extends Credentials.Checker {
             private String scheme;
             private String algorithm;
             private String variant;
-            private Charset charset = DEFAULT_CHARSET;
+            private Charset charset = StandardCharsets.UTF_8;
             private BytesEncoding encoding;
             private int iterations = -1;
             private int saltByteSize = -1;
@@ -674,28 +678,28 @@ public interface Hasher extends Credentials.Checker {
             public Properties asProperties() {
                 Properties props = new Properties();
                 if (this.saltByteSize != -1) {
-                    props.put(SALT_BYTE_SIZE_PROPERTY_NAME, this.saltByteSize);
+                    props.put(Field.saltByteSize.name(), this.saltByteSize);
                 }
                 if (this.hashByteSize != -1) {
-                    props.put(HASH_BYTE_SIZE_PROPERTY_NAME, this.hashByteSize);
+                    props.put(Field.hashByteSize.name(), this.hashByteSize);
                 }
                 if (this.iterations != -1) {
-                    props.put(ITERATIONS_PROPERTY_NAME, this.iterations);
+                    props.put(Field.iterations.name(), this.iterations);
                 }
                 if (this.logRounds != -1) {
-                    props.put(LOG_ROUNDS_PROPERTY_NAME, this.logRounds);
+                    props.put(Field.logRounds.name(), this.logRounds);
                 }
                 if (this.scheme != null) {
-                    props.setProperty(SCHEME_PROPERTY_NAME, this.scheme);
+                    props.setProperty(Field.scheme.name(), this.scheme);
                 }
                 if (this.algorithm != null) {
-                    props.setProperty(ALGORITHM_PROPERTY_NAME, this.algorithm);
+                    props.setProperty(Field.algorithm.name(), this.algorithm);
                 }
                 if (this.variant != null) {
-                    props.setProperty(VARIANT_PROPERTY_NAME, this.variant);
+                    props.setProperty(Field.variant.name(), this.variant);
                 }
-                props.put(ENCODING_PROPERTY_NAME, this.encoding);
-                props.setProperty(CHARSET_PROPERTY_NAME, this.charset.name());
+                props.put(Field.encoding.name(), this.encoding);
+                props.setProperty(Field.charset.name(), this.charset.name());
                 props.setProperty(Builder.class.getCanonicalName(), builder.getName());
                 props.setProperty(Hasher.class.getCanonicalName(), clazz.getName());
                 props.setProperty(CryptFormatter.class.getCanonicalName(), formatter.getClass().getName());
@@ -805,12 +809,6 @@ public interface Hasher extends Credentials.Checker {
         }
 
         @Override
-        public Builder setSaltByteSize() {
-            this.conf.saltByteSize = DEFAULT_SALT_BYTE_SIZE;
-            return this;
-        }
-
-        @Override
         public int getHashByteSize() {
             return this.conf.hashByteSize;
         }
@@ -822,12 +820,6 @@ public interface Hasher extends Credentials.Checker {
         }
 
         @Override
-        public Builder setHashByteSize() {
-            this.conf.hashByteSize = DEFAULT_HASH_BYTE_SIZE;
-            return this;
-        }
-
-        @Override
         public int getIterations() {
             return this.conf.iterations;
         }
@@ -835,12 +827,6 @@ public interface Hasher extends Credentials.Checker {
         @Override
         public Builder setIterations(int iterations) {
             this.conf.iterations = iterations;
-            return this;
-        }
-
-        @Override
-        public Builder setIterations() {
-            this.conf.iterations = DEFAULT_ITERATIONS;
             return this;
         }
 
@@ -859,12 +845,6 @@ public interface Hasher extends Credentials.Checker {
         @Override
         public Builder setLogRounds(int logRounds) {
             this.conf.logRounds = logRounds;
-            return this;
-        }
-
-        @Override
-        public Builder setLogRounds() {
-            this.conf.logRounds = DEFAULT_GENSALT_LOG2_ROUNDS;
             return this;
         }
 
@@ -925,50 +905,50 @@ public interface Hasher extends Credentials.Checker {
         public Builder configure(Properties properties) throws InvalidAlgorithmParameterException {
             int p = 0;
             try {
-                Integer sbs = (Integer) properties.get(SALT_BYTE_SIZE_PROPERTY_NAME);
+                Integer sbs = (Integer) properties.get(Field.saltByteSize.name());
                 if (sbs != null) {
                     p++;
                     setSaltByteSize(sbs.intValue());
                 }
             } catch (ClassCastException e) {
-                throw new InvalidAlgorithmParameterException(SALT_BYTE_SIZE_PROPERTY_NAME
+                throw new InvalidAlgorithmParameterException(Field.saltByteSize.name()
                         + " must be an integer", e);
             }
             try {
-                Integer hbs = (Integer) properties.get(HASH_BYTE_SIZE_PROPERTY_NAME);
+                Integer hbs = (Integer) properties.get(Field.hashByteSize.name());
                 if (hbs != null) {
                     p++;
                     setHashByteSize(hbs.intValue());
                 }
             } catch (ClassCastException e) {
-                throw new InvalidAlgorithmParameterException(HASH_BYTE_SIZE_PROPERTY_NAME
+                throw new InvalidAlgorithmParameterException(Field.hashByteSize.name()
                         + " must be an integer", e);
             }
             try {
-                Integer i = (Integer) properties.get(ITERATIONS_PROPERTY_NAME);
+                Integer i = (Integer) properties.get(Field.iterations.name());
                 if (i != null) {
                     p++;
                     if (i <= 0 ) {
-                        throw new InvalidAlgorithmParameterException(ITERATIONS_PROPERTY_NAME
+                        throw new InvalidAlgorithmParameterException(Field.iterations.name()
                                 + " must be greater than 0.");
                     }
                     setIterations(i.intValue());
                 }
             } catch (ClassCastException e) {
-                throw new InvalidAlgorithmParameterException(ITERATIONS_PROPERTY_NAME
+                throw new InvalidAlgorithmParameterException(Field.iterations.name()
                         + " must be an integer", e);
             }
             try {
-                Integer lr = (Integer) properties.get(LOG_ROUNDS_PROPERTY_NAME);
+                Integer lr = (Integer) properties.get(Field.logRounds.name());
                 if (lr != null) {
                     p++;
                     setLogRounds(lr.intValue());
                 }
             } catch (ClassCastException e) {
-                throw new InvalidAlgorithmParameterException(LOG_ROUNDS_PROPERTY_NAME
+                throw new InvalidAlgorithmParameterException(Field.logRounds.name()
                         + " must be an integer", e);
             }
-            String encoding = (String) properties.get(ENCODING_PROPERTY_NAME);
+            String encoding = (String) properties.get(Field.encoding.name());
             if (encoding != null) {
                 p++;
                 this.conf.encoding = BytesEncoder.valueOf(encoding);
@@ -989,23 +969,24 @@ public interface Hasher extends Credentials.Checker {
          * @return The default list contains all the standard
          *      properties defined in Hasher.
          *
-         * @see #ALGORITHM_PROPERTY_NAME
-         * @see #CHARSET_PROPERTY_NAME
-         * @see #SALT_BYTE_SIZE_PROPERTY_NAME
-         * @see #HASH_BYTE_SIZE_PROPERTY_NAME
-         * @see #ITERATIONS_PROPERTY_NAME
-         * @see #ENCODING_PROPERTY_NAME
-         * @see #LOG_ROUNDS_PROPERTY_NAME
+         * @see Field#algorithm
+         * @see Field#charset
+         * @see Field#saltByteSize
+         * @see Field#hashByteSize
+         * @see Field#iterations
+         * @see Field#encoding
+         * @see Field#logRounds
          */
         protected List<String> getPropertyNames() {
             return Arrays.asList(
-                    ALGORITHM_PROPERTY_NAME,
-                    CHARSET_PROPERTY_NAME,
-                    SALT_BYTE_SIZE_PROPERTY_NAME,
-                    HASH_BYTE_SIZE_PROPERTY_NAME,
-                    ITERATIONS_PROPERTY_NAME,
-                    ENCODING_PROPERTY_NAME,
-                    LOG_ROUNDS_PROPERTY_NAME);
+                Field.algorithm.name(),
+                Field.charset.name(),
+                Field.saltByteSize.name(),
+                Field.hashByteSize.name(),
+                Field.iterations.name(),
+                Field.encoding.name(),
+                Field.logRounds.name()
+            );
         }
 
         @Override

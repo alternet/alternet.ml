@@ -78,16 +78,16 @@ public abstract class BasicAuthorizationBuffer {
     public abstract void debug(String msg);
 
     // states of the parser
-    public static final int READ_AUTH = 0;
-    public static final int READ_UNTIL_CRLF = 1;
-    public static final int READ_OWS_BASIC = 2;
-    public static final int READ_BASIC = 3;
-    public static final int READ_CRED = 4;
-    public static final int READ_LF = 5;
-    public static final int READ_LAST_LF = 6;
+    static final int READ_AUTH = 0;
+    static final int READ_UNTIL_CRLF = 1;
+    static final int READ_OWS_BASIC = 2;
+    static final int READ_BASIC = 3;
+    static final int READ_CRED = 4;
+    static final int READ_LF = 5;
+    static final int READ_LAST_LF = 6;
 
-    private static final String AUTHORIZATION = "authorization:";
-    private static final String BASIC = "basic ";
+    static final String AUTHORIZATION = "authorization:";
+    static final String BASIC = "basic ";
 
     int auth = 0;
     int basicPos = 0;

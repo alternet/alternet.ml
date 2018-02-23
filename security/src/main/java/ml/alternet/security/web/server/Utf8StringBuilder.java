@@ -24,11 +24,11 @@ public class Utf8StringBuilder extends Utf8Appendable {
         char[] c;
         int len = 0;
 
-        public SafeAppendable(int capacity) {
+        SafeAppendable(int capacity) {
             c = new char[Math.max(capacity, 32)];
         }
 
-        public SafeAppendable() {
+        SafeAppendable() {
             this(32);
         }
 
@@ -97,13 +97,19 @@ public class Utf8StringBuilder extends Utf8Appendable {
 
     }
 
-    public Utf8StringBuilder()
-    {
+    /**
+     * Create an Utf8StringBuilder
+     */
+    public Utf8StringBuilder() {
         super(new SafeAppendable());
     }
 
-    public Utf8StringBuilder(int capacity)
-    {
+    /**
+     * Create an Utf8StringBuilder
+     *
+     * @param capacity The initial capacity
+     */
+    public Utf8StringBuilder(int capacity) {
         super(new SafeAppendable(capacity));
     }
 
@@ -125,31 +131,38 @@ public class Utf8StringBuilder extends Utf8Appendable {
     }
 
     @Override
-    public int length()
-    {
+    public int length() {
         return ((SafeAppendable) _appendable).length();
     }
 
     @Override
-    public void reset()
-    {
+    public void reset() {
         super.reset();
         ((SafeAppendable) _appendable).reset();
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         checkState();
         return ((SafeAppendable) _appendable).toString();
     }
 
+    /**
+     * Append some chars
+     *
+     * @param chars The chars to append
+     */
     public void append(char[] chars) {
         ((SafeAppendable) _appendable).append(chars);
     }
 
-    public void append(char replacement) {
-        ((SafeAppendable) _appendable).append(replacement);
+    /**
+     * Append a single char
+     *
+     * @param c The char to append
+     */
+    public void append(char c) {
+        ((SafeAppendable) _appendable).append(c);
     }
 
 }

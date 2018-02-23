@@ -13,7 +13,9 @@ import ml.alternet.security.auth.hasher.BCryptHasher;
 import ml.alternet.security.auth.hasher.MD5BasedHasher;
 import ml.alternet.security.auth.hasher.MessageHasher;
 import ml.alternet.security.auth.hasher.PBKDF2Hasher;
+import ml.alternet.security.auth.hasher.PBKDF1Hasher;
 import ml.alternet.security.auth.hasher.SHA2Hasher;
+import ml.alternet.security.auth.hasher.SaltedMessageHasher;
 import ml.alternet.util.EnumUtil;
 
 /**
@@ -27,8 +29,6 @@ import ml.alternet.util.EnumUtil;
  * @author Philippe Poulard
  */
 public enum ModularCryptFormatHashers implements Supplier<Hasher> {
-
-//    __("_"),
 
     /**
      * The Apache variant (apr1) of the MD5 based BSD password algorithm 1.
@@ -52,12 +52,8 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
     $1$ {
         @Override
         public Hasher get() {
-            return Hasher.Builder.builder()
-                .setClass(MD5BasedHasher.class)
-                .setScheme("MD5")
+            return $apr1$.get().getBuilder()
                 .setVariant("1")
-                .setEncoding(BytesEncoder.h64be)
-                .setFormatter(MD5BasedHasher.MD5CRYPT_FORMATTER)
                 .build();
         }
     },
@@ -75,7 +71,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
                 .setEncoding(BytesEncoder.bcrypt64)
                 .setFormatter(BCryptHasher.BCRYPT_FORMATTER)
                 .setSaltByteSize(BCrypt.BCRYPT_SALT_LEN)
-                .setLogRounds(Hasher.HasherBuilder.DEFAULT_GENSALT_LOG2_ROUNDS)
+                .setLogRounds(10)
                 .build();
         }
     },
@@ -88,14 +84,8 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
     $2a$ {
         @Override
         public Hasher get() {
-            return Hasher.Builder.builder()
-                .setClass(BCryptHasher.class)
-                .setScheme("Blowfish")
+            return $2$.get().getBuilder()
                 .setVariant("2a")
-                .setEncoding(BytesEncoder.bcrypt64)
-                .setFormatter(BCryptHasher.BCRYPT_FORMATTER)
-                .setSaltByteSize(BCrypt.BCRYPT_SALT_LEN)
-                .setLogRounds(Hasher.HasherBuilder.DEFAULT_GENSALT_LOG2_ROUNDS)
                 .build();
         }
     },
@@ -158,6 +148,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
                 .build();
         }
     },
+
     /**
      * The SHA-512 hash algorithms in a libc6 crypt() compatible way.
      *
@@ -166,13 +157,10 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
     $6$ {
         @Override
         public Hasher get() {
-            return Hasher.Builder.builder()
-                .setClass(SHA2Hasher.class)
+            return $5$.get().getBuilder()
                 .setScheme("SHA-512")
                 .setVariant("6")
                 .setAlgorithm("SHA-512")
-                .setEncoding(BytesEncoder.h64be)
-                .setFormatter(SHA2Hasher.SHA2CRYPT_FORMATTER)
                 .build();
         }
     },
@@ -189,9 +177,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
     },
 //    $md5_("$md$,"),
 
-    $sha1$,
-
-    $bcrypt_sha256$("$bcrypt-sha256$") {
+    $bcrypt_sha256$() {
         @Override
         public Hasher get() {
             return $2a$.get().getBuilder()
@@ -201,7 +187,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         }
     },
 
-    $bcrypt_sha512$("$bcrypt-sha512$") {
+    $bcrypt_sha512$() {
         @Override
         public Hasher get() {
             return $2a$.get().getBuilder()
@@ -211,7 +197,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         }
     },
 
-    $pbkdf2_sha1$("$pbkdf2-sha1$") {
+    $pbkdf2_sha1$() {
         @Override
         public Hasher get() {
             return Hasher.Builder.builder()
@@ -227,7 +213,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         }
     },
 
-    $pbkdf2_sha256$("$pbkdf2-sha256$") {
+    $pbkdf2_sha256$() {
         @Override
         public Hasher get() {
             return $pbkdf2_sha1$.get().getBuilder()
@@ -237,7 +223,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         }
     },
 
-    $pbkdf2_sha512$("$pbkdf2-sha512$") {
+    $pbkdf2_sha512$() {
         @Override
         public Hasher get() {
             return $pbkdf2_sha1$.get().getBuilder()
@@ -281,10 +267,8 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         }
     };
 
-    ModularCryptFormatHashers() { }
-
-    ModularCryptFormatHashers(String name) {
-        EnumUtil.replace(this, s -> name);
+    ModularCryptFormatHashers() {
+        EnumUtil.replace(this, s -> s.replace('_', '-'));
     }
 
     @Override

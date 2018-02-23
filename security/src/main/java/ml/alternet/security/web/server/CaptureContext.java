@@ -18,6 +18,8 @@ import ml.alternet.security.web.Passwords;
  * while handling the request for capturing the
  * passwords.
  *
+ * <T> The writable input buffer
+ *
  * @author Philippe Poulard
  */
 public class CaptureContext<T> implements Destroyable {
