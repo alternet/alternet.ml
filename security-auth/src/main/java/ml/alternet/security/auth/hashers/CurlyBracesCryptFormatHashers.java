@@ -5,9 +5,11 @@ import java.util.function.Supplier;
 import ml.alternet.encode.BytesEncoder;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.Hasher.Builder;
-import ml.alternet.security.auth.formats.CurlyBracesCryptFormat;
 import ml.alternet.security.auth.formats.PlainTextCryptFormat;
-import ml.alternet.security.auth.formats.CurlyBracesCryptFormat.CryptFormatterWrapper;
+import ml.alternet.security.auth.formatters.CurlyBracesCryptFormatter;
+import ml.alternet.security.auth.formatters.CurlyBracesCryptFormatterWrapper;
+import ml.alternet.security.auth.formatters.IterativeSaltedCurlyBracesCryptFormatter;
+import ml.alternet.security.auth.formatters.SaltedCurlyBracesCryptFormatter;
 import ml.alternet.security.auth.hasher.MessageHasher;
 import ml.alternet.security.auth.hasher.PBKDF2Hasher;
 import ml.alternet.security.auth.hasher.SaltedMessageHasher;
@@ -32,137 +34,116 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher> {
      *
      * <p>"<tt>password</tt>" -&gt; "<tt>{MD5}X03MO1qnZdYdgyfeuILPmQ==</tt>"</p>
      */
-    MD5 {
-        @Override
-        public Hasher get() {
-            return Hasher.Builder.builder()
-                .setClass(MessageHasher.class)
-                .setScheme("MD5")
-                .setAlgorithm("MD5")
-                .setEncoding(BytesEncoder.base64)
-                .setFormatter(CurlyBracesCryptFormat.CryptFormatter.INSTANCE)
-                .build();
-        }
-    },
+    MD5(
+        Hasher.Builder.builder()
+            .setClass(MessageHasher.class)
+            .setScheme("MD5")
+            .setAlgorithm("MD5")
+            .setEncoding(BytesEncoder.base64)
+            .setFormatter(new CurlyBracesCryptFormatter())
+    ),
 
     /**
      * LDAP’s plain SHA1 format.
      *
      * <p>"<tt>password</tt>" -&gt; "<tt>{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=</tt>"</p>
      */
-    SHA {
-        @Override
-        public Hasher get() {
-            return Hasher.Builder.builder()
-                .setClass(MessageHasher.class)
-                .setScheme("SHA")
-                .setAlgorithm("SHA1")
-                .setEncoding(BytesEncoder.base64)
-                .setFormatter(CurlyBracesCryptFormat.CryptFormatter.INSTANCE)
-                .build();
-        }
-    },
+    SHA(
+        Hasher.Builder.builder()
+            .setClass(MessageHasher.class)
+            .setScheme("SHA")
+            .setAlgorithm("SHA1")
+            .setEncoding(BytesEncoder.base64)
+            .setFormatter(new CurlyBracesCryptFormatter())
+    ),
 
     /**
      * LDAP’s salted MD5 format with 4 bytes salt.
      *
      * <p>"<tt>password</tt>" -&gt; "<tt>{SMD5}jNoSMNY0cybfuBWiaGlFw3Mfi/U=</tt>"</p>
      */
-    SMD5 {
-        @Override
-        public Hasher get() {
-            return Hasher.Builder.builder()
-                .setClass(SaltedMessageHasher.class)
-                .setScheme("SMD5")
-                .setAlgorithm("MD5")
-                .setEncoding(BytesEncoder.base64)
-                .setSaltByteSize(4)
-                .setFormatter(CurlyBracesCryptFormat.SaltedCryptFormatter.INSTANCE)
-                .build();
-        }
-    },
+    SMD5(
+        Hasher.Builder.builder()
+            .setClass(SaltedMessageHasher.class)
+            .setScheme("SMD5")
+            .setAlgorithm("MD5")
+            .setEncoding(BytesEncoder.base64)
+            .setSaltByteSize(4)
+            .setFormatter(new SaltedCurlyBracesCryptFormatter())
+    ),
 
     /**
      * LDAP’s salted SHA1 format with 4 bytes salt.
      *
      * <p>"<tt>password</tt>" -&gt; "<tt>{SSHA}pKqkNr1tq3wtQqk+UcPyA3HnA2NsU5NJ</tt>"</p>
      */
-    SSHA {
-        @Override
-        public Hasher get() {
-            return Hasher.Builder.builder()
-                .setClass(SaltedMessageHasher.class)
-                .setScheme("SSHA")
-                .setAlgorithm("SHA1")
-                .setEncoding(BytesEncoder.base64)
-                .setSaltByteSize(4)
-                .setFormatter(CurlyBracesCryptFormat.SaltedCryptFormatter.INSTANCE)
-                .build();
-        }
-    },
+    SSHA(
+        Hasher.Builder.builder()
+            .setClass(SaltedMessageHasher.class)
+            .setScheme("SSHA")
+            .setAlgorithm("SHA1")
+            .setEncoding(BytesEncoder.base64)
+            .setSaltByteSize(4)
+            .setFormatter(new SaltedCurlyBracesCryptFormatter())
+    ),
 
     /**
      * PBKDF2 with SHA1 algorithm.
      *
      * <p>"<tt>password</tt>" -&gt; "<tt>{PBKDF2}131000$tLbWWssZ45zzfi9FiDEmxA$dQlpmhY4dGvmx4MOK/uOj/WU7Lg</tt>"</p>
      */
-    PBKDF2 {
-        @Override
-        public Hasher get() {
-            return Hasher.Builder.builder()
-                .setClass(PBKDF2Hasher.class)
-                .setScheme("PBKDF2")
-                .setAlgorithm("PBKDF2WithHmacSHA1")
-                .setEncoding(BytesEncoder.abase64)
-                .setSaltByteSize(24)
-                .setHashByteSize(20)
-                .setIterations(29000)
-                .setFormatter(CurlyBracesCryptFormat.IterativeSaltedFormatter.INSTANCE)
-                .build();
-        }
-    },
+    PBKDF2(
+        Hasher.Builder.builder()
+            .setClass(PBKDF2Hasher.class)
+            .setScheme("PBKDF2")
+            .setAlgorithm("PBKDF2WithHmacSHA1")
+            .setEncoding(BytesEncoder.abase64)
+            .setSaltByteSize(24)
+            .setHashByteSize(20)
+            .setIterations(29000)
+            .setFormatter(new IterativeSaltedCurlyBracesCryptFormatter())
+    ),
 
     /**
      * PBKDF2 with SHA256 algorithm.
      */
-    PBKDF2_SHA256 {
-        @Override
-        public Hasher get() {
-            return PBKDF2.get().getBuilder()
-                .setHashByteSize(32)
-                .setAlgorithm("PBKDF2WithHmacSHA256")
-                .build();
-        }
-    },
+    PBKDF2_SHA256(
+        PBKDF2.get().getBuilder()
+            .setHashByteSize(32)
+            .setAlgorithm("PBKDF2WithHmacSHA256")
+    ),
 
     /**
      * PBKDF2 with SHA512 algorithm.
      */
-    PBKDF2_SHA512 {
-        @Override
-        public Hasher get() {
-            return PBKDF2.get().getBuilder()
-                .setHashByteSize(64)
-                .setAlgorithm("PBKDF2WithHmacSHA512")
-                .build();
-        }
-    },
+    PBKDF2_SHA512(
+        PBKDF2.get().getBuilder()
+            .setHashByteSize(64)
+            .setAlgorithm("PBKDF2WithHmacSHA512")
+    ),
 
     /**
      * Alternate method for storing plaintext passwords by using
      * the identifying prefix <tt>{plaintext}</tt>.
      */
-    plaintext {
-        @SuppressWarnings({ "rawtypes", "unchecked" })
-        @Override
-        public Hasher get() {
-            Builder b = PlainTextCryptFormat.get().getBuilder();
-            b.setFormatter(new CryptFormatterWrapper(b.getFormatter(), "plaintext"));
-            return b.build();
-        }
-    };
+    plaintext(plainTextBuilder());
 
-    CurlyBracesCryptFormatHashers() {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private static Builder plainTextBuilder() {
+        Builder b = PlainTextCryptFormat.get().getBuilder();
+        b.setFormatter(new CurlyBracesCryptFormatterWrapper(b.getFormatter(), "plaintext"));
+        return b;
+    }
+
+    private Hasher.Builder builder;
+
+    @Override
+    public Hasher get() {
+        return this.builder.build();
+    }
+
+    CurlyBracesCryptFormatHashers(Hasher.Builder builder) {
+        this.builder = builder;
         EnumUtil.replace(this, s -> s.replace("_", "-"));
     }
 

@@ -6,7 +6,7 @@ import java.util.function.Predicate;
 import ml.alternet.encode.BytesEncoder;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
-import ml.alternet.security.auth.formats.ColonCryptFormat;
+import ml.alternet.security.auth.formatters.ColonCryptFormatter;
 import ml.alternet.security.auth.hasher.PBKDF2Hasher;
 
 public class PBKDF2Test extends CryptTestBase<PBKDF2Hasher, WorkFactorSaltedParts> {
@@ -47,7 +47,7 @@ public class PBKDF2Test extends CryptTestBase<PBKDF2Hasher, WorkFactorSaltedPart
                 .setSaltByteSize(24)
                 .setHashByteSize(24)
                 .setIterations(29000)
-                .setFormatter(ColonCryptFormat.COLON_CRYPT_FORMATTER)
+                .setFormatter(new ColonCryptFormatter())
                 .build();
     }
 

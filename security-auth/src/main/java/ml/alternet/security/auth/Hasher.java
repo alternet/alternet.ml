@@ -17,7 +17,6 @@ import ml.alternet.misc.Thrower;
 import ml.alternet.misc.WtfException;
 import ml.alternet.security.Password;
 import ml.alternet.security.auth.crypt.CryptParts;
-import ml.alternet.security.auth.formats.CryptFormatter;
 
 /**
  * Computes/checks a password to/with a crypt.

@@ -8,9 +8,9 @@ import ml.alternet.encode.BytesEncoding;
 import ml.alternet.security.algorithms.SHA2Crypt;
 import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.CryptFormat;
+import ml.alternet.security.auth.CryptFormatter;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
-import ml.alternet.security.auth.formats.CryptFormatter;
 import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.util.EnumUtil;
 

@@ -8,10 +8,10 @@ import org.testng.annotations.Test;
 
 import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.CryptFormat;
+import ml.alternet.security.auth.CryptFormatter;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.CryptParts;
 import ml.alternet.security.auth.crypt.SaltedParts;
-import ml.alternet.security.auth.formats.CryptFormatter;
 import ml.alternet.security.auth.formats.CurlyBracesCryptFormat;
 import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.security.auth.hasher.HasherBase;

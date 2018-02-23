@@ -176,11 +176,11 @@ Argon2 is the recommended choice in Alternet Security : it safely erase sensitiv
 
  * [`Credentials`](../security/apidocs/ml/alternet/security/auth/Credentials.html), which is roughly a wrapper around `Password`
  * [`Hasher`](../security-auth/apidocs/ml/alternet/security/auth/Hasher.html) which allow to compute a crypt, and check some credentials given a crypt
- * [`CryptFormatter`](../security-auth/apidocs/ml/alternet/security/auth/formats/CryptFormatter.html) which allow to turn the bytes of a hash to a string crypt, or to parse a crypt in its parts
+ * [`CryptFormatter`](../security-auth/apidocs/ml/alternet/security/auth/CryptFormatter.html) which allow to turn the bytes of a hash to a string crypt, or to parse a crypt in its parts
 
 ### Generate a hash
 
-Most common hashers are available and parameterized in :
+Most popular hashers are available and parameterized in :
 
  * [`CurlyBracesCryptFormatHashers`](../security-auth/apidocs/ml/alternet/security/auth/hashers/CurlyBracesCryptFormatHashers.html) - [source code](https://github.com/alternet/alternet.ml/blob/master/security-auth/src/main/java/ml/alternet/security/auth/hashers/CurlyBracesCryptFormatHashers.java)
  * [`ModularCryptFormatHashers`](../security-auth/apidocs/ml/alternet/security/auth/hashers/ModularCryptFormatHashers.html) - [source code](https://github.com/alternet/alternet.ml/blob/master/security-auth/src/main/java/ml/alternet/security/auth/hashers/ModularCryptFormatHashers.java)
@@ -237,12 +237,10 @@ if (hasher.check(credentials, crypt)) {
 ```
 
 Sometimes, you may have existing crypts available in various formats.
-For that purpose, a more suitable credentials checker (see [`CredentialsChecker`](../security-auth/apidocs/ml/alternet/security/auth/CredentialsChecker.html))
-will lookup for the right hasher.
+For that purpose, a more suitable credentials checker (see [`CredentialsChecker`](../security-auth/apidocs/ml/alternet/security/auth/CredentialsChecker.html)) will lookup for the right hasher.
 
 For example, the following credentials checker will try all the formats in sequence.
-Note in the example the `PlainTextCryptFormat` is used as the last attempt to check clear passwords,
-and should not be used in production.
+Note in the example the `PlainTextCryptFormat` is used as the last attempt to check clear passwords, and MUST NOT be used in production. The [`ModularCryptFormat`](../security-auth/apidocs/ml/alternet/security/auth/formats/ModularCryptFormat.html)) is certainly the better choice nowaday, and if the crypt belongs to this family, the relevant hasher will be get from [`ModularCryptFormatHashers`](../security-auth/apidocs/ml/alternet/security/auth/hashers/ModularCryptFormatHashers.html) - [source code](https://github.com/alternet/alternet.ml/blob/master/security-auth/src/main/java/ml/alternet/security/auth/hashers/ModularCryptFormatHashers.java)
 
 ``` java
 CredentialsChecker checker = new CredentialsChecker.$(

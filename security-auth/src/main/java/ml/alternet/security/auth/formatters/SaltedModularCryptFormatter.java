@@ -1,21 +1,19 @@
-package ml.alternet.security.auth.formats;
+package ml.alternet.security.auth.formatters;
 
 import ml.alternet.encode.BytesEncoding;
 import ml.alternet.security.auth.CryptFormat;
+import ml.alternet.security.auth.CryptFormatter;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.SaltedParts;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.util.StringUtil;
 
 /**
+ * Salted Modular Crypt Formatter
  *
  * @author Philippe Poulard
  */
 public class SaltedModularCryptFormatter implements CryptFormatter<SaltedParts> {
-
-    /**
-     * The singleton.
-     */
-    public static final CryptFormatter<SaltedParts> INSTANCE = new SaltedModularCryptFormatter();
 
     @Override
     public SaltedParts parse(String crypt, Hasher hr) {

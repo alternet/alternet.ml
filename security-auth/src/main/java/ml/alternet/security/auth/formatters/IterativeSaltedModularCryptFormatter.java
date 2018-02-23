@@ -1,9 +1,11 @@
-package ml.alternet.security.auth.formats;
+package ml.alternet.security.auth.formatters;
 
 import ml.alternet.encode.BytesEncoding;
 import ml.alternet.security.auth.CryptFormat;
+import ml.alternet.security.auth.CryptFormatter;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
 
 /**
  * <tt>password</tt> -&gt; <tt>$5$rounds=80000$wnsT7Yr92oJoP28r$cKhJImk5mfuSKV9b3mumNzlbstFUplKtQXXMo4G6Ep5</tt>
@@ -11,11 +13,6 @@ import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
  * @author Philippe Poulard
  */
 public class IterativeSaltedModularCryptFormatter implements CryptFormatter<WorkFactorSaltedParts> {
-
-    /**
-     * The singleton.
-     */
-    public static final CryptFormatter<WorkFactorSaltedParts> INSTANCE = new IterativeSaltedModularCryptFormatter();
 
     @Override
     public WorkFactorSaltedParts parse(String crypt, Hasher hr) {

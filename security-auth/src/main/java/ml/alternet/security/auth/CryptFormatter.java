@@ -1,7 +1,5 @@
-package ml.alternet.security.auth.formats;
+package ml.alternet.security.auth;
 
-import ml.alternet.security.auth.CryptFormat;
-import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.CryptParts;
 
 /**
