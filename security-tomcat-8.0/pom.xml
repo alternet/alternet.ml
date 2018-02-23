@@ -76,12 +76,6 @@
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
-        <!--  >dependency>
-            <groupId>ml.alternet</groupId>
-            <artifactId>alternet-security-auth-impl</artifactId>
-            <version>1.0</version>
-            <scope>test</scope>
-        </dependency-->
 
         <dependency>
             <groupId>org.apache.tomcat</groupId>

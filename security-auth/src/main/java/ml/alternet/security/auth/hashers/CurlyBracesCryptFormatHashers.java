@@ -124,8 +124,6 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher> {
 
     /**
      * PBKDF2 with SHA256 algorithm.
-     *
-     * <p>"<tt>password</tt>" -&gt; "<tt></tt>"</p>
      */
     PBKDF2_SHA256 {
         @Override
@@ -137,6 +135,9 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher> {
         }
     },
 
+    /**
+     * PBKDF2 with SHA512 algorithm.
+     */
     PBKDF2_SHA512 {
         @Override
         public Hasher get() {
@@ -164,7 +165,7 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher> {
     @Override
     public abstract Hasher get();
 
-    private CurlyBracesCryptFormatHashers() {
+    CurlyBracesCryptFormatHashers() {
         EnumUtil.replace(this, s -> s.replace("_", "-"));
     }
 

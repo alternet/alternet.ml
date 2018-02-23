@@ -60,7 +60,8 @@ public class SaltedMessageHasher extends HasherBase<SaltedParts> {
         SaltedParts parts = new SaltedParts(this);
         int saltSize = getConfiguration().getSaltByteSize();
         if (saltSize < min || saltSize > max) {
-            throw new IllegalArgumentException("Invalid salt size " + saltSize + " ; must be between " + min + " and " + max + " bytes.");
+            throw new IllegalArgumentException("Invalid salt size " + saltSize + " ; must be between "
+                        + min + " and " + max + " bytes.");
         }
         parts.generateSalt();
         return parts;

@@ -20,6 +20,11 @@ import ml.alternet.security.auth.hashers.UnixHashers;
  */
 public class CryptParts {
 
+    /**
+     * Create some crypt for a hasher
+     *
+     * @param hr The actual hasher.
+     */
     public CryptParts(Hasher hr) {
         this.hr = hr;
     }

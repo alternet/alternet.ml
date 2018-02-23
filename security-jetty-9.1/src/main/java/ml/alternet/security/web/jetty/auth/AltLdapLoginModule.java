@@ -84,29 +84,29 @@ public class AltLdapLoginModule extends LdapLoginModule implements CredentialsCh
 
     // first we pick the values from the options, since they are not reachable
     private void initPrivateFields(Map<String, ?> options) {
-        _userBaseDn = (String) options.get("userBaseDn");
-        _userObjectClass = getOption(options, "userObjectClass", _userObjectClass);
-        _userIdAttribute = getOption(options, "userIdAttribute", _userIdAttribute);
-        _roleBaseDn = (String) options.get("roleBaseDn");
-        _roleObjectClass = getOption(options, "roleObjectClass", _roleObjectClass);
-        _roleMemberAttribute = getOption(options, "roleMemberAttribute", _roleMemberAttribute);
-        _roleNameAttribute = getOption(options, "roleNameAttribute", _roleNameAttribute);
+        userBaseDn = (String) options.get("userBaseDn");
+        userObjectClass = getOption(options, "userObjectClass", userObjectClass);
+        userIdAttribute = getOption(options, "userIdAttribute", userIdAttribute);
+        roleBaseDn = (String) options.get("roleBaseDn");
+        roleObjectClass = getOption(options, "roleObjectClass", roleObjectClass);
+        roleMemberAttribute = getOption(options, "roleMemberAttribute", roleMemberAttribute);
+        roleNameAttribute = getOption(options, "roleNameAttribute", roleNameAttribute);
         try {
-            _rootContext = new InitialDirContext(getEnvironment());
+            rootContext = new InitialDirContext(getEnvironment());
         } catch (NamingException ex) {
             throw new IllegalStateException("Unable to establish root context", ex);
         }
     }
 
     // here are the copy of the fields
-    private String _userBaseDn;
-    private String _userObjectClass = "inetOrgPerson";
-    private String _userIdAttribute = "cn";
-    private String _roleBaseDn;
-    private String _roleObjectClass = "groupOfUniqueNames";
-    private String _roleMemberAttribute = "uniqueMember";
-    private String _roleNameAttribute = "roleName";
-    private DirContext _rootContext;
+    private String userBaseDn;
+    private String userObjectClass = "inetOrgPerson";
+    private String userIdAttribute = "cn";
+    private String roleBaseDn;
+    private String roleObjectClass = "groupOfUniqueNames";
+    private String roleMemberAttribute = "uniqueMember";
+    private String roleNameAttribute = "roleName";
+    private DirContext rootContext;
 
     // and below the methods that use that fields
 
@@ -116,7 +116,7 @@ public class AltLdapLoginModule extends LdapLoginModule implements CredentialsCh
         SearchResult searchResult = findUser(username);
         String userDn = searchResult.getNameInNamespace();
         LOG.info("Attempting authentication: " + userDn);
-        Hashtable<Object,Object> environment = getEnvironment();
+        Hashtable<Object, Object> environment = getEnvironment();
         if ( userDn == null || "".equals(userDn) ) {
             throw new NamingException("username may not be empty");
         }
@@ -151,8 +151,7 @@ public class AltLdapLoginModule extends LdapLoginModule implements CredentialsCh
     }
 
     // copy of the method in the parent class that has not enough visibility
-    private SearchResult findUser(String username) throws NamingException, LoginException
-    {
+    private SearchResult findUser(String username) throws NamingException, LoginException {
         SearchControls ctls = new SearchControls();
         ctls.setCountLimit(1);
         ctls.setDerefLinkFlag(true);
@@ -160,66 +159,59 @@ public class AltLdapLoginModule extends LdapLoginModule implements CredentialsCh
 
         String filter = "(&(objectClass={0})({1}={2}))";
 
-        LOG.info("Searching for users with filter: \'" + filter + "\'" + " from base dn: " + _userBaseDn);
+        LOG.info("Searching for users with filter: \'" + filter + "\'" + " from base dn: " + userBaseDn);
 
         Object[] filterArguments = new Object[]{
-            _userObjectClass,
-            _userIdAttribute,
+            userObjectClass,
+            userIdAttribute,
             username
         };
-        NamingEnumeration<SearchResult> results = _rootContext.search(_userBaseDn, filter, filterArguments, ctls);
+        NamingEnumeration<SearchResult> results = rootContext.search(userBaseDn, filter, filterArguments, ctls);
 
         LOG.info("Found user?: " + results.hasMoreElements());
 
-        if (!results.hasMoreElements())
-        {
+        if (!results.hasMoreElements()) {
             throw new LoginException("User not found.");
         }
 
         return results.nextElement();
     }
 
-    private List<String> getUserRolesByDn(DirContext dirContext, String userDn) throws LoginException, NamingException
-    {
+    private List<String> getUserRolesByDn(DirContext dirContext, String userDn) throws LoginException, NamingException {
         List<String> roleList = new ArrayList<String>();
 
-        if (dirContext == null || _roleBaseDn == null || _roleMemberAttribute == null || _roleObjectClass == null)
-        {
+        if (dirContext == null || roleBaseDn == null || roleMemberAttribute == null || roleObjectClass == null) {
             return roleList;
         }
 
         SearchControls ctls = new SearchControls();
         ctls.setDerefLinkFlag(true);
         ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        ctls.setReturningAttributes(new String[]{_roleNameAttribute});
+        ctls.setReturningAttributes(new String[]{roleNameAttribute});
 
         String filter = "(&(objectClass={0})({1}={2}))";
-        Object[] filterArguments = {_roleObjectClass, _roleMemberAttribute, userDn};
-        NamingEnumeration<SearchResult> results = dirContext.search(_roleBaseDn, filter, filterArguments, ctls);
+        Object[] filterArguments = {roleObjectClass, roleMemberAttribute, userDn};
+        NamingEnumeration<SearchResult> results = dirContext.search(roleBaseDn, filter, filterArguments, ctls);
 
         LOG.debug("Found user roles?: " + results.hasMoreElements());
 
-        while (results.hasMoreElements())
-        {
+        while (results.hasMoreElements()) {
             SearchResult result = results.nextElement();
 
             Attributes attributes = result.getAttributes();
 
-            if (attributes == null)
-            {
+            if (attributes == null) {
                 continue;
             }
 
-            Attribute roleAttribute = attributes.get(_roleNameAttribute);
+            Attribute roleAttribute = attributes.get(roleNameAttribute);
 
-            if (roleAttribute == null)
-            {
+            if (roleAttribute == null) {
                 continue;
             }
 
             NamingEnumeration<?> roles = roleAttribute.getAll();
-            while (roles.hasMore())
-            {
+            while (roles.hasMore()) {
                 roleList.add(roles.next().toString());
             }
         }
@@ -227,12 +219,10 @@ public class AltLdapLoginModule extends LdapLoginModule implements CredentialsCh
         return roleList;
     }
 
-    private String getOption(Map<String,?> options, String key, String defaultValue)
-    {
+    private String getOption(Map<String, ?> options, String key, String defaultValue) {
         Object value = options.get(key);
 
-        if (value == null)
-        {
+        if (value == null) {
             return defaultValue;
         }
 

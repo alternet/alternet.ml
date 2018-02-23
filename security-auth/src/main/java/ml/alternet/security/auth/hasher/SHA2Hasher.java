@@ -35,7 +35,7 @@ public class SHA2Hasher extends HasherBase<WorkFactorSaltedParts> {
      *
      * @author Philippe Poulard
      */
-    public static enum Algorithm {
+    public enum Algorithm {
 
         /**
          * The SHA-256 hash algorithm in a crypt(3) compatible way.
@@ -198,18 +198,18 @@ public class SHA2Hasher extends HasherBase<WorkFactorSaltedParts> {
         byte[] order = algo.order();
         byte[] result = new byte[algo.blockSize()];
 
-        for (int i= 0 ; i< order.length / 3; i++) {
+        for (int i = 0 ; i < order.length / 3; i++) {
             // process 3 by 3
-            byte pos0 = order[i*3  ]; // starts with 0
-            byte pos1 = order[i*3+1]; // starts with 10
-            byte pos2 = order[i*3+2]; // starts with 20
+            byte pos0 = order[i * 3    ]; // starts with 0
+            byte pos1 = order[i * 3 + 1]; // starts with 10
+            byte pos2 = order[i * 3 + 2]; // starts with 20
             byte v0 = pos0 == -1 ? 0 : b[pos0];
             byte v1 = pos1 == -1 ? 0 : b[pos1];
             byte v2 = b[pos2];
             // some masks are useless but ensure we don't miss a bit
             // stuvwxmn
-            result[i*3] = (byte) ( ((v2 << 2) & 0b11111100) | ((v1 >> 2) & 0b00000011) );
-            if (i*3+1 < result.length) {
+            result[i * 3] = (byte) ( ((v2 << 2) & 0b11111100) | ((v1 >> 2) & 0b00000011) );
+            if (i * 3 + 1 < result.length) {
                 if (pos0 == -1) {
                     // what is annoying is the processing of the end,
                     // since 43 sextets (258 bits) doesn't fit in 32 bytes (256 bits)
@@ -217,21 +217,21 @@ public class SHA2Hasher extends HasherBase<WorkFactorSaltedParts> {
                     // just keep the significative bits
 
                     // opqrijkl (abcdefgh are missing)
-                    result[i*3+1] = (byte) (  ((v1 << 6) & 0b11000000) | ((v2 >> 2) & 0b00110000)
-                            | ((v1 >> 4) & 0b00001111) );
+                    result[i * 3 + 1] = (byte) (  ((v1 << 6) & 0b11000000) | ((v2 >> 2) & 0b00110000)
+                                                | ((v1 >> 4) & 0b00001111) );
                 } else {
                     // opqrghij
-                    result[i*3+1] = (byte) (  ((v1 << 6) & 0b11000000) | ((v2 >> 2) & 0b00110000)
-                                            | ((v0 << 2) & 0b00001100) | ((v1 >> 6) & 0b00000011) );
+                    result[i * 3 + 1] = (byte) (  ((v1 << 6) & 0b11000000) | ((v2 >> 2) & 0b00110000)
+                                                | ((v0 << 2) & 0b00001100) | ((v1 >> 6) & 0b00000011) );
                 }
             }
-            if (i*3+2 < result.length) {
+            if (i * 3 + 2 < result.length) {
                 // klabcdef
-                result[i*3+2  ] = (byte) ( ((v1 << 2) & 0b11000000) | ((v0 >> 2) & 0b00111111 ) );
+                result[i * 3 + 2  ] = (byte) ( ((v1 << 2) & 0b11000000) | ((v0 >> 2) & 0b00111111 ) );
             }
             if (pos1 == -1) {
                 // stuvwxqr (abcdefghijklmnop are missing)
-                result[i*3] = (byte) ( ((v2 << 2) & 0b11111100) | ((v2 >> 6) & 0b00000011) );
+                result[i * 3] = (byte) ( ((v2 << 2) & 0b11111100) | ((v2 >> 6) & 0b00000011) );
             }
             // and so on with 21, 1, 11, you got it ? (see SHA_256_ORDER above)
         }
@@ -246,7 +246,7 @@ public class SHA2Hasher extends HasherBase<WorkFactorSaltedParts> {
         return parts;
     }
 
-    static private final char[] SALTCHARS = BytesEncoder.ValueSpace.h64.get();
+    private static final char[] SALTCHARS = BytesEncoder.ValueSpace.h64.get();
         // "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
     private byte[] genSalt() {

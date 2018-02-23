@@ -26,6 +26,11 @@ import ml.alternet.security.binary.SafeBuffer;
 @Singleton
 public class PlainTextCryptFormat implements CryptFormat {
 
+    /**
+     * Get a configured plain text hasher.
+     *
+     * @return The new instance.
+     */
     public static Hasher get() {
         return Hasher.Builder.builder()
             .setClass(PlainTextHasher.class)
@@ -46,6 +51,12 @@ public class PlainTextCryptFormat implements CryptFormat {
      * @author Philippe Poulard
      */
     public static class PlainTextHasher extends HasherBase<CryptParts> {
+
+        /**
+         * Create a plain text hasher.
+         *
+         * @param conf The configuration.
+         */
         public PlainTextHasher(Builder conf) {
             super(conf);
         }

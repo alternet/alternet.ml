@@ -202,7 +202,7 @@ public interface Hasher extends Credentials.Checker {
      *
      * @author Philippe Poulard
      */
-    public static interface Builder extends Configuration {
+    interface Builder extends Configuration {
 
         /**
          * Get the default builder according to the configuration.
@@ -225,7 +225,7 @@ public interface Hasher extends Credentials.Checker {
          *
          * @author Philippe Poulard
          */
-        public enum Field {
+        enum Field {
 
             /**
              * The standard property name "scheme"
@@ -394,11 +394,8 @@ public interface Hasher extends Credentials.Checker {
          *
          * @param encoding encoding class name.
          * @return This builder.
-         * @throws ClassNotFoundException When the encoding class doesn't exist.
-         * @throws IllegalAccessException When the encoding class can't be accessed.
-         * @throws InstantiationException When the encoding class can't be instanciated.
          */
-        Builder setEncoding(String encoding) throws InstantiationException, IllegalAccessException, ClassNotFoundException;
+        Builder setEncoding(String encoding);
 
         /**
          * Setter for encoding, by encoder name.
@@ -428,7 +425,7 @@ public interface Hasher extends Credentials.Checker {
          * @param clazz The hasher class name
          * @return This builder.
          */
-        Builder setClass(String clazz) throws ClassNotFoundException;
+        Builder setClass(String clazz);
 
         /**
          * Set the crypt formatter
@@ -464,7 +461,7 @@ public interface Hasher extends Credentials.Checker {
      *
      * @author Philippe Poulard
      */
-    public interface Configuration {
+    interface Configuration {
 
         /**
          * The builder that built this configuration,
@@ -520,6 +517,8 @@ public interface Hasher extends Credentials.Checker {
 
         /**
          * The formatter used to breakdown a cypt in parts, or to format parts in a crypt.
+         *
+         * @param <T> The type of the crypt parts
          *
          * @return The formatter.
          */
@@ -595,7 +594,7 @@ public interface Hasher extends Credentials.Checker {
      * @author Philippe Poulard
      */
     @LookupKey(forClass = Builder.class, byDefault = true)
-    public static class HasherBuilder implements Builder, Configuration {
+    class HasherBuilder implements Builder, Configuration {
 
         Conf conf = new Conf();
 
@@ -742,8 +741,10 @@ public interface Hasher extends Credentials.Checker {
 
         @SuppressWarnings("unchecked")
         @Override
-        public Builder setClass(String clazz) throws ClassNotFoundException {
-            this.conf.clazz = (Class<? extends Hasher>) Class.forName(clazz);
+        public Builder setClass(String clazz) {
+            this.conf.clazz = Thrower.safeCall(() ->
+                (Class<? extends Hasher>) Class.forName(clazz)
+            );
             return this;
         }
 
@@ -860,8 +861,10 @@ public interface Hasher extends Credentials.Checker {
         }
 
         @Override
-        public Builder setEncoding(String encoding) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-            this.conf.encoding = (BytesEncoding) Class.forName(encoding).newInstance();
+        public Builder setEncoding(String encoding) {
+            this.conf.encoding = Thrower.safeCall(() ->
+                (BytesEncoding) Class.forName(encoding).newInstance()
+            );
             return this;
         }
 
@@ -871,7 +874,9 @@ public interface Hasher extends Credentials.Checker {
                 this.conf.encoding = BytesEncoder.valueOf(encoder);
             } catch (IllegalArgumentException e) {
                 try {
-                    this.conf.encoding = DiscoveryService.lookupSingleton(BytesEncoding.class.getName() + "/" + encoder);
+                    this.conf.encoding = DiscoveryService.lookupSingleton(
+                        BytesEncoding.class.getName() + "/" + encoder
+                    );
                 } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e1) {
                     throw e;
                 }

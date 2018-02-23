@@ -206,7 +206,7 @@ public class AltHttpConnectionFactory extends HttpConnectionFactory implements D
      *
      * @see ml.alternet.security.impl.StrongPasswordManager
      */
-    public AltHttpConnectionFactory(@Name(value="webAppContext") WebAppContext wac) {
+    public AltHttpConnectionFactory(@Name(value = "webAppContext") WebAppContext wac) {
         this(PasswordManagerFactory.getStrongPasswordManager(), wac);
     }
 
@@ -285,7 +285,7 @@ public class AltHttpConnectionFactory extends HttpConnectionFactory implements D
      *
      * @see ml.alternet.security.impl.StrongPasswordManager
      */
-    public AltHttpConnectionFactory(@Name(value="server") Server server) {
+    public AltHttpConnectionFactory(@Name(value = "server") Server server) {
         this(PasswordManagerFactory.getStrongPasswordManager(), server);
     }
 
@@ -372,7 +372,9 @@ public class AltHttpConnectionFactory extends HttpConnectionFactory implements D
                             if (authBuf.findCredentialsBoundaries()) {
                                 // capture pwd
                                 Credentials credentials = authBuf.replace(pm);
-                                getHttpChannel().getRequest().setAttribute(Passwords.BASIC_AUTH_ATTRIBUTE_KEY, credentials);
+                                getHttpChannel().getRequest().setAttribute(
+                                    Passwords.BASIC_AUTH_ATTRIBUTE_KEY, credentials
+                                );
                             }
                         }
                         // do things normally

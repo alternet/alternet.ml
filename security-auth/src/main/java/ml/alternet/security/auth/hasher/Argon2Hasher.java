@@ -40,7 +40,7 @@ public class Argon2Hasher extends HasherBase<Argon2Hasher.Argon2Parts> implement
     public Hasher configureWithCrypt(String crypt) {
         // the hash part is used to set the hash byte size
         Argon2Hasher hr = this;
-        CryptParts parts= hr.getConfiguration().getFormatter().parse(crypt, hr);
+        CryptParts parts = hr.getConfiguration().getFormatter().parse(crypt, hr);
         if (parts.hash != null) {
             hr = (Argon2Hasher) hr.getBuilder().setHashByteSize(parts.hash.length)
                 .use(null) // this avoid loooooooop
@@ -118,7 +118,7 @@ public class Argon2Hasher extends HasherBase<Argon2Hasher.Argon2Parts> implement
      *
      * @author Philippe Poulard
      */
-    public static interface SecretResolver {
+    interface SecretResolver {
 
         /**
          * Return the secret bound to the given key.
@@ -133,8 +133,18 @@ public class Argon2Hasher extends HasherBase<Argon2Hasher.Argon2Parts> implement
 
     }
 
+    /**
+     * The crypt parts for Argon2.
+     *
+     * @author Philippe Poulard
+     */
     public static class Argon2Parts extends SaltedParts {
 
+        /**
+         * Create some crypt for a hasher
+         *
+         * @param hr The actual hasher.
+         */
         public Argon2Parts(Hasher hr) {
             super(hr);
         }
@@ -221,8 +231,8 @@ public class Argon2Hasher extends HasherBase<Argon2Hasher.Argon2Parts> implement
                         keyPresent = 1;
                         parts.keyid = encoding.decode(params[3].substring(6));
                     }
-                    if (params.length > 3+keyPresent && params[3+keyPresent].startsWith("data=")) {
-                        parts.data = encoding.decode(params[3+keyPresent].substring(5));
+                    if (params.length > 3 + keyPresent && params[3 + keyPresent].startsWith("data=")) {
+                        parts.data = encoding.decode(params[3 + keyPresent].substring(5));
                     }
                 }
             }
@@ -277,9 +287,14 @@ public class Argon2Hasher extends HasherBase<Argon2Hasher.Argon2Parts> implement
      *
      * @author Philippe Poulard
      */
-    @LookupKey(byDefault=true, implClass=Bridge.class)
+    @LookupKey(byDefault = true, implClass = Bridge.class)
     public interface Argon2Bridge {
 
+        /**
+         * Argon2 variants.
+         *
+         * @author Philippe Poulard
+         */
         enum Type {
             // order matters !!!
             argon2d, argon2i, argon2id
@@ -307,7 +322,7 @@ public class Argon2Hasher extends HasherBase<Argon2Hasher.Argon2Parts> implement
         /**
          * The singleton implementation.
          */
-        static Argon2Bridge $ = argon2();
+        Argon2Bridge $ = argon2();
 
     }
 
@@ -319,10 +334,16 @@ public class Argon2Hasher extends HasherBase<Argon2Hasher.Argon2Parts> implement
         }
     }
 
+    /**
+     * A bridge with the Argon2 algorithm.
+     *
+     * @author Philippe Poulard
+     */
     public static class Bridge implements Argon2Bridge {
         @Override
         public byte[] encrypt(byte[] passwordb, byte[] salt, int memoryCost, int timeCost, int parallelism,
-                Type type, int version, int outputLength, byte[] additional, byte[] secret) {
+                Type type, int version, int outputLength, byte[] additional, byte[] secret)
+        {
             Argon2 argon2 = new Argon2();
 
             if (memoryCost != -1) {

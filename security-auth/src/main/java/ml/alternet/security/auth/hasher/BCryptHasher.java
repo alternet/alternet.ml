@@ -110,7 +110,7 @@ public class BCryptHasher extends HasherBase<WorkFactorSaltedParts> {
                 if (hasAlgo) {
                     salt = stringParts[3];
                 } else {
-                    salt =stringParts[3].substring(0, 22);
+                    salt = stringParts[3].substring(0, 22);
                 }
                 BytesEncoding encoding = hr.getConfiguration().getEncoding();
                 parts.salt = encoding.decode(salt);
@@ -146,8 +146,9 @@ public class BCryptHasher extends HasherBase<WorkFactorSaltedParts> {
                 crypt.append(version);
             }
             crypt.append(hasAlgo ? ',' : '$');
-            if (parts.workFactor < 10)
+            if (parts.workFactor < 10) {
                 crypt.append("0");
+            }
             if (parts.workFactor > 30) {
                 throw new IllegalArgumentException(
                         "log_rounds exceeds maximum (30)");

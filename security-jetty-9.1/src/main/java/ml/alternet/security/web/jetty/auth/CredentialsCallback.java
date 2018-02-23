@@ -22,8 +22,16 @@ public class CredentialsCallback extends ObjectCallback implements CredentialsCh
 
     List<CryptFormat> formats;
 
+    /**
+     * Create credentials callback
+     */
     public CredentialsCallback() { }
 
+    /**
+     * Create credentials callback
+     *
+     * @param formats Use the given formats
+     */
     public CredentialsCallback(List<CryptFormat> formats) {
         this.formats = formats;
     }
@@ -61,7 +69,7 @@ public class CredentialsCallback extends ObjectCallback implements CredentialsCh
     }
 
    /**
-    *
+    * Credentials for Jetty
     *
     * @author Philippe Poulard
     */
@@ -71,6 +79,11 @@ public class CredentialsCallback extends ObjectCallback implements CredentialsCh
 
         Credentials cred;
 
+        /**
+         * Wrap Alternet credentials
+         *
+         * @param cred Alternet credentials
+         */
         public AltCredential(Credentials cred) {
             this.cred = cred;
         }
@@ -81,6 +94,11 @@ public class CredentialsCallback extends ObjectCallback implements CredentialsCh
             return CredentialsCallback.this.check(this.cred, crypt);
         }
 
+        /**
+         * Return Alternet credentials
+         *
+         * @return Alternet credentials
+         */
         public Credentials getCredentials() {
             return this.cred;
         }

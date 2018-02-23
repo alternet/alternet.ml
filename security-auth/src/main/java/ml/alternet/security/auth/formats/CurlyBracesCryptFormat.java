@@ -62,7 +62,9 @@ public class CurlyBracesCryptFormat implements CryptFormat {
                     }
                 }
                 if (b != null && schemePart.encoding != null) {
-                    b.setEncoder("HEX".equalsIgnoreCase(schemePart.encoding) ? BytesEncoder.hexa.toString() : BytesEncoder.base64.toString());
+                    b.setEncoder("HEX".equalsIgnoreCase(schemePart.encoding)
+                        ? BytesEncoder.hexa.toString()
+                        : BytesEncoder.base64.toString());
                     b.setVariant("withEncoding");
                 }
             }
@@ -105,6 +107,11 @@ public class CurlyBracesCryptFormat implements CryptFormat {
         public String encoding = null;
         public int rcb = -1; // right curly brace index
 
+        /**
+         * Breakdown a crypt into its parts.
+         *
+         * @param crypt The actual crypt.
+         */
         public SchemePart(String crypt) {
             if (crypt.startsWith("{")) {
                 rcb = crypt.indexOf('}');
@@ -132,6 +139,9 @@ public class CurlyBracesCryptFormat implements CryptFormat {
      */
     public static class CryptFormatter implements ml.alternet.security.auth.formats.CryptFormatter<CryptParts> {
 
+        /**
+         * The singleton.
+         */
         public static final CryptFormatter INSTANCE = new CryptFormatter();
 
         @Override
@@ -198,6 +208,9 @@ public class CurlyBracesCryptFormat implements CryptFormat {
      */
     public static class SaltedCryptFormatter implements ml.alternet.security.auth.formats.CryptFormatter<SaltedParts> {
 
+        /**
+         * The singleton.
+         */
         public static final SaltedCryptFormatter INSTANCE = new SaltedCryptFormatter();
 
         @Override
@@ -255,8 +268,18 @@ public class CurlyBracesCryptFormat implements CryptFormat {
         }
     }
 
-    public static class IterativeSaltedFormatter implements ml.alternet.security.auth.formats.CryptFormatter<WorkFactorSaltedParts> {
+    /**
+     * An iterative salted formatter.
+     *
+     * @author Philippe Poulard
+     */
+    public static class IterativeSaltedFormatter
+        implements ml.alternet.security.auth.formats.CryptFormatter<WorkFactorSaltedParts>
+    {
 
+        /**
+         * Singleton
+         */
         public static final IterativeSaltedFormatter INSTANCE = new IterativeSaltedFormatter();
 
         @Override
@@ -312,11 +335,19 @@ public class CurlyBracesCryptFormat implements CryptFormat {
      *
      * @param <T> The crypt parts type
      */
-    public static class CryptFormatterWrapper<T extends CryptParts> implements ml.alternet.security.auth.formats.CryptFormatter<T> {
+    public static class CryptFormatterWrapper<T extends CryptParts>
+        implements ml.alternet.security.auth.formats.CryptFormatter<T>
+    {
 
         ml.alternet.security.auth.formats.CryptFormatter<T> cf;
         String scheme;
 
+        /**
+         * Create a crypt formatter wrapper
+         *
+         * @param cf The wrapped crypt formatter
+         * @param scheme The scheme to display
+         */
         public CryptFormatterWrapper(ml.alternet.security.auth.formats.CryptFormatter<T> cf, String scheme) {
             this.cf = cf;
             this.scheme = scheme;

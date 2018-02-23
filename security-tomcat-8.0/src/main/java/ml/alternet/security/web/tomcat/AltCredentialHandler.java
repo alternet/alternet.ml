@@ -3,8 +3,6 @@ package ml.alternet.security.web.tomcat;
 import javax.servlet.ServletRequest;
 
 import org.apache.catalina.CredentialHandler;
-import org.apache.juli.logging.Log;
-import org.apache.juli.logging.LogFactory;
 
 import ml.alternet.misc.Thrower;
 import ml.alternet.security.auth.Credentials;
@@ -18,8 +16,6 @@ import ml.alternet.security.web.server.AuthenticationMethod;
  * @author Philippe Poulard
  */
 public class AltCredentialHandler implements CredentialHandler {
-
-    private static final Log LOG = LogFactory.getLog(AltCredentialHandler.class);
 
     private Hasher hasher;
 

@@ -20,7 +20,7 @@ import ml.alternet.util.Util;
 @Util
 public final class SafeBuffer {
 
-    private SafeBuffer() {}
+    private SafeBuffer() { }
 
     /**
      * Encode characters to bytes and ensures that intermediate data are cleared.
@@ -54,16 +54,18 @@ public final class SafeBuffer {
         ByteBuffer bb = ByteBuffer.allocate(n);
         if ((n != 0) || (cb.remaining() != 0)) {
             encoder.reset();
-            for (;;) {
-                CoderResult cr = cb.hasRemaining() ?
-                    encoder.encode(cb, bb, true) : CoderResult.UNDERFLOW;
+            for ( ; ; ) {
+                CoderResult cr = cb.hasRemaining()
+                        ? encoder.encode(cb, bb, true)
+                        : CoderResult.UNDERFLOW;
                 if (cr.isUnderflow()) {
                     cr = encoder.flush(bb);
                 }
-                if (cr.isUnderflow())
+                if (cr.isUnderflow()) {
                     break;
+                }
                 if (cr.isOverflow()) {
-                    n = 2*n + 1; // Ensure progress; n might be 0!
+                    n = 2 * n + 1; // Ensure progress; n might be 0!
                     ByteBuffer o = ByteBuffer.allocate(n);
                     bb.flip();
                     o.put(bb);

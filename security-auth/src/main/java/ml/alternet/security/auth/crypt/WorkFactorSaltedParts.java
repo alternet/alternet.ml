@@ -9,6 +9,11 @@ import ml.alternet.security.auth.Hasher;
  */
 public class WorkFactorSaltedParts extends SaltedParts {
 
+    /**
+     * Create some crypt for a hasher
+     *
+     * @param hr The actual hasher.
+     */
     public WorkFactorSaltedParts(Hasher hr) {
         super(hr);
     }

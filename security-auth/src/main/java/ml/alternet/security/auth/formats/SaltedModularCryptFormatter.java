@@ -12,6 +12,9 @@ import ml.alternet.util.StringUtil;
  */
 public class SaltedModularCryptFormatter implements CryptFormatter<SaltedParts> {
 
+    /**
+     * The singleton.
+     */
     public static final CryptFormatter<SaltedParts> INSTANCE = new SaltedModularCryptFormatter();
 
     @Override
@@ -48,9 +51,9 @@ public class SaltedModularCryptFormatter implements CryptFormatter<SaltedParts> 
         return buf.toString();
     }
 
-	@Override
-	public CryptFormat getCryptFormat() {
-		return new ModularCryptFormat();
-	}
+    @Override
+    public CryptFormat getCryptFormat() {
+        return new ModularCryptFormat();
+    }
 
 }

@@ -52,12 +52,12 @@ public class AltProtocolHandler implements ProtocolHandler, DebugLevel.Debuggabl
 
     static final Log LOG = LogFactory.getLog(AltProtocolHandler.class);
 
-    public static ThreadLocal<org.apache.catalina.connector.Request> request = new ThreadLocal<>();
+    static ThreadLocal<org.apache.catalina.connector.Request> request = new ThreadLocal<>();
 
     private ProtocolHandler ph; // ph 7 is neutral - just joking
     private DebugLevel debugLevel = new DebugLevel();
     private PasswordManager pm;
-    private Map<String,String> props = new HashMap<>(); // pending props until ph is set
+    private Map<String, String> props = new HashMap<>(); // pending props until ph is set
 
     @Override
     public DebugLevel getDebugLevel() {
@@ -155,7 +155,7 @@ public class AltProtocolHandler implements ProtocolHandler, DebugLevel.Debuggabl
             return IntrospectionUtils.setProperty(ph, name, value);
         }
         if (ph != null && props != null) {
-            props.forEach((n,v) -> IntrospectionUtils.setProperty(ph, n, v));
+            props.forEach((n, v) -> IntrospectionUtils.setProperty(ph, n, v));
             props = null;
         }
         return true;

@@ -12,6 +12,9 @@ import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
  */
 public class IterativeSaltedModularCryptFormatter implements CryptFormatter<WorkFactorSaltedParts> {
 
+    /**
+     * The singleton.
+     */
     public static final CryptFormatter<WorkFactorSaltedParts> INSTANCE = new IterativeSaltedModularCryptFormatter();
 
     @Override
@@ -49,7 +52,7 @@ public class IterativeSaltedModularCryptFormatter implements CryptFormatter<Work
 
     @Override
     public CryptFormat getCryptFormat() {
-    		return new ModularCryptFormat();
+        return new ModularCryptFormat();
     }
 
 }

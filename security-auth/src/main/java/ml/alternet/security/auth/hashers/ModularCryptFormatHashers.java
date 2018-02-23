@@ -13,9 +13,7 @@ import ml.alternet.security.auth.hasher.BCryptHasher;
 import ml.alternet.security.auth.hasher.MD5BasedHasher;
 import ml.alternet.security.auth.hasher.MessageHasher;
 import ml.alternet.security.auth.hasher.PBKDF2Hasher;
-import ml.alternet.security.auth.hasher.PBKDF1Hasher;
 import ml.alternet.security.auth.hasher.SHA2Hasher;
-import ml.alternet.security.auth.hasher.SaltedMessageHasher;
 import ml.alternet.util.EnumUtil;
 
 /**
@@ -165,6 +163,9 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         }
     },
 
+    /**
+     * MD5.
+     */
     $md5$ {
         @Override
         public Hasher get() {
@@ -177,6 +178,9 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
     },
 //    $md5_("$md$,"),
 
+    /**
+     * Modified BCrypt for SHA-256.
+     */
     $bcrypt_sha256$() {
         @Override
         public Hasher get() {
@@ -187,6 +191,9 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         }
     },
 
+    /**
+     * Modified BCrypt for SHA-512.
+     */
     $bcrypt_sha512$() {
         @Override
         public Hasher get() {
@@ -197,6 +204,9 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         }
     },
 
+    /**
+     * PBKDF2 with HMac SHA-1.
+     */
     $pbkdf2_sha1$() {
         @Override
         public Hasher get() {
@@ -213,6 +223,9 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         }
     },
 
+    /**
+     * PBKDF2 with HMac SHA-256.
+     */
     $pbkdf2_sha256$() {
         @Override
         public Hasher get() {
@@ -223,6 +236,9 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         }
     },
 
+    /**
+     * PBKDF2 with HMac SHA-512.
+     */
     $pbkdf2_sha512$() {
         @Override
         public Hasher get() {
@@ -233,6 +249,9 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         }
     },
 
+    /**
+     * Argon2 with variant argon2i.
+     */
     $argon2i$ {
         @Override
         public Hasher get() {
@@ -249,6 +268,9 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         }
     },
 
+    /**
+     * Argon2 with variant argon2d.
+     */
     $argon2d$ {
         @Override
         public Hasher get() {
@@ -258,6 +280,9 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
         }
     },
 
+    /**
+     * Argon2 with variant argon2id.
+     */
     $argon2id$ {
         @Override
         public Hasher get() {

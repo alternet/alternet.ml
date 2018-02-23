@@ -35,6 +35,11 @@ public class MD5BasedHasher extends HasherBase<SaltedParts> {
         return APR1.equals(hr.getConfiguration().getVariant());
     }
 
+    /**
+     * Create an MD5 based hasher.
+     *
+     * @param config The configuration of this hasher.
+     */
     public MD5BasedHasher(Builder config) {
         super(config);
     }
@@ -61,19 +66,19 @@ public class MD5BasedHasher extends HasherBase<SaltedParts> {
         // 0       1       2        // target index
         byte[] result = new byte[16];
         // process the 15 first bytes
-        for (int i= 0 ; i< 5; i++) {
+        for (int i = 0 ; i < 5; i++) {
             // process 3 by 3
-            byte pos0 = order[i*3  ]; // starts with 0
-            byte pos1 = order[i*3+1]; // starts with 6
-            byte pos2 = order[i*3+2]; // starts with 12
+            byte pos0 = order[i * 3    ]; // starts with 0
+            byte pos1 = order[i * 3 + 1]; // starts with 6
+            byte pos2 = order[i * 3 + 2]; // starts with 12
             // some masks are useless but ensure we don't miss a bit
             // stuvwxmn
-            result[i*3  ] = (byte) ( ((b[pos2] << 2) & 0b11111100) | ((b[pos1] >> 2) & 0b00000011) );
+            result[i * 3    ] = (byte) ( ((b[pos2] << 2) & 0b11111100) | ((b[pos1] >> 2) & 0b00000011) );
             // opqrghij
-            result[i*3+1] = (byte) ( ((b[pos1] << 6) & 0b11000000) | ((b[pos2] >> 2) & 0b00110000)
-                                   | ((b[pos0] << 2) & 0b00001100) | ((b[pos1] >> 6) & 0b00000011) );
+            result[i * 3 + 1] = (byte) ( ((b[pos1] << 6) & 0b11000000) | ((b[pos2] >> 2) & 0b00110000)
+                                       | ((b[pos0] << 2) & 0b00001100) | ((b[pos1] >> 6) & 0b00000011) );
             // klabcdef
-            result[i*3+2] = (byte) ( ((b[pos1] << 2) & 0b11000000) | ((b[pos0] >> 2) & 0b00111111 ) );
+            result[i * 3 + 2] = (byte) ( ((b[pos1] << 2) & 0b11000000) | ((b[pos0] >> 2) & 0b00111111 ) );
             // and so on with 1, 7, 13, you got it ?
         }
         // revert the 16th byte
@@ -88,7 +93,7 @@ public class MD5BasedHasher extends HasherBase<SaltedParts> {
         return parts;
     }
 
-    static private final char[] SALTCHARS = BytesEncoder.ValueSpace.base64.get();
+    private static final char[] SALTCHARS = BytesEncoder.ValueSpace.base64.get();
         // "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890+/"
 
     private byte[] genSalt() {

@@ -127,7 +127,7 @@ public class WebappPasswordFieldMatcher implements PasswordFieldMatcher, FormLim
                 .orElseThrow(() -> {
                     // Uh ?
                     LOG.warn("UNABLE TO FIND A WEB APP CONTEXT FOR THIS REQUEST", req);
-                    return new IllegalStateException("UNABLE TO FIND A WEB APP CONTEXT FOR THIS REQUEST "+ req);
+                    return new IllegalStateException("UNABLE TO FIND A WEB APP CONTEXT FOR THIS REQUEST " + req);
                 })
                 .getServletContext();
         };
@@ -204,7 +204,7 @@ public class WebappPasswordFieldMatcher implements PasswordFieldMatcher, FormLim
                             ((HandlerContainer) h).getChildHandlersByClass(WebAppContext.class)
                         )
                         .map(handler -> (WebAppContext) handler);
-                    } else if (h instanceof WebAppContext){
+                    } else if (h instanceof WebAppContext) {
                         return Stream.of((WebAppContext) h);
                     } else {
                         return Stream.empty();

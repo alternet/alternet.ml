@@ -48,7 +48,7 @@ public class UnixCryptHasher extends HasherBase<SaltedParts> {
             parts.salt[1] = (byte) b64.indexOf(crypt.charAt(1));
             parts.hash = new byte[11];
             for (int i = 2 ; i < 13 ; i++) {
-                parts.hash[i-2] = (byte) b64.indexOf(crypt.charAt(i));
+                parts.hash[i - 2] = (byte) b64.indexOf(crypt.charAt(i));
             }
             return parts;
         }
@@ -80,7 +80,7 @@ public class UnixCryptHasher extends HasherBase<SaltedParts> {
             );
             for (int i = 0; i < 8; i++) {
                                                                 // cast byte to int
-                keyword = (keyword << 8) | ((i < pwd.length) ? 2 * (pwd[i]  &  0xff) : 0);
+                keyword = (keyword << 8) | (i < pwd.length ? 2 * (pwd[i]  &  0xff) : 0);
             }
         }
         try {

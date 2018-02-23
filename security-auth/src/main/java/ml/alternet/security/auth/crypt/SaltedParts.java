@@ -12,6 +12,11 @@ import ml.alternet.security.auth.Hasher.Configuration;
  */
 public class SaltedParts extends CryptParts {
 
+    /**
+     * Create some crypt for a hasher
+     *
+     * @param hr The actual hasher.
+     */
     public SaltedParts(Hasher hr) {
         super(hr);
     }

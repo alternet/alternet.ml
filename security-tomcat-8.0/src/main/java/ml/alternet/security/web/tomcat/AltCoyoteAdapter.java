@@ -69,7 +69,8 @@ public class AltCoyoteAdapter extends CoyoteAdapter {
     @Override
     protected boolean postParseRequest(Request req, org.apache.catalina.connector.Request request,
             Response res, org.apache.catalina.connector.Response response) throws IOException,
-            ServletException {
+            ServletException
+    {
         try {
             // first, let set the context to the request
             // (because right now, it is unknown)
@@ -116,7 +117,8 @@ public class AltCoyoteAdapter extends CoyoteAdapter {
                         @Override
                         public void debug(String msg) {
                             if (debugLevel.isAllowingUnsercureTrace()) {
-                                AltProtocolHandler.LOG.debug(msg + " :\n" + new String(buffer, Charset.forName("ISO-8859-1")));
+                                AltProtocolHandler.LOG.debug(msg + " :\n"
+                                            + new String(buffer, Charset.forName("ISO-8859-1")));
                             }
                         }
                     };
@@ -165,7 +167,11 @@ public class AltCoyoteAdapter extends CoyoteAdapter {
                             return in.doRead(chunk, request);
                         } finally {
                             int size = chunk.getLength();
-                            cc.writableInputBuffer = ByteBuffer.wrap(chunk.getBytes(), chunk.getStart(), chunk.getLength());
+                            cc.writableInputBuffer = ByteBuffer.wrap(
+                                chunk.getBytes(),
+                                chunk.getStart(),
+                                chunk.getLength()
+                            );
                             fr.get(size, chunk.getBytes(), chunk.getStart(), chunk.getLength());
 
                             Passwords pwd = cc.asPasswords();
@@ -182,7 +188,8 @@ public class AltCoyoteAdapter extends CoyoteAdapter {
         try {
             super.service(coyoteRequest, res);
         } finally { // #From : ml.alternet.security.web.Passwords looks like a CaptureContext
-            Credentials credentials = (Credentials) coyoteRequest.getAttributes().get(Passwords.BASIC_AUTH_ATTRIBUTE_KEY);
+            Credentials credentials = (Credentials) coyoteRequest.getAttributes()
+                    .get(Passwords.BASIC_AUTH_ATTRIBUTE_KEY);
             if (credentials != null) {
                 credentials.destroy();
                 coyoteRequest.getAttributes().remove(Passwords.BASIC_AUTH_ATTRIBUTE_KEY);
