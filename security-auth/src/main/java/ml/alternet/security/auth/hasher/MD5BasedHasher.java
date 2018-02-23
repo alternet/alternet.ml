@@ -6,13 +6,8 @@ import java.security.SecureRandom;
 import ml.alternet.encode.BytesEncoder;
 import ml.alternet.security.algorithms.MD5Crypt;
 import ml.alternet.security.auth.Credentials;
-import ml.alternet.security.auth.CryptFormat;
-import ml.alternet.security.auth.CryptFormatter;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.SaltedParts;
-import ml.alternet.security.auth.formats.ModularCryptFormat;
-import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
-import ml.alternet.util.StringUtil;
 
 /**
  * The MD5 based BSD password algorithm 1 and apr1 (Apache variant).
@@ -31,7 +26,14 @@ public class MD5BasedHasher extends HasherBase<SaltedParts> {
 
     private static final String APR1 = "apr1";
 
-    static boolean isApacheVariant(Hasher hr) {
+    /**
+     * Indicates whether a hasher is configured with the apache variant.
+     *
+     * @param hr The hasher
+     *
+     * @return {@code true} for {@code $apr1$}, {@code false} otherwise.
+     */
+    public static boolean isApacheVariant(Hasher hr) {
         return APR1.equals(hr.getConfiguration().getVariant());
     }
 
@@ -104,55 +106,6 @@ public class MD5BasedHasher extends HasherBase<SaltedParts> {
             salt.append(SALTCHARS[index]);
         }
         return salt.toString().getBytes(StandardCharsets.US_ASCII);
-    }
-
-    /**
-     * The most popular formatter for this hasher is the Modular Crypt Format.
-     *
-     * <ul>
-     * <li>Apache MD5 crypt format :
-     * <pre>$apr1$jgwedrkq$jzeetEHMGal5H0SUFDMEl1</pre></li>
-     * <li>Crypt MD5 :
-     * <pre>$1$3iuE5z/b$JHyXMzQOIq3cl6WlEMoZC.</pre></li>
-     * </ul>
-     *
-     * @see ModularCryptFormatHashers
-     */
-    public static final CryptFormatter<SaltedParts> MD5CRYPT_FORMATTER = new CryptFormatter<SaltedParts>() {
-        @Override
-        public SaltedParts parse(String crypt, Hasher hr) {
-            String[] stringParts = crypt.split("\\$");
-            SaltedParts parts = new SaltedParts(hr);
-            if (! stringParts[1].equals(parts.hr.getConfiguration().getVariant())) {
-                parts.hr = parts.hr.getBuilder().setVariant(stringParts[1]).build();
-            }
-            if (stringParts.length > 2 && ! StringUtil.isVoid(stringParts[2])) {
-                parts.salt = stringParts[2].getBytes(StandardCharsets.US_ASCII);
-            }
-            if (stringParts.length > 3 && ! StringUtil.isVoid(stringParts[3])) {
-                parts.hash = hr.getConfiguration().getEncoding().decode(stringParts[3]);
-            }
-            return parts;
-        }
-
-        @Override
-        public String format(SaltedParts parts) {
-            boolean isApacheVariant = isApacheVariant(parts.hr);
-            StringBuffer buf = new StringBuffer(isApacheVariant ? 37 : 34);
-            buf.append('$');
-            buf.append(parts.hr.getConfiguration().getVariant());
-            buf.append("$");
-            buf.append(new String(parts.salt, StandardCharsets.US_ASCII));
-            buf.append('$');
-            buf.append(parts.hr.getConfiguration().getEncoding().encode(parts.hash));
-            return buf.toString();
-        }
-
-        @Override
-        public CryptFormat getCryptFormat() {
-            return new ModularCryptFormat();
-        }
-
     };
 
 }

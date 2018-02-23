@@ -2,10 +2,11 @@ package ml.alternet.test.security.auth.hashers;
 
 import java.util.function.Predicate;
 
+import ml.alternet.security.auth.crypt.Argon2Parts;
 import ml.alternet.security.auth.hasher.Argon2Hasher;
 import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
 
-public class Argon2Test extends CryptTestBase<Argon2Hasher, Argon2Hasher.Argon2Parts> {
+public class Argon2Test extends CryptTestBase<Argon2Hasher, Argon2Parts> {
 
     String data[][] = { // in CryptTestBase it is [ "PASSWORD", "SALT", "HASH" ]
             // but for Argon2, the SALT can't be cut from the hash, because the hash length is a parameter

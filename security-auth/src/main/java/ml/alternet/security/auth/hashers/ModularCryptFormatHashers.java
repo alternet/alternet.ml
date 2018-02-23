@@ -14,6 +14,11 @@ import ml.alternet.security.auth.hasher.MessageHasher;
 import ml.alternet.security.auth.hasher.PBKDF2Hasher;
 import ml.alternet.security.auth.hasher.SHA2Hasher;
 import ml.alternet.util.EnumUtil;
+import ml.alternet.security.auth.formatters.Argon2CryptFormatter;
+import ml.alternet.security.auth.formatters.BCryptFormatter;
+import ml.alternet.security.auth.formatters.MD5ModularCryptFormatter;
+import ml.alternet.security.auth.formatters.PBKDF2ModularCryptFormatter;
+import ml.alternet.security.auth.formatters.SHA2ModularCryptFormatter;
 
 /**
  * Out-of-the box hashers.
@@ -36,7 +41,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
             .setScheme("MD5")
             .setVariant("apr1")
             .setEncoding(BytesEncoder.h64be)
-            .setFormatter(MD5BasedHasher.MD5CRYPT_FORMATTER)
+            .setFormatter(new MD5ModularCryptFormatter())
     ),
 
     /**
@@ -56,7 +61,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
             .setScheme("Blowfish")
             .setVariant("2")
             .setEncoding(BytesEncoder.bcrypt64)
-            .setFormatter(BCryptHasher.BCRYPT_FORMATTER)
+            .setFormatter(new BCryptFormatter())
             .setSaltByteSize(BCrypt.BCRYPT_SALT_LEN)
             .setLogRounds(10)
     ),
@@ -114,7 +119,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
             .setVariant("5")
             .setAlgorithm("SHA-256")
             .setEncoding(BytesEncoder.h64be)
-            .setFormatter(SHA2Hasher.SHA2CRYPT_FORMATTER)
+            .setFormatter(new SHA2ModularCryptFormatter())
     ),
 
     /**
@@ -169,7 +174,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
             .setSaltByteSize(16)
             .setHashByteSize(20)
             .setIterations(29000)
-            .setFormatter(PBKDF2Hasher.MCF_FORMATTER)
+            .setFormatter(new PBKDF2ModularCryptFormatter())
     ),
 
     /**
@@ -202,7 +207,7 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
             .setHashByteSize(32)
             .setSaltByteSize(16)
             .setEncoding(BytesEncoder.base64_no_padding)
-            .setFormatter(Argon2Hasher.ARGON2_FORMATTER)
+            .setFormatter(new Argon2CryptFormatter())
     ),
 
     /**
