@@ -47,6 +47,7 @@ import javax.security.auth.Destroyable;
  *
  * @author Philippe Poulard
  */
+@SensitiveData
 public interface Password extends Destroyable {
 
     /**

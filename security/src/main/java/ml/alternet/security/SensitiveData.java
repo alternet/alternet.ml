@@ -1,16 +1,19 @@
 package ml.alternet.security;
 
-import ml.alternet.misc.ToDo;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Todo
+ * Mark a data as sensitive data, that is to say
+ * should be destroyed after use and not remain too much
+ * time in memory.
  *
  * @author Philippe Poulard
  */
-@ToDo
-public interface SensitiveData {
-
-    // TODO : same principle as Password for other sensitive data
-    // SecureString : better name ?
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD, ElementType.TYPE, ElementType.LOCAL_VARIABLE, ElementType.PARAMETER})
+public @interface SensitiveData {
 
 }
