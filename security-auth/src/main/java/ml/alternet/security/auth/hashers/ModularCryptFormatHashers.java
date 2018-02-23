@@ -4,7 +4,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 
 import ml.alternet.encode.BytesEncoder;
-import ml.alternet.misc.TodoException;
 import ml.alternet.security.algorithms.BCrypt;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.formats.SaltlessModularCryptFormatter;
@@ -294,11 +293,6 @@ public enum ModularCryptFormatHashers implements Supplier<Hasher> {
 
     ModularCryptFormatHashers() {
         EnumUtil.replace(this, s -> s.replace('_', '-'));
-    }
-
-    @Override
-    public Hasher get() {
-        throw new TodoException();
     }
 
 }

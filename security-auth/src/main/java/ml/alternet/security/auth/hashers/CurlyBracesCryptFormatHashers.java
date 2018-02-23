@@ -162,9 +162,6 @@ public enum CurlyBracesCryptFormatHashers implements Supplier<Hasher> {
         }
     };
 
-    @Override
-    public abstract Hasher get();
-
     CurlyBracesCryptFormatHashers() {
         EnumUtil.replace(this, s -> s.replace("_", "-"));
     }
