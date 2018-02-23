@@ -13,7 +13,7 @@
     </parent>
 
     <name>Alternet Security - Authentication</name>
-    <description>Alternet Security aims to enhance security on passwords handled in the JVM.</description>
+    <description>Alternet Security - Authentication is a framework for password-based authentications.</description>
     <url>http://alternet.ml/alternet-libs/security/security.html</url>
 
     <properties>
