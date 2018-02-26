@@ -101,6 +101,11 @@
             <artifactId>alternet-security</artifactId>
             <version>1.0</version>
         </dependency>
+        <dependency>
+            <groupId>ml.alternet</groupId>
+            <artifactId>alternet-parsing</artifactId>
+            <version>1.0</version>
+        </dependency>
 
         <dependency>
             <groupId>javax.servlet</groupId>
