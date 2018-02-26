@@ -2,8 +2,9 @@ package ml.alternet.parser.ast;
 
 import java.util.Deque;
 
-import ml.alternet.parser.Grammar.Fragment;
 import ml.alternet.parser.EventsHandler.TokenValue;
+import ml.alternet.parser.Grammar.Fragment;
+import ml.alternet.parser.Grammar.Token;
 import ml.alternet.parser.handlers.TreeHandler.Value;
 import ml.alternet.parser.util.ValueStack;
 
@@ -17,7 +18,7 @@ import ml.alternet.parser.util.ValueStack;
  *
  * @param <Node> The type of the target node.
  */
-public interface TokenMapper<Node> {
+public interface TokenMapper<Node> extends Mapper<TokenValue<?>, Node> {
 
     /**
      * Transform a token to a node in the context
@@ -44,9 +45,19 @@ public interface TokenMapper<Node> {
      *      to keep the token unchanged (in that case it
      *      is supposed to be consumed elsewhere.
      */
+    @Override
     Node transform(
             ValueStack<Value<Node>> stack,
             TokenValue<?> token,
             Deque<Value<Node>> next);
+
+    /**
+     * Convenient method for building a set of mappers.
+     *
+     * @return A token mapper builder.
+     */
+    static <Node> Builder<TokenMapper<Node>, Token, Node> $() {
+        return Mapper.<TokenMapper<Node>, Token, Node> $();
+    }
 
 }

@@ -17,7 +17,7 @@ import ml.alternet.parser.util.ValueStack;
  *
  * @param <Node> The type of the target node.
  */
-public interface RuleMapper<Node> {
+public interface RuleMapper<Node> extends Mapper<Rule, Node> {
 
     /**
      * Transform a rule to a node in the context
@@ -38,9 +38,19 @@ public interface RuleMapper<Node> {
      *      its arguments will be merged with the arguments
      *      of the nested rule.
      */
+    @Override
     Node transform(
             ValueStack<Value<Node>> stack,
             Rule rule,
             Deque<Value<Node>> args);
+
+    /**
+     * Convenient method for building a set of mappers.
+     *
+     * @return A rule mapper builder.
+     */
+    static <Node> Builder<RuleMapper<Node>, Rule, Node> $() {
+        return Mapper.<RuleMapper<Node>, Rule, Node> $();
+    }
 
 }
