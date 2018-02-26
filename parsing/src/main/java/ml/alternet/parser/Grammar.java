@@ -20,12 +20,14 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import ml.alternet.facet.Initializable;
 import ml.alternet.facet.Presentable;
 import ml.alternet.facet.Trackable;
 import ml.alternet.misc.CharRange;
+import ml.alternet.misc.Type;
 import ml.alternet.parser.EventsHandler.NumberValue;
 import ml.alternet.parser.EventsHandler.RuleEnd;
 import ml.alternet.parser.EventsHandler.RuleStart;
@@ -812,6 +814,18 @@ public interface Grammar {
          */
         public TypedToken<java.lang.Number> asNumber() {
             return new TypedToken.Number(this);
+        }
+
+        /**
+         * Make this rule a token number, the token being of the type
+         * expected.
+         *
+         * @param numberClass The expected number type.
+         *
+         * @return This rule as a token.
+         */
+        public <T extends java.lang.Number> TypedToken<T> asNumber(Class<T> numberClass) {
+            return new TypedToken.TypedNumber<T>(this, numberClass);
         }
 
         /**
@@ -2200,7 +2214,7 @@ public interface Grammar {
         EnumValues<T> values;
 
         @SuppressWarnings("unchecked")
-        public EnumToken(@SuppressWarnings("rawtypes") Class<? extends Enum> values) {
+        public <E extends Enum<E>> EnumToken(Class<E> values) {
             this.values = (EnumValues<T>) EnumValues.from(values);
         }
 
@@ -2413,11 +2427,16 @@ public interface Grammar {
         public boolean parse(Scanner scanner, Handler handler, boolean alreadyMarked) throws IOException {
             TokensCollector<?> collector = collector();
             if (! this.rule.parse(scanner, collector).fail() && ! collector.isEmpty()) {
-                handler.receive(newTokenValue(collector, scanner));
-                return true;
-            } else {
-                return false;
+                TokenValue<T> value;
+                try {
+                    value = newTokenValue(collector, scanner);
+                    handler.receive(value);
+                    return true;
+                } catch (Exception e) {
+                    // if the value can't be created, the rule didn't matched
+                }
             }
+            return false;
         }
 
         @Override
@@ -2462,6 +2481,8 @@ public interface Grammar {
          */
         public static class Number extends TypedToken<java.lang.Number> {
 
+            Class<? extends Number> numberClass;
+
             /**
              * This token is made of subrules.
              *
@@ -2471,17 +2492,86 @@ public interface Grammar {
                 super(rule);
             }
 
+            /**
+             * This token is made of subrules.
+             *
+             * @param rule The rule that this token is made of.
+             * @param numberClass The number class expected.
+             */
+            public Number(Rule rule, Class<? extends Number> numberClass) {
+                this(rule);
+                this.numberClass = numberClass;
+            }
+
             @Override
             public TokenValue<java.lang.Number> newTokenValue(TokensCollector<?> buf, Trackable trackable) {
                 @SuppressWarnings("unchecked")
-                StringBuilder sb = ((TokensCollector<StringBuilder>) buf).get();
-                java.lang.Number number = NumberUtil.parseNumber(sb.toString());
+                TokensCollector<LinkedList<TokenValue<?>>> coll = (TokensCollector<LinkedList<TokenValue<?>>>) buf;
+                LinkedList<TokenValue<?>> values = coll.get();
+                if (values.size() == 1) {
+                    TokenValue<?> tv = values.get(0);
+                    Object o = tv.getValue();
+                    if (o instanceof java.lang.Number) {
+                        return new NumberValue(this, (java.lang.Number) o, trackable);
+                    }
+                }
+                java.lang.String s = values.stream().map(tv -> tv.toString())
+                    .collect(Collectors.joining());
+                java.lang.Number number = NumberUtil.parseNumber(s);
                 return new NumberValue(this, number, trackable);
             }
 
             @Override
             public TokensCollector<?> collector() {
-                return TokensCollector.newStringBuilderHandler();
+                return TokensCollector.newTokenValueHandler();
+            }
+
+        }
+
+        /**
+         * A token that collect its subrules to a number of a given type.
+         *
+         * @author Philippe Poulard
+         */
+        public static class TypedNumber<T extends java.lang.Number> extends TypedToken<T> {
+
+            Class<T> numberClass;
+
+            /**
+             * This token is made of subrules.
+             *
+             * @param rule The rule that this token is made of.
+             * @param numberClass The class number expected.
+             */
+            @SuppressWarnings("unchecked")
+            public TypedNumber(Rule rule, Class<T> numberClass) {
+                super(rule);
+                this.numberClass = (Class<T>) Type.of(numberClass).box().forName().get();
+            }
+
+            @Override
+            public TokenValue<T> newTokenValue(TokensCollector<?> buf, Trackable trackable) {
+                @SuppressWarnings("unchecked")
+                TokensCollector<LinkedList<TokenValue<?>>> coll = (TokensCollector<LinkedList<TokenValue<?>>>) buf;
+                LinkedList<TokenValue<?>> values = coll.get();
+                if (values.size() == 1) {
+                    TokenValue<?> tv = values.get(0);
+                    Object o = tv.getValue();
+                    if (o instanceof java.lang.Number) {
+                        T t = NumberUtil.as((java.lang.Number) o, numberClass);
+                        return new TokenValue<T>(this, t, trackable);
+                    }
+                }
+                java.lang.String s = values.stream().map(tv -> tv.toString())
+                    .collect(Collectors.joining());
+                @SuppressWarnings("unchecked")
+                T number = (T) NumberUtil.parseNumber(s, true, this.numberClass);
+                return new TokenValue<T>(this, number, trackable);
+            }
+
+            @Override
+            public TokensCollector<?> collector() {
+                return TokensCollector.newTokenValueHandler();
             }
 
         }

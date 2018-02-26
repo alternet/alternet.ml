@@ -5,6 +5,8 @@ import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import ml.alternet.misc.OmgException;
+
 /**
  * Numbers utilities.
  *
@@ -170,21 +172,21 @@ public final class NumberUtil {
         if (numberClass == null) {
             return parseNumber(number, isFloatingPoint);
         } else {
-            if (Integer.class.equals(numberClass)) {
+            if (Integer.class.equals(numberClass) || int.class.equals(numberClass)) {
                 return Integer.valueOf(number);
-            } else if (Byte.class.equals(numberClass)) {
+            } else if (Byte.class.equals(numberClass) || byte.class.equals(numberClass)) {
                 return Byte.valueOf(number);
-            } else if (Double.class.equals(numberClass)) {
+            } else if (Double.class.equals(numberClass) || double.class.equals(numberClass)) {
                 return Double.valueOf(number);
-            } else if (Float.class.equals(numberClass)) {
+            } else if (Float.class.equals(numberClass) || float.class.equals(numberClass)) {
                 return Float.valueOf(number);
-            } else if (Long.class.equals(numberClass)) {
+            } else if (Long.class.equals(numberClass) || long.class.equals(numberClass)) {
                 return Long.valueOf(number);
             } else if (BigInteger.class.equals(numberClass)) {
                 return new BigInteger(number);
             } else if (BigDecimal.class.equals(numberClass)) {
                 return new BigDecimal(number);
-            } else if (Short.class.equals(numberClass)) {
+            } else if (Short.class.equals(numberClass) || short.class.equals(numberClass)) {
                 return Short.valueOf(number);
             } else if (AtomicInteger.class.equals(numberClass)) {
                 return new AtomicInteger(Integer.valueOf(number));
@@ -192,6 +194,52 @@ public final class NumberUtil {
                 return new AtomicLong(Long.valueOf(number));
             } else {
                 return parseNumber(number, isFloatingPoint);
+            }
+        }
+    }
+
+    /**
+     * Cast a number to a given number type.
+     *
+     * @param number The actual number.
+     * @param numberClass The target class.
+     * @return A number of the expected type.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T extends Number> T as(Number number, Class<T> numberClass) {
+        if (numberClass.isInstance(number)) {
+            return (T) number;
+        } else {
+            if (Integer.class.equals(numberClass) || int.class.equals(numberClass)) {
+                return (T) (Integer) number.intValue();
+            } else if (Byte.class.equals(numberClass) || byte.class.equals(numberClass)) {
+                return (T) (Byte) number.byteValue();
+            } else if (Double.class.equals(numberClass) || double.class.equals(numberClass)) {
+                return (T) (Double) number.doubleValue();
+            } else if (Float.class.equals(numberClass) || float.class.equals(numberClass)) {
+                return (T) (Float) number.floatValue();
+            } else if (Long.class.equals(numberClass) || long.class.equals(numberClass)) {
+                return (T) (Long) number.longValue();
+            } else if (BigInteger.class.equals(numberClass)) {
+                if (number instanceof BigDecimal) {
+                    return (T) ((BigDecimal) number).toBigInteger();
+                } else {
+                    return (T) BigInteger.valueOf(number.longValue());
+                }
+            } else if (BigDecimal.class.equals(numberClass)) {
+                if (number instanceof BigInteger) {
+                    return (T) new BigDecimal((BigInteger) number);
+                } else {
+                    return (T) BigDecimal.valueOf(number.doubleValue());
+                }
+            } else if (Short.class.equals(numberClass) || short.class.equals(numberClass)) {
+                return (T) (Short) number.shortValue();
+            } else if (AtomicInteger.class.equals(numberClass)) {
+                return (T) new AtomicInteger(number.intValue());
+            } else if (AtomicLong.class.equals(numberClass)) {
+                return (T) new AtomicLong(number.longValue());
+            } else {
+                throw new OmgException();
             }
         }
     }
