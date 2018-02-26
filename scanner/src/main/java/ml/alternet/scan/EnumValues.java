@@ -3,6 +3,7 @@ package ml.alternet.scan;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -54,16 +55,15 @@ public class EnumValues<T> implements Readable<T>, Presentable { // is a set of 
      *
      * @return The enum values that holds all the hierarchy.
      */
-    @SuppressWarnings({ "rawtypes" })
-    public static EnumValues<? extends Enum> from(Class<? extends Enum> values) {
-        Set<EnumValues<? extends Enum>> enumValues = Arrays.stream(values.getEnumConstants())
-                .map(e -> new EnumValues<>(e))
-                .collect(Collectors.toSet());
+    public static <T extends Enum<T>> EnumValues<T> from(Class<T> values) {
+        Set<EnumValues<T>> enumValues = Arrays.stream(values.getEnumConstants())
+            .map(e -> new EnumValues<>(e))
+            .collect(Collectors.toSet());
         // dispatch by chars, start at index 0
         @SuppressWarnings("unchecked")
-        EnumValues<? extends Enum> result = new EnumValues<>((Set<EnumValues<?>>) (Object)
-                                              enumValues); // odd cast to ensure to call the right constructor
-        return result.dispatch(0);
+        EnumValues<T> result = new EnumValues<>((Set<EnumValues<?>>) (Object)
+                                   enumValues); // odd cast to ensure to call the right constructor
+        return result.dispatch(0).wrap();
     }
 
     /**
@@ -86,13 +86,29 @@ public class EnumValues<T> implements Readable<T>, Presentable { // is a set of 
      */
     public static EnumValues<String> from(Stream<String> values) {
         Set<EnumValues<String>> enumValues = values
-                .map(e -> new EnumValues<>(e))
-                .collect(Collectors.toSet());
+            .map(e -> new EnumValues<>(e))
+            .collect(Collectors.toSet());
         // dispatch by chars, start at index 0
         @SuppressWarnings("unchecked")
         EnumValues<String> result = new EnumValues<>((Set<EnumValues<?>>) (Object)
-                                              enumValues); // odd cast to ensure to call the right constructor
-        return result.dispatch(0);
+                                        enumValues); // odd cast to ensure to call the right constructor
+        return result.dispatch(0).wrap();
+    }
+
+    EnumValues<T> wrap() {
+        if (this.chars != null        // when all values start by the same String
+            || this.values == null)  // or when we have a single value
+        {
+            // we are wrapping this in a set because when
+            // using nextValue() we are starting with the set
+            Set<EnumValues<T>> set = new HashSet<>();
+            set.add(this);
+            EnumValues<T> wrapper = new EnumValues<T>((T) null);
+            wrapper.values = set;
+            return wrapper;
+        } else {
+            return this;
+        }
     }
 
     // constructor for the root
@@ -131,16 +147,19 @@ public class EnumValues<T> implements Readable<T>, Presentable { // is a set of 
 
     // push a char in the current char sequence
     void push(char c) {
+        if (this.chars == null) {
+            this.chars = new CharArray(new char[1], 0, 0); // allocate a single char
+        }
         // additional characters are common to the set of values
         this.chars.append(c);
     }
 
     @Override
     public String toString() {
-        return this.start == 0 ? "" : ("(" + this.start + ") ")
-             + this.chars == null ? "" : ("\"" + this.chars + "\"=")
-             + "\'" + (this.val == null ? "" : this.val) + "\'"
-             + ("" + this.values == null ? "[]" : (this.values + ""));
+        return (this.start == 0 ? "" : ("(" + this.start + ") "))
+             + (this.chars == null ? "" : ("\'" + this.chars + "\' -> "))
+             + (this.val == null ? "" : "\'" + this.val + "\'")
+             + (this.values == null ? "" : (this.values + ""));
     }
 
     // do we have the next chars from the input here ?
@@ -199,9 +218,9 @@ public class EnumValues<T> implements Readable<T>, Presentable { // is a set of 
             } else {
                 scanner.mark();
                 // read as many chars as in the common chars (matched so far)...
-                scanner.nextString(new StringConstraint.ReadLength(enumValue.chars.length()));
+                int l = scanner.nextString(new StringConstraint.ReadLength(enumValue.chars.length()));
                 // ...and go on parsing
-                result = enumValue.nextValuePart(scanner, charPos + 1);
+                result = enumValue.nextValuePart(scanner, charPos + l);
                 if (result.isPresent()) {
                     scanner.consume();
                 } else {
