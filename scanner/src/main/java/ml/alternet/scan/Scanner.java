@@ -3,8 +3,14 @@ package ml.alternet.scan;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Optional;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.Stack;
+import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import ml.alternet.facet.Rewindable;
 import ml.alternet.facet.Trackable;
@@ -185,6 +191,34 @@ public abstract class Scanner implements Trackable, Rewindable {
             this.state.source.read();
         }
         return targetLength;
+    }
+
+    /**
+     * Return a stream of Unicode characters ;
+     * when the end of the stream is reached, the
+     * scanner can go on reading.
+     *
+     * @param predicate {@code true} to accept the current Unicode character
+     *      {@code false} to stop the stream.
+     * @return A stream on the input characters.
+     */
+    public IntStream nextChars(IntPredicate predicate) {
+        return StreamSupport.intStream(new Spliterators.AbstractIntSpliterator(
+                Long.MAX_VALUE, Spliterator.ORDERED | Spliterator.NONNULL | Spliterator.IMMUTABLE )
+        {
+
+            @Override
+            public boolean tryAdvance(IntConsumer action) {
+                if (hasNext() && predicate.test(lookAhead())) {
+                    action.accept(lookAhead());
+                    Thrower.safeCall(() -> read());
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }, false);
+
     }
 
     /**
@@ -442,7 +476,7 @@ public abstract class Scanner implements Trackable, Rewindable {
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public <T> Optional<T> nextEnumValue( Class<? extends Enum> values ) throws IOException {
-        return (Optional<T>) EnumValues.from(values).nextValue(this);
+        return EnumValues.from(values).nextValue(this);
     }
 
     /**
