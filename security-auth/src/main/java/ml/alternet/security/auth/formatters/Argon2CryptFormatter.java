@@ -1,12 +1,19 @@
 package ml.alternet.security.auth.formatters;
 
+import java.io.IOException;
+import java.util.NoSuchElementException;
+
 import ml.alternet.encode.BytesEncoding;
+import ml.alternet.scan.NumberConstraint;
+import ml.alternet.scan.Scanner;
 import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.CryptFormatter;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.Argon2Parts;
 import ml.alternet.security.auth.formats.ModularCryptFormat;
-import ml.alternet.util.StringUtil;
+import ml.alternet.security.auth.hasher.Argon2Hasher.Argon2Bridge.Type;
+
+import static ml.alternet.security.auth.formatters.Util.*;
 
 /**
  * The Argon2 hash format is defined by the argon2 reference implementation.
@@ -16,9 +23,9 @@ import ml.alternet.util.StringUtil;
  *
  * An example hash (of password) is:
  *
- * <code>$argon2i$v=19$m=512,t=3,p=2$c29tZXNhbHQ$SqlVijFGiPG+935vDSGEsA</code>
+ * <code>$argon2i$[v=19$]m=512,t=3,p=2$c29tZXNhbHQ$SqlVijFGiPG+935vDSGEsA</code>
  *
- * This string has the format <code>$argon2X$v=V$m=M,t=T,p=P[,data=DATA]$salt$digest</code>, where:
+ * This string has the format <code>$argon2X$[v=V$]m=M,t=T,p=P[,keyid=KEYID][,data=DATA]$salt$digest</code>, where:
  *
  * <ul>
  * <li>X is either i or d, depending on the argon2 variant (i in the example).</li>
@@ -55,44 +62,57 @@ public class Argon2CryptFormatter implements CryptFormatter<Argon2Parts> {
     @Override
     public Argon2Parts parse(String crypt, Hasher hr) {
         Argon2Parts parts = new Argon2Parts(hr);
-        String[] stringParts = crypt.split("\\$");
-        if (! stringParts[1].equals(parts.hr.getConfiguration().getVariant())) {
-            hr = parts.hr.getBuilder().setVariant(stringParts[1]).build();
-            parts.hr = hr;
-        }
-        int versionPresent = 0;
-        if (stringParts[2].startsWith("v=")) {
-            versionPresent = 1;
-            parts.version = Integer.parseInt(stringParts[2].substring(2));
-        }
-        BytesEncoding encoding = hr.getConfiguration().getEncoding();
-        if (stringParts.length > 2 + versionPresent && ! StringUtil.isVoid(stringParts[2 + versionPresent])) {
-            String[] params = stringParts[2 + versionPresent].split(",");
-            if (params.length > 0 && params[0].startsWith("m=")) {
-                parts.memoryCost = Integer.parseInt(params[0].substring(2));
+
+        Scanner scanner = Scanner.of(crypt);
+        try {
+            ensure(scanner.hasNextChar('$', true));
+            Type type = (Type) scanner.nextEnumValue(Type.class).get();
+            if (! type.name().equals(parts.hr.getConfiguration().getVariant())) {
+                hr = parts.hr.getBuilder().setVariant(type.name()).build();
+                parts.hr = hr;
             }
-            if (params.length > 1 && params[1].startsWith("t=")) {
-                parts.timeCost = Integer.parseInt(params[1].substring(2));
+            ensure(scanner.hasNextChar('$', true));
+            // be smart, make the parts optionals
+            if (scanner.hasNextString("v=", true)) {
+                parts.version = scanner.nextNumber(NumberConstraint.INT_CONSTRAINT).intValue();
+                ensure(scanner.hasNextChar('$', true));
             }
-            if (params.length > 2 && params[2].startsWith("p=")) {
-                parts.parallelism = Integer.parseInt(params[2].substring(2));
+            if (scanner.hasNextString("m=", true)) {
+                parts.memoryCost = scanner.nextNumber(NumberConstraint.INT_CONSTRAINT).intValue();
+                ensure(scanner.hasNextChar(',', true));
             }
-            if (params.length > 3) {
-                int keyPresent = 0;
-                if (params[3].startsWith("keyid=")) {
-                    keyPresent = 1;
-                    parts.keyid = encoding.decode(params[3].substring(6));
+            if (scanner.hasNextString("t=", true)) {
+                parts.timeCost = scanner.nextNumber(NumberConstraint.INT_CONSTRAINT).intValue();
+                ensure(scanner.hasNextChar(',', true));
+            }
+            if (scanner.hasNextString("p=", true)) {
+                parts.parallelism = scanner.nextNumber(NumberConstraint.INT_CONSTRAINT).intValue();
+            }
+            if (scanner.hasNextChar(',', true)) {
+                boolean keyid = false;
+                if (scanner.hasNextString("keyid=", true)) {
+                    keyid = true;
+                    parts.keyid = decode(hr, scanner, c -> c != ',' && c != '$');
                 }
-                if (params.length > 3 + keyPresent && params[3 + keyPresent].startsWith("data=")) {
-                    parts.data = encoding.decode(params[3 + keyPresent].substring(5));
+                if (! keyid || (keyid && scanner.hasNextChar(',', true))) {
+                    if (scanner.hasNextString("data=", true)) {
+                        parts.data = decode(hr, scanner, c -> c != ',' && c != '$');
+                    }
                 }
             }
-        }
-        if (stringParts.length > 3 + versionPresent && ! StringUtil.isVoid(stringParts[3 + versionPresent])) {
-            parts.salt = encoding.decode(stringParts[3 + versionPresent]);
-        }
-        if (stringParts.length > 4 + versionPresent && ! StringUtil.isVoid(stringParts[4 + versionPresent])) {
-            parts.hash = encoding.decode(stringParts[4 + versionPresent]);
+            // below, if salt or hash are missing, the crypt is just use for configuring a hasher
+            if (scanner.hasNext()) {
+                ensure(scanner.hasNextChar('$', true));
+                if (scanner.hasNext()) {
+                    parts.salt = decode(hr, scanner, c -> c != '$');
+                }
+            }
+            if (scanner.hasNext()) {
+                ensure(scanner.hasNextChar('$', true));
+                parts.hash = decode(hr, scanner, c -> true); // decode till the end
+            }
+        } catch (NullPointerException | NoSuchElementException | IOException e) {
+            throw new IllegalArgumentException("Unable to parse " + crypt);
         }
         return parts;
     }
