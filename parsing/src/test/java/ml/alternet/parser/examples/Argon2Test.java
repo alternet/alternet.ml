@@ -6,9 +6,12 @@ import org.assertj.core.api.Assertions;
 import org.testng.annotations.Test;
 
 import ml.alternet.encode.BytesEncoder;
+import ml.alternet.security.auth.CryptFormatter;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.Argon2Parts;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.security.auth.hasher.Argon2Hasher;
+import ml.alternet.test.security.auth.hashers.CryptTestBase;
 
 public class Argon2Test extends CryptTestBase<Argon2Hasher, Argon2Parts> {
 
@@ -58,6 +61,11 @@ public class Argon2Test extends CryptTestBase<Argon2Hasher, Argon2Parts> {
     @Override
     protected Argon2Hasher newHasher(String salt) {
         return (Argon2Hasher) newHasher().getBuilder().use(salt).build();
+    }
+
+    @Override
+    protected Hasher resolve(String crypt) {
+        return newHasher(crypt);
     }
 
     @Override

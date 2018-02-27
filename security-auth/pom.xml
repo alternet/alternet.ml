@@ -92,6 +92,18 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${version.maven-jar-plugin}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -103,7 +115,7 @@
         </dependency>
         <dependency>
             <groupId>ml.alternet</groupId>
-            <artifactId>alternet-parsing</artifactId>
+            <artifactId>alternet-scanner</artifactId>
             <version>1.0</version>
         </dependency>
 

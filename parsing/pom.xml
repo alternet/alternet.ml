@@ -33,6 +33,19 @@
             <artifactId>alternet-scanner</artifactId>
             <version>1.0</version>
         </dependency>
+        <dependency>
+            <groupId>ml.alternet</groupId>
+            <artifactId>alternet-security-auth</artifactId>
+            <version>1.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ml.alternet</groupId>
+            <artifactId>alternet-security-auth</artifactId>
+            <version>1.0</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
