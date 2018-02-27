@@ -9,6 +9,7 @@ import ml.alternet.encode.BytesEncoder.Base64;
 import ml.alternet.encode.BytesEncoder.ValueSpace;
 import ml.alternet.io.IOUtil;
 import ml.alternet.misc.CharRange;
+import ml.alternet.util.BytesUtil;
 
 /**
  * Encode/decode bytes to base 64 or hexa strings.
@@ -38,10 +39,10 @@ public interface BytesEncoding {
      */
     default String encode(byte[] data, int offset, int len) {
         return encode(IntStream.range(offset, offset + len).map(i -> data[i]))
-                .collect(StringBuilder::new,
-                        (sb, c) -> sb.append((char) c),
-                        StringBuilder::append)
-                .toString();
+            .collect(StringBuilder::new,
+                    (sb, c) -> sb.append((char) c),
+                    StringBuilder::append)
+            .toString();
     }
 
     /**
@@ -72,12 +73,10 @@ public interface BytesEncoding {
      * @return The bytes.
      */
     default byte[] decode(String data) {
-        int[] ints = decode(data.chars().mapToObj(c -> (Character) (char) c))
-            .toArray();
-        byte[] bytes = new byte[ints.length];
-        for (int i = 0; i < ints.length; i++) {
-            bytes[i] = (byte) ints[i];
-        }
+        byte[] bytes = decode(data.chars() // do not use codepoints
+                .mapToObj(c -> (Character) (char) c))
+            .mapToObj(i -> (Integer) i)
+            .collect(BytesUtil.toByteArray());
         return bytes;
     }
 

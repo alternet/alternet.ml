@@ -1,5 +1,10 @@
 package ml.alternet.util;
 
+import java.io.ByteArrayOutputStream;
+import java.util.stream.Collector;
+
+import ml.alternet.misc.Thrower;
+
 /**
  * Bytes-related utilities.
  *
@@ -73,6 +78,22 @@ public final class BytesUtil {
             chars[i] = c;
         }
         return chars;
+    }
+
+    /**
+     * Collect a stream of bytes to an array.
+     *
+     * @return A byte array collector.
+     */
+    public static Collector<Integer, ?, byte[]> toByteArray() {
+
+        return Collector.of(ByteArrayOutputStream::new,
+                ByteArrayOutputStream::write,
+                (baos1, baos2) -> {
+                    Thrower.safeCall(() -> baos2.writeTo(baos1));
+                    return baos1;
+                },
+                ByteArrayOutputStream::toByteArray);
     }
 
 }
