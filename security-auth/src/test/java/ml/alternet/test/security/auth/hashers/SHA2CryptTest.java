@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 
 import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
 import ml.alternet.security.auth.hasher.SHA2Hasher;
-import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
 
 @Test
 public class SHA2CryptTest extends CryptTestBase<SHA2Hasher, WorkFactorSaltedParts> {
@@ -40,7 +40,7 @@ public class SHA2CryptTest extends CryptTestBase<SHA2Hasher, WorkFactorSaltedPar
 
     @Override
     protected SHA2Hasher newHasher() {
-        return (SHA2Hasher) ModularCryptFormatHashers.$5$.get();
+        return (SHA2Hasher) ModularCryptFormat.Hashers.$5$.get();
     }
 
     @Override

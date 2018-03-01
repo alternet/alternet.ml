@@ -1,15 +1,28 @@
 package ml.alternet.security.auth.formats;
 
 import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import javax.inject.Singleton;
 
-import ml.alternet.discover.DiscoveryService;
 import ml.alternet.encode.BytesEncoder;
+import ml.alternet.encode.BytesEncoding;
+import ml.alternet.misc.Thrower;
+import ml.alternet.scan.Scanner;
 import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
+import ml.alternet.security.auth.Hasher.Builder;
+import ml.alternet.security.auth.formatters.CurlyBracesCryptFormatter;
 import ml.alternet.security.auth.formatters.CurlyBracesCryptFormatterWrapper;
-import ml.alternet.security.auth.hashers.CurlyBracesCryptFormatHashers;
+import ml.alternet.security.auth.formatters.IterativeSaltedCurlyBracesCryptFormatter;
+import ml.alternet.security.auth.formatters.SaltedCurlyBracesCryptFormatter;
+import ml.alternet.security.auth.hasher.MessageHasher;
+import ml.alternet.security.auth.hasher.PBKDF2Hasher;
+import ml.alternet.security.auth.hasher.SaltedMessageHasher;
+import ml.alternet.util.EnumUtil;
+
+import static ml.alternet.misc.Thrower.safeCall;
 
 /**
  * The scheme of this format appears in curly braces.
@@ -27,51 +40,60 @@ import ml.alternet.security.auth.hashers.CurlyBracesCryptFormatHashers;
  * @author Philippe Poulard
  */
 @Singleton
-public class CurlyBracesCryptFormat implements CryptFormat {
+public class CurlyBracesCryptFormat implements CryptFormat, DiscoverableCryptFormat {
+
+    /**
+     * Return the end boundary of the scheme.
+     */
+    protected char shemeEndChar() {
+        return '}';
+    }
+
+    /**
+     * Return the start boundary of the scheme that will test
+     * and consume the characters before the scheme, if any.
+     */
+    protected Predicate<Scanner> schemeStartCondition() {
+        return c -> safeCall(() -> c.hasNextChar('{', true));
+    }
 
     @Override
     public Optional<Hasher> resolve(String crypt) {
-        Hasher.Builder b = null;
-        SchemePart schemePart = null;
         try {
-            schemePart = new SchemePart(crypt);
-            if ("CRYPT".equals(schemePart.scheme)) {
-                String mcfPart = crypt.substring(schemePart.rcb + 1);
-                b = new ModularCryptFormat().resolve(mcfPart).get().getBuilder();
-                b.setFormatter(new CurlyBracesCryptFormatterWrapper<>(b.getFormatter(), "CRYPT"));
-            } else if (schemePart.scheme != null) {
-                String lookupKey = Hasher.Builder.class.getCanonicalName() + "/" + family() + "/" + schemePart.scheme;
-                try {
-                    Class<Hasher.Builder> clazz = DiscoveryService.lookup(lookupKey);
-                    if (clazz != null) {
-                        b = clazz.newInstance();
+            Scanner scanner = Scanner.of(crypt);
+            SchemeWithEncoding swe = new SchemeWithEncoding(
+                scanner,
+                schemeStartCondition(),
+                shemeEndChar()
+            );
+            return swe.scheme.map(scheme -> Thrower.safeCall(() -> {
+                if (scanner.hasNextChar(shemeEndChar(), true)) {
+                    Hasher.Builder builder = null;
+                    if ("CRYPT".equals(scheme)) {
+                        String mcfPart = scanner.getRemainderString().get();
+                        builder = new ModularCryptFormat().resolve(mcfPart).get().getBuilder();
+                        builder.setFormatter(new CurlyBracesCryptFormatterWrapper<>(builder.getFormatter(), "CRYPT", new ModularCryptFormat()));
+                    } else {
+                        try {
+                            builder = Hashers.valueOf(scheme).get().getBuilder();
+                        } catch (IllegalArgumentException e) { // scheme not within the enum
+                            builder = lookup(scheme);
+                        }
                     }
-                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException cnfe) {
-                    LOGGER.warning(cnfe.toString());
-                }
-                if (b == null) {
-                    try {
-                        b = CurlyBracesCryptFormatHashers.valueOf(schemePart.scheme)
-                            .get().getBuilder();
-                    } catch (Exception e) {
-                        LOGGER.fine("No crypt format found for " + schemePart.scheme + " for " + family());
+                    if (builder != null) {
+                        Optional<BytesEncoding> encoding = swe.encoding.get();
+                        if (encoding.isPresent()) {
+                            builder.setEncoding(encoding.get());
+                            builder.setVariant("withEncoding");
+                        };
+                        return builder.use(crypt).build();
                     }
-                }
-                if (b != null && schemePart.encoding != null) {
-                    b.setEncoder("HEX".equalsIgnoreCase(schemePart.encoding)
-                        ? BytesEncoder.hexa.toString()
-                        : BytesEncoder.base64.toString());
-                    b.setVariant("withEncoding");
-                }
-            }
-        } catch (Exception e) {
-            if (schemePart.scheme == null) {
-                LOGGER.fine("Unable to parse " + family());
-            } else {
-                LOGGER.fine("No crypt format found for " + schemePart.scheme + " for " + family());
-            }
+                } // else that format is not matching
+                return null;
+            }));
+        } catch (Exception ex) {
+            return Thrower.doThrow(ex);
         }
-        return Optional.ofNullable(b).map(Hasher.Builder::build);
     }
 
     /**
@@ -91,50 +113,137 @@ public class CurlyBracesCryptFormat implements CryptFormat {
     }
 
     /**
-     * Focus on the parts in curly braces.
+     * LDAP hash formats specified by <a href="https://tools.ietf.org/html/rfc2307.html">RFC 2307</a>
+     * including standard formats {MD5}, {SMD5}, {SHA}, {SSHA} and extensions. These schemes range
+     * from somewhat to very insecure, and should not be used except when required.
      *
-     * Exist in a separate class just for handling the optional part "encodeInHexa".
+     * <h1>Configuration</h1>
+     *
+     * You can examine the configuration of each value
+     * <a href="https://github.com/alternet/alternet.ml/blob/master/security-auth/src/main/java/ml/alternet/security/auth/formats/CurlyBracesCryptFormat.java">here</a>.
      *
      * @author Philippe Poulard
      */
-    public static class SchemePart {
+    public enum Hashers implements Supplier<Hasher> {
 
         /**
-         * The scheme
-         */
-        public String scheme = null;
-
-        /**
-         * The encoding
-         */
-        public String encoding = null;
-
-        /**
-         * Right curly brace index, for further parsing
-         */
-        public int rcb = -1;
-
-        /**
-         * Breakdown a crypt into its parts.
+         * LDAP’s plain MD5 format.
          *
-         * @param crypt The actual crypt.
+         * <p>"<tt>password</tt>" -&gt; "<tt>{MD5}X03MO1qnZdYdgyfeuILPmQ==</tt>"</p>
          */
-        public SchemePart(String crypt) {
-            if (crypt.startsWith("{")) {
-                rcb = crypt.indexOf('}');
-                if (rcb > 1) {
-                    scheme = crypt.substring(1, rcb);
-                    int dot = scheme.indexOf('.');
-                    if (dot != -1) {
-                        encoding = scheme.substring(dot + 1);
-                        scheme = scheme.substring(0, dot);
-                        if (! "HEX".equalsIgnoreCase(encoding) && ! "b64".equalsIgnoreCase(encoding)) {
-                            LOGGER.warning("Unknown scheme variant \"" + encoding + "\" in " + "\"" + crypt + "\"");
-                        }
-                    }
-                }
-            }
+        MD5(
+            Hasher.Builder.builder()
+                .setClass(MessageHasher.class)
+                .setScheme("MD5")
+                .setAlgorithm("MD5")
+                .setEncoding(BytesEncoder.base64)
+                .setFormatter(new CurlyBracesCryptFormatter())
+        ),
+
+        /**
+         * LDAP’s plain SHA1 format.
+         *
+         * <p>"<tt>password</tt>" -&gt; "<tt>{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=</tt>"</p>
+         */
+        SHA(
+            Hasher.Builder.builder()
+                .setClass(MessageHasher.class)
+                .setScheme("SHA")
+                .setAlgorithm("SHA1")
+                .setEncoding(BytesEncoder.base64)
+                .setFormatter(new CurlyBracesCryptFormatter())
+        ),
+
+        /**
+         * LDAP’s salted MD5 format with 4 bytes salt.
+         *
+         * <p>"<tt>password</tt>" -&gt; "<tt>{SMD5}jNoSMNY0cybfuBWiaGlFw3Mfi/U=</tt>"</p>
+         */
+        SMD5(
+            Hasher.Builder.builder()
+                .setClass(SaltedMessageHasher.class)
+                .setScheme("SMD5")
+                .setAlgorithm("MD5")
+                .setEncoding(BytesEncoder.base64)
+                .setSaltByteSize(4)
+                .setFormatter(new SaltedCurlyBracesCryptFormatter())
+        ),
+
+        /**
+         * LDAP’s salted SHA1 format with 4 bytes salt.
+         *
+         * <p>"<tt>password</tt>" -&gt; "<tt>{SSHA}pKqkNr1tq3wtQqk+UcPyA3HnA2NsU5NJ</tt>"</p>
+         */
+        SSHA(
+            Hasher.Builder.builder()
+                .setClass(SaltedMessageHasher.class)
+                .setScheme("SSHA")
+                .setAlgorithm("SHA1")
+                .setEncoding(BytesEncoder.base64)
+                .setSaltByteSize(4)
+                .setFormatter(new SaltedCurlyBracesCryptFormatter())
+        ),
+
+        /**
+         * PBKDF2 with SHA1 algorithm.
+         *
+         * <p>"<tt>password</tt>" -&gt; "<tt>{PBKDF2}131000$tLbWWssZ45zzfi9FiDEmxA$dQlpmhY4dGvmx4MOK/uOj/WU7Lg</tt>"</p>
+         */
+        PBKDF2(
+            Hasher.Builder.builder()
+                .setClass(PBKDF2Hasher.class)
+                .setScheme("PBKDF2")
+                .setAlgorithm("PBKDF2WithHmacSHA1")
+                .setEncoding(BytesEncoder.abase64)
+                .setSaltByteSize(24)
+                .setHashByteSize(20)
+                .setIterations(29000)
+                .setFormatter(new IterativeSaltedCurlyBracesCryptFormatter())
+        ),
+
+        /**
+         * PBKDF2 with SHA256 algorithm.
+         */
+        PBKDF2_SHA256(
+            PBKDF2.get().getBuilder()
+                .setHashByteSize(32)
+                .setAlgorithm("PBKDF2WithHmacSHA256")
+        ),
+
+        /**
+         * PBKDF2 with SHA512 algorithm.
+         */
+        PBKDF2_SHA512(
+            PBKDF2.get().getBuilder()
+                .setHashByteSize(64)
+                .setAlgorithm("PBKDF2WithHmacSHA512")
+        ),
+
+        /**
+         * Alternate method for storing plaintext passwords by using
+         * the identifying prefix <tt>{plaintext}</tt>.
+         */
+        plaintext(plainTextBuilder());
+
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        private static Builder plainTextBuilder() {
+            Builder b = PlainTextCryptFormat.get().getBuilder();
+            b.setFormatter(new CurlyBracesCryptFormatterWrapper(b.getFormatter(), "plaintext", new PlainTextCryptFormat()));
+            return b;
         }
+
+        private Hasher.Builder builder;
+
+        @Override
+        public Hasher get() {
+            return this.builder.build();
+        }
+
+        Hashers(Hasher.Builder builder) {
+            this.builder = builder;
+            EnumUtil.replace(this, s -> s.replace("_", "-"));
+        }
+
     }
 
 }

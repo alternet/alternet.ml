@@ -6,8 +6,8 @@ import java.security.MessageDigest;
 import ml.alternet.security.Password;
 import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.crypt.SaltedParts;
-import ml.alternet.security.auth.hashers.CurlyBracesCryptFormatHashers;
 import ml.alternet.security.binary.SafeBuffer;
+import ml.alternet.security.auth.formats.CurlyBracesCryptFormat.Hashers;
 
 /**
  * Compute a checksum as the raw digest of the the string {password}{salt}.
@@ -18,8 +18,8 @@ import ml.alternet.security.binary.SafeBuffer;
  * supply the expected message digest, the discovery service tries to find
  * one with the algorithm name.
  *
- * @see CurlyBracesCryptFormatHashers#SMD5
- * @see CurlyBracesCryptFormatHashers#SSHA
+ * @see Hashers#SMD5
+ * @see Hashers#SSHA
  *
  * @see MessageHasher#lookup(String)
  *

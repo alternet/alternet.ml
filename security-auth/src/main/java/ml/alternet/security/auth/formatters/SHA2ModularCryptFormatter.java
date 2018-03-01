@@ -8,9 +8,8 @@ import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.CryptFormatter;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
-import ml.alternet.security.auth.formats.ModularCryptFormat;
-import ml.alternet.security.auth.hasher.SHA2Hasher;
 import ml.alternet.security.auth.hasher.SHA2Hasher.Algorithm;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
 
 /**
  * SHA2 crypt formatter :

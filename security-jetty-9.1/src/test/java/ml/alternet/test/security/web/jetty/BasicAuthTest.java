@@ -15,9 +15,9 @@ import org.testng.annotations.Test;
 
 import jodd.methref.Methref;
 import ml.alternet.security.auth.formats.CurlyBracesCryptFormat;
-import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.security.auth.formats.PlainTextCryptFormat;
-import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
+import ml.alternet.security.auth.formats.ModularCryptFormat.Hashers;
 import ml.alternet.security.web.Config;
 import ml.alternet.security.web.jetty.AltHttpConnectionFactory;
 import ml.alternet.test.security.web.server.BasicAuthServerTestHarness;
@@ -83,8 +83,7 @@ public class BasicAuthTest extends BasicAuthServerTestHarness<Server> {
                 PlainTextCryptFormat.class.getName()
         );
         // store a user with its crypt
-        String crypt = ModularCryptFormatHashers.$2$.get()
-            .encrypt(unsafePwd.toCharArray());
+        String crypt = Hashers.$2$.get().encrypt(unsafePwd.toCharArray());
         loginService.putUser(userName, crypt, new String[] {"admin"});
 
         ConstraintSecurityHandler security = new ConstraintSecurityHandler();

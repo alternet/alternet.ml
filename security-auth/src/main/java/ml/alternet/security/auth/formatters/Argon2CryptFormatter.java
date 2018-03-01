@@ -3,6 +3,8 @@ package ml.alternet.security.auth.formatters;
 import java.io.IOException;
 import java.util.NoSuchElementException;
 
+import javax.inject.Singleton;
+
 import ml.alternet.encode.BytesEncoding;
 import ml.alternet.scan.NumberConstraint;
 import ml.alternet.scan.Scanner;
@@ -11,6 +13,7 @@ import ml.alternet.security.auth.CryptFormatter;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.Argon2Parts;
 import ml.alternet.security.auth.formats.ModularCryptFormat;
+import ml.alternet.security.auth.formats.ModularCryptFormat.Hashers;
 import ml.alternet.security.auth.hasher.Argon2Hasher.Argon2Bridge.Type;
 
 import static ml.alternet.security.auth.formatters.Util.*;
@@ -55,14 +58,18 @@ import static ml.alternet.security.auth.formatters.Util.*;
  * into UTF-8 if not already encoded, and handed off to the Argon2 function. A specified number of bytes
  * (16 byte default) returned result are encoded as the checksum.
  *
+ * @see ModularCryptFormat
+ *
  * @author Philippe Poulard
+ *
+ * @see Hashers#$argon2i$
  */
+@Singleton
 public class Argon2CryptFormatter implements CryptFormatter<Argon2Parts> {
 
     @Override
     public Argon2Parts parse(String crypt, Hasher hr) {
         Argon2Parts parts = new Argon2Parts(hr);
-
         Scanner scanner = Scanner.of(crypt);
         try {
             ensure(scanner.hasNextChar('$', true));
@@ -152,4 +159,5 @@ public class Argon2CryptFormatter implements CryptFormatter<Argon2Parts> {
     public CryptFormat getCryptFormat() {
         return new ModularCryptFormat();
     }
+
 }

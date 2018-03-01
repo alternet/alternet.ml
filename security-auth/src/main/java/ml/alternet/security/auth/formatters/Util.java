@@ -20,7 +20,7 @@ public class Util {
      *
      * @param hr Hold the decoder.
      * @param scanner The character stream
-     * @param predicate Indicates the character to accept.
+     * @param predicate Scan until predicate is {@code false}.
      * @return The byte array of characters.
      */
     public static byte[] decode(Hasher hr, Scanner scanner, IntPredicate predicate) {

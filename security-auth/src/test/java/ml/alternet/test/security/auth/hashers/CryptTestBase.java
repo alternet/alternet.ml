@@ -13,8 +13,8 @@ import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.CryptFormatter;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.CryptParts;
-import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.security.auth.hasher.HasherBase;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
 
 /**
  * Crypt test harness
