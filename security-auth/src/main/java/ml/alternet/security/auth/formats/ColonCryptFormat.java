@@ -1,14 +1,15 @@
 package ml.alternet.security.auth.formats;
 
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import javax.inject.Singleton;
 
-import ml.alternet.discover.DiscoveryService;
+import ml.alternet.scan.Scanner;
 import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.Hasher;
+import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
 import ml.alternet.security.auth.formatters.ColonCryptFormatter;
-import ml.alternet.security.auth.hashers.CurlyBracesCryptFormatHashers;
 
 /**
  * With the Colon Crypt format, the parts are separated by ":".
@@ -21,37 +22,27 @@ import ml.alternet.security.auth.hashers.CurlyBracesCryptFormatHashers;
  * 3AE344F7AB5AA17308A49FDAD997105340DD6E348FDF5623</pre></li>
  * </ul>
  *
+ * @see WorkFactorSaltedParts
+ *
  * @author Philippe Poulard
  */
 @Singleton
-public class ColonCryptFormat implements CryptFormat {
+public class ColonCryptFormat extends CurlyBracesCryptFormat implements CryptFormat {
+
+    @Override
+    protected char shemeEndChar() {
+        return ':';
+    }
+
+    @Override
+    protected Predicate<Scanner> schemeStartCondition() {
+        return c -> true; // this scheme doesn't start by a specific char
+    }
 
     @Override
     public Optional<Hasher> resolve(String crypt) {
-        String[] parts = crypt.split(":");
-        Hasher.Builder b = null;
-        if (parts.length > 0) {
-            String scheme = parts[0];
-            String lookupKey = Hasher.Builder.class.getCanonicalName() + "/" + family() + "/" + scheme;
-            try {
-                Class<Hasher.Builder> clazz = DiscoveryService.lookup(lookupKey);
-                if (clazz != null) {
-                    b = clazz.newInstance();
-                }
-            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException cnfe) {
-                LOGGER.warning(cnfe.toString());
-            }
-            if (b == null) {
-                try {
-                    b = CurlyBracesCryptFormatHashers.valueOf(scheme)
-                        .get().getBuilder()
-                        .setFormatter(new ColonCryptFormatter());
-                } catch (Exception e) {
-                    LOGGER.fine("No crypt format found for " + scheme + " for " + family());
-                }
-            }
-        }
-        return Optional.ofNullable(b).map(Hasher.Builder::build);
+        return super.resolve(crypt)
+            .map(hr -> hr.getBuilder().setFormatter(new ColonCryptFormatter()).build());
     }
 
     /**

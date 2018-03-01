@@ -7,7 +7,7 @@ import org.apache.catalina.CredentialHandler;
 import ml.alternet.misc.Thrower;
 import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.Hasher;
-import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.security.web.server.AuthenticationMethod;
 
 /**
@@ -59,7 +59,7 @@ public class AltCredentialHandler implements CredentialHandler {
     public Hasher getHasher() {
         if (this.hasher == null) {
 //            this.hasher = Hasher.getDefault();
-            this.hasher = ModularCryptFormatHashers.$2$.get(); // TODO Hasher conf
+            this.hasher = ModularCryptFormat.Hashers.$2$.get(); // TODO Hasher conf
         }
         return this.hasher;
     }

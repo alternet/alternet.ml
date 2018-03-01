@@ -182,9 +182,9 @@ Argon2 is the recommended choice in Alternet Security : it safely erase sensitiv
 
 Most popular hashers are available and parameterized in :
 
- * [`CurlyBracesCryptFormatHashers`](../security-auth/apidocs/ml/alternet/security/auth/hashers/CurlyBracesCryptFormatHashers.html) - [source code](https://github.com/alternet/alternet.ml/blob/master/security-auth/src/main/java/ml/alternet/security/auth/hashers/CurlyBracesCryptFormatHashers.java)
- * [`ModularCryptFormatHashers`](../security-auth/apidocs/ml/alternet/security/auth/hashers/ModularCryptFormatHashers.html) - [source code](https://github.com/alternet/alternet.ml/blob/master/security-auth/src/main/java/ml/alternet/security/auth/hashers/ModularCryptFormatHashers.java)
- * [`UnixHashers`](../security-auth/apidocs/ml/alternet/security/auth/hashers/UnixHashers.html) - [source code](https://github.com/alternet/alternet.ml/blob/master/security-auth/src/main/java/ml/alternet/security/auth/hashers/UnixHashers.java)
+ * [`CurlyBracesCryptFormat`](../security-auth/apidocs/ml/alternet/security/auth/formats/CurlyBracesCryptFormat.html) - [source code](https://github.com/alternet/alternet.ml/blob/master/security-auth/src/main/java/ml/alternet/security/auth/formats/CurlyBracesCryptFormat.java)
+ * [`ModularCryptFormat`](../security-auth/apidocs/ml/alternet/security/auth/formats/ModularCryptFormat.html) - [source code](https://github.com/alternet/alternet.ml/blob/master/security-auth/src/main/java/ml/alternet/security/auth/formats/ModularCryptFormat.java)
+ * [`UnixCryptFormat`](../security-auth/apidocs/ml/alternet/security/auth/formats/UnixCryptFormat.html) - [source code](https://github.com/alternet/alternet.ml/blob/master/security-auth/src/main/java/ml/alternet/security/auth/formats/UnixCryptFormat.java)
 
 You can check in the source code the default parameters. If the default configuration doesn't suit your needs, you can alter any supported parameter. However, since a `Hasher` is immutable, you have to rebuild a new one, but you can get a builder from the existing configuration.
 
@@ -198,7 +198,7 @@ Credentials credentials = Credentials.fromPassword(pwd);
                        // or         .fromUserPassword(user, pwd)
 
 // pick a hasher
-Hasher hasher = CurlyBracesCryptFormatHashers.PBKDF2.get() // with standard configuration
+Hasher hasher = CurlyBracesCryptFormat.Hashers.PBKDF2.get() // with standard configuration
 
 // but we want a slightly different hasher
 hasher = hasher.getBuilder() // we can get a builder from the existing configuration
@@ -226,7 +226,7 @@ Credentials credentials = Credentials.fromPassword(pwd);
 String crypt = ... // some hash stored in a database
 
 // get the hasher
-Hasher hasher = CurlyBracesCryptFormatHashers.PBKDF2.get()
+Hasher hasher = CurlyBracesCryptFormat.Hashers.PBKDF2.get()
 // no need to change the iteration, it is encoded in the crypt
 
 if (hasher.check(credentials, crypt)) {

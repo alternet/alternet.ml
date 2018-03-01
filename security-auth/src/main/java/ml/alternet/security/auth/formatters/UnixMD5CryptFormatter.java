@@ -7,7 +7,7 @@ import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.CryptFormatter;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.CryptParts;
-import ml.alternet.security.auth.hashers.UnixHashers;
+import ml.alternet.security.auth.formats.UnixCryptFormat;
 
 /**
  * Trivial formatter for a crypt made of just a hash field.
@@ -36,7 +36,7 @@ public class UnixMD5CryptFormatter implements CryptFormatter<CryptParts> {
 
             @Override
             public Optional<Hasher> resolve(String crypt) {
-                return Optional.of(UnixHashers.MD5.get());
+                return Optional.of(UnixCryptFormat.Hashers.MD5.get());
             }
 
             @Override

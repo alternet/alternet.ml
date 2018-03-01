@@ -26,7 +26,7 @@ import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
 import ml.alternet.security.auth.hasher.BCryptHasher;
-import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
 
 /**
  * unit tests for BCrypt routines
@@ -152,7 +152,7 @@ public class BCryptTest extends CryptTestBase<BCryptHasher, WorkFactorSaltedPart
 
     @Override
     protected BCryptHasher newHasher() {
-        return (BCryptHasher) ModularCryptFormatHashers.$2a$.get();
+        return (BCryptHasher) ModularCryptFormat.Hashers.$2a$.get();
     }
 
     @Override
@@ -217,7 +217,7 @@ public class BCryptTest extends CryptTestBase<BCryptHasher, WorkFactorSaltedPart
      */
     @Test(dataProvider="pwdWithLogRounds")
     public void logRound_should_affectCrypt(int logRounds, String plain) throws InvalidAlgorithmParameterException {
-        Hasher hr = ModularCryptFormatHashers.$2a$.get().getBuilder().setLogRounds(logRounds).build();
+        Hasher hr = ModularCryptFormat.Hashers.$2a$.get().getBuilder().setLogRounds(logRounds).build();
         Credentials cred = Credentials.fromPassword(plain.toCharArray());
         String hashed1 = hr.encrypt(cred);
         String hashed2 = encrypt(cred, hashed1);

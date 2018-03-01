@@ -11,11 +11,11 @@ import org.testng.annotations.Test;
 
 import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.Hasher;
-import ml.alternet.security.auth.hashers.UnixHashers;
+import ml.alternet.security.auth.formats.UnixCryptFormat;
 
 public class UnixCryptTest {
 
-    Hasher UNIX_CRYPT = UnixHashers.UNIX_CRYPT.get();
+    Hasher UNIX_CRYPT = UnixCryptFormat.Hashers.UNIX_CRYPT.get();
 
     @DataProvider(name="pwd")
     public String[][] getPasswords() {

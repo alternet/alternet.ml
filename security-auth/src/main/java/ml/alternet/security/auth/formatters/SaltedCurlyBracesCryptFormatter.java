@@ -1,11 +1,17 @@
 package ml.alternet.security.auth.formatters;
 
+import static ml.alternet.security.auth.formatters.Util.decode;
+
 import ml.alternet.encode.BytesEncoding;
+import ml.alternet.misc.Thrower;
+import ml.alternet.scan.Scanner;
 import ml.alternet.security.auth.CryptFormat;
+import ml.alternet.security.auth.CryptFormatter;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.SaltedParts;
 import ml.alternet.security.auth.formats.CurlyBracesCryptFormat;
-import ml.alternet.security.auth.formats.CurlyBracesCryptFormat.SchemePart;
+import ml.alternet.security.auth.formats.CurlyBracesCryptFormat.Hashers;
+import ml.alternet.security.auth.formats.SchemeWithEncoding;
 
 /**
  * Salted crypt formatter for <tt>{scheme}hash</tt> and <tt>{scheme.encoding}hash</tt>.
@@ -21,31 +27,28 @@ import ml.alternet.security.auth.formats.CurlyBracesCryptFormat.SchemePart;
  * </ul>
  *
  * @author Philippe Poulard
+ *
+ * @see Hashers#SMD5
+ * @see Hashers#SSHA
  */
-public class SaltedCurlyBracesCryptFormatter implements ml.alternet.security.auth.CryptFormatter<SaltedParts> {
+public class SaltedCurlyBracesCryptFormatter implements CryptFormatter<SaltedParts> {
 
     @Override
     public SaltedParts parse(String crypt, Hasher hr) {
-        SchemePart schemePart = new SchemePart(crypt);
-        if (schemePart.scheme == null) {
-            throw new IllegalArgumentException(crypt);
-        }
-        SaltedParts parts = new SaltedParts(hr);
-        if (schemePart.encoding != hr.getConfiguration().getVariant()) {
-            hr = hr.getBuilder().setVariant("withEncoding").build();
-            parts.hr = hr;
-        }
-        BytesEncoding encoding = hr.getConfiguration().getEncoding();
-        if (crypt.length() > schemePart.rcb + 1) {
-            String ssp = crypt.substring(schemePart.rcb + 1);
-            byte[] bytes = encoding.decode(ssp);
-            int saltSize = hr.getConfiguration().getSaltByteSize();
-            parts.salt = new byte[saltSize];
-            System.arraycopy(bytes, bytes.length - saltSize, parts.salt, 0, saltSize);
-            parts.hash = new byte[bytes.length - saltSize];
-            System.arraycopy(bytes, 0, parts.hash, 0, bytes.length - saltSize);
-        }
-        return parts;
+        Scanner scanner = Scanner.of(crypt);
+        Hasher hasher = CurlyBracesCryptFormatter.parseScheme(scanner, hr);
+        SaltedParts parts = new SaltedParts(hasher);
+        return Thrower.safeCall(() -> {
+            if (scanner.hasNext()) {
+                byte[] bytes = decode(hr, scanner, c -> true); // decode till the end
+                int saltSize = hr.getConfiguration().getSaltByteSize();
+                parts.salt = new byte[saltSize];
+                System.arraycopy(bytes, bytes.length - saltSize, parts.salt, 0, saltSize);
+                parts.hash = new byte[bytes.length - saltSize];
+                System.arraycopy(bytes, 0, parts.hash, 0, bytes.length - saltSize);
+            }
+            return parts;
+        });
     }
 
     @Override
@@ -56,12 +59,7 @@ public class SaltedCurlyBracesCryptFormatter implements ml.alternet.security.aut
         String variant = parts.hr.getConfiguration().getVariant();
         if ("withEncoding".equals(variant)) {
             BytesEncoding encoding = parts.hr.getConfiguration().getEncoding();
-            String encName = encoding.name();
-            if (encName.startsWith("hexa")) {
-                buf.append(".HEX");
-            } else if (encName.startsWith("base64")) {
-                buf.append(".b64");
-            }
+            SchemeWithEncoding.code(encoding).ifPresent(enc -> buf.append('.').append(enc));
         }
         buf.append('}');
         if (parts.hash != null && parts.hash.length > 0) {

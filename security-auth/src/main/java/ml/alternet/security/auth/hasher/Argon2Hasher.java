@@ -73,7 +73,7 @@ public class Argon2Hasher extends HasherBase<Argon2Parts> implements Hasher.Conf
     /**
      * Return the secret bound to the given key.
      *
-     * You must supply an implementation of {@link SecretResolver} in order to
+     * You must supply an implementation of {@link Argon2Hasher.SecretResolver} in order to
      * support the "keyid" parameter.
      *
      * @param keyid The key ID.
@@ -82,7 +82,7 @@ public class Argon2Hasher extends HasherBase<Argon2Parts> implements Hasher.Conf
      *
      * @throws IllegalArgumentException When the key is not found.
      *
-     * @see SecretResolver
+     * @see Argon2Hasher.SecretResolver
      */
     public byte[] getSecret(byte[] keyid) { // TODO : should try with hash conf to get an implementation ???
         if (keyid == null) {

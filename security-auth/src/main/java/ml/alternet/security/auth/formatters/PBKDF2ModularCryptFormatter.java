@@ -6,14 +6,16 @@ import ml.alternet.security.auth.CryptFormatter;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
 import ml.alternet.security.auth.formats.ModularCryptFormat;
-import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
+import ml.alternet.security.auth.formats.ModularCryptFormat.Hashers;
 
 /**
  * One popular formatter for PBKFD2 family is the Modular Crypt Format.
  *
  * <p>"<tt>password</tt>" -&gt; "<tt>$pbkdf2-sha256$6400$0ZrzXitFSGltTQnBWOsdAw$Y11AchqV4b0sUisdZd0Xr97KWoymNE0LNNrnEgY4H9M</tt>"</p>
  *
- * @see ModularCryptFormatHashers
+ * @see Hashers#$pbkdf2_sha1$
+ * @see Hashers#$pbkdf2_sha256$
+ * @see Hashers#$pbkdf2_sha512$
  *
  * @author Philippe Poulard
  */

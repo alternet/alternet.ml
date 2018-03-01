@@ -14,9 +14,9 @@ import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.CryptFormatter;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.Argon2Parts;
-import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.security.auth.hasher.Argon2Hasher;
 import ml.alternet.security.auth.hasher.Argon2Hasher.Argon2Bridge.Type;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.util.StringUtil;
 
 /**

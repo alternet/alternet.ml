@@ -218,7 +218,7 @@ public class EnumValues<T> implements Readable<T>, Presentable { // is a set of 
             } else {
                 scanner.mark();
                 // read as many chars as in the common chars (matched so far)...
-                int l = scanner.nextString(new StringConstraint.ReadLength(enumValue.chars.length()));
+                int l = scanner.skipNextString(new StringConstraint.ReadLength(enumValue.chars.length()));
                 // ...and go on parsing
                 result = enumValue.nextValuePart(scanner, charPos + l);
                 if (result.isPresent()) {

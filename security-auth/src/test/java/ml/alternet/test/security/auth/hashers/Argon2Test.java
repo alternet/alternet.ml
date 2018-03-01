@@ -4,7 +4,7 @@ import java.util.function.Predicate;
 
 import ml.alternet.security.auth.crypt.Argon2Parts;
 import ml.alternet.security.auth.hasher.Argon2Hasher;
-import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
 
 public class Argon2Test extends CryptTestBase<Argon2Hasher, Argon2Parts> {
 
@@ -30,7 +30,7 @@ public class Argon2Test extends CryptTestBase<Argon2Hasher, Argon2Parts> {
 
     @Override
     protected Argon2Hasher newHasher() {
-        return (Argon2Hasher) ModularCryptFormatHashers.$argon2i$.get();
+        return (Argon2Hasher) ModularCryptFormat.Hashers.$argon2i$.get();
     }
 
     @Override

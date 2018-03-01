@@ -194,6 +194,42 @@ public abstract class Scanner implements Trackable, Rewindable {
     }
 
     /**
+     * Read the next string.
+     *
+     * <p>The string stops at the first separator specified
+     * by the stop condition of the constraint or at the
+     * end of the stream. Each character to append is
+     * filtered by the constraint (for example to allow
+     * escaping characters).</p>
+     *
+     * <p>The characters involved in the stop condition
+     * can be preserved (they will be the next
+     * characters to read) or not according to the
+     * stop condition.</p>
+     * <p>WARNING: It is the responsibility
+     * of the {@link StringConstraint#stopCondition(int, int, Scanner)}
+     * method to mark and reset the scanner if necessary.</p>
+     *
+     * <p>In any case the characters involved in the stop condition are not
+     * appended to the buffer.</p>
+     *
+     * @param constraint The non-<code>null</code> constraint that the
+     *         string to read has to satisfy.
+     *
+     * @return The characters read.
+     *
+     * @throws IOException When an I/O error occur.
+     */
+    public Optional<String> nextString(StringConstraint constraint) throws IOException {
+        StringBuilder buf = new StringBuilder();
+        if (nextString(constraint, buf) == 0) {
+            return Optional.empty();
+        } else {
+            return Optional.of(buf.toString());
+        }
+    }
+
+    /**
      * Return a stream of Unicode characters ;
      * when the end of the stream is reached, the
      * scanner can go on reading.
@@ -245,7 +281,7 @@ public abstract class Scanner implements Trackable, Rewindable {
      *
      * @see #nextString(StringConstraint, StringBuilder)
      */
-    public int nextString( StringConstraint constraint ) throws IOException {
+    public int skipNextString( StringConstraint constraint ) throws IOException {
         this.state.sourceIndex = 0;
         while ( ! this.state.end && ! constraint.stopCondition( this.state.sourceIndex, 0, this ) ) {
             this.state.sourceIndex++;
@@ -490,7 +526,7 @@ public abstract class Scanner implements Trackable, Rewindable {
      *
      * @throws IOException When an I/O error occur.
      */
-    public <T> Optional<T>  nextEnumValue( EnumValues<T> values ) throws IOException {
+    public <T> Optional<T> nextEnumValue( EnumValues<T> values ) throws IOException {
         return values.nextValue(this);
     }
 
@@ -590,7 +626,7 @@ public abstract class Scanner implements Trackable, Rewindable {
      *
      * @see #nextNumber()
      * @see #nextNumber(NumberConstraint)
-     * @see #nextString(StringConstraint)
+     * @see #skipNextString(StringConstraint)
      * @see #nextString(StringConstraint, StringBuilder)
      */
     public int getSourceIndex() {

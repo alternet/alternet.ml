@@ -6,9 +6,9 @@ import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.CryptFormatter;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.SaltedParts;
-import ml.alternet.security.auth.formats.ModularCryptFormat;
 import ml.alternet.security.auth.hasher.MD5BasedHasher;
-import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
+import ml.alternet.security.auth.formats.ModularCryptFormat.Hashers;
 import ml.alternet.util.StringUtil;
 
 /**
@@ -21,7 +21,8 @@ import ml.alternet.util.StringUtil;
  * <pre>$1$3iuE5z/b$JHyXMzQOIq3cl6WlEMoZC.</pre></li>
  * </ul>
  *
- * @see ModularCryptFormatHashers
+ * @see Hashers#$apr1$
+ * @see Hashers#$1$
  *
  * @author Philippe Poulard
  */

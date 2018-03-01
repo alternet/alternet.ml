@@ -6,7 +6,7 @@ import org.testng.annotations.Test;
 
 import ml.alternet.security.auth.crypt.CryptParts;
 import ml.alternet.security.auth.hasher.MessageHasher;
-import ml.alternet.security.auth.hashers.ModularCryptFormatHashers;
+import ml.alternet.security.auth.formats.ModularCryptFormat;
 
 @Test
 public class NTHashTest extends CryptTestBase<MessageHasher, CryptParts> {
@@ -30,7 +30,7 @@ public class NTHashTest extends CryptTestBase<MessageHasher, CryptParts> {
 
     @Override
     protected MessageHasher newHasher() {
-        return (MessageHasher) ModularCryptFormatHashers.$3$.get();
+        return (MessageHasher) ModularCryptFormat.Hashers.$3$.get();
     }
 
     @Override

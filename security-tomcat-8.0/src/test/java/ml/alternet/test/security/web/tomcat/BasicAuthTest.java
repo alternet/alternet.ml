@@ -1,13 +1,5 @@
 package ml.alternet.test.security.web.tomcat;
 
-import jodd.methref.Methref;
-import ml.alternet.security.web.Config;
-import ml.alternet.security.web.tomcat.AltBasicAuthenticator;
-import ml.alternet.security.web.tomcat.AltCredentialHandler;
-import ml.alternet.test.security.web.server.BasicAuthServerTestHarness;
-
-import java.util.Objects;
-
 import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.authenticator.AuthenticatorBase;
@@ -21,6 +13,12 @@ import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
 import org.glassfish.jersey.server.ServerProperties;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.testng.annotations.Test;
+
+import jodd.methref.Methref;
+import ml.alternet.security.web.Config;
+import ml.alternet.security.web.tomcat.AltBasicAuthenticator;
+import ml.alternet.security.web.tomcat.AltCredentialHandler;
+import ml.alternet.test.security.web.server.BasicAuthServerTestHarness;
 
 /**
  * The tests that show on BASIC authentication that the password is captured by
