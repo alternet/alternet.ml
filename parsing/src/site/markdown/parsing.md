@@ -9,7 +9,7 @@ Published version of this page available HERE</a></div>
 
 1. [Overview](#overview)
     1. [Features](#features)
-2. [Grammar tutorial](#grammar-tutorial)
+1. [Grammars](#grammars)
     1. [The grammar skeleton](#skeleton)
     1. [Tokens](#tokens)
         1. [Enum tokens](#enumTokens)
@@ -21,12 +21,12 @@ Published version of this page available HERE</a></div>
         1. [Direct reference](#directRef)
         1. [Handling whitespaces](#whitespaces)
         1. [Extending grammars and overriding rules](#extending)
-    1. [Grammar with custom token types](#customTypes)
-        1. [The target custom classes](#targetClasses)
-        1. [Dropping tokens](#drop)
-        1. [Mapping tokens](#mapping)
+1. [Grammar with custom token types](#customTypes)
+    1. [The target custom classes](#targetClasses)
+    1. [Dropping tokens](#drop)
+    1. [Mapping tokens](#mapping)
     1. [Separating the raw grammar and the augmented grammar](#augmented)
-3. [Parsing tutorial](#parsing-tutorial)
+1. [Parsing](#parsing)
     1. [Parsing an input](#input)
         1. [The “tokenizer” rule](#tokenizer)
         1. [The remainder](#remainder)
@@ -38,7 +38,8 @@ Published version of this page available HERE</a></div>
         1. [Token mappers](#tokenMappers)
         1. [Rule mappers](#ruleMappers)
     1. [A grammar as a token](#grammarToken)
-4. [Troubleshooting](#troubleshooting)
+1. [Examples](#examples)
+1. [Troubleshooting](#troubleshooting)
 
 <a name="overview"></a>
 
@@ -91,9 +92,9 @@ Alternet Parsing comes with out-of-the-box convenient features such as :
 </div>
 </div>
 
-<a name="grammar-tutorial"></a>
+<a name="grammars"></a>
 
-## Grammar tutorial
+## Grammars
 
 In this tutorial, we are writing a grammar that allow to parse a simple mathematical expression like this :
 
@@ -767,7 +768,7 @@ In the next section we will learn how to build a custom data model.
 
 <a name="customTypes"></a>
 
-### Grammar with custom token types
+## Grammar with custom token types
 
 A **token value** represents the input characters that are parsed. We have seen before that a token value may have various types :
 
@@ -801,7 +802,7 @@ We will design our `WAuth` grammar and our custom result objects (for the part a
 
 <a name="targetClasses"></a>
 
-#### The target custom classes
+### The target custom classes
 
 Our custom classes, first, are very simple ; notice they are agnostic
 regarding our future grammar, they are just POJOs :
@@ -833,7 +834,7 @@ public class Challenge {
 }
 ```
 
-#### The WAuth grammar
+### The WAuth grammar
 
 Now, the grammar (using the "Augmented BNF" syntax, see §2.1 in [RFC-2616](https://www.ietf.org/rfc/rfc2616.txt)) :
 
@@ -858,7 +859,7 @@ Now, the grammar (using the "Augmented BNF" syntax, see §2.1 in [RFC-2616](http
 
 <a name="drop"></a>
 
-#### Dropping tokens
+### Dropping tokens
 
 Let's start the Java grammar :
 
@@ -913,7 +914,7 @@ Conversely, the `DOUBLE_QUOTE` token is not dropped at the token definition, bec
 
 <a name="mapping"></a>
 
-#### Mapping tokens
+### Mapping tokens
 
 Instead of having `String`s or `Numbers`s, we expect having our types (yes, fields and types may have the same name) :
 
@@ -1057,9 +1058,9 @@ That way your users may use either the raw grammar, the augmented grammar with y
 
 It is certainly a good practice to follow this pattern to make your grammar really reusable.
 
-<a name="parsing-tutorial"></a>
+<a name="parsing"></a>
 
-## Parsing tutorial
+## Parsing
 
 Now that your grammar is well designed, you are able to parse your data.
 
@@ -1454,7 +1455,7 @@ The more often the stack doesn't serve the transformation but sometimes it may h
 * The last parameter contains all the values that are either the **arguments** of the rule to transform, or all the values coming **next** from the token to transform in the context of its enclosed rule. That values can be raw values or transformed values, according to how you process them individually.
 In fact `Value<NumericExpression>` is a wrapper around an object that can be either the raw token or a `NumericExpression`. You are free to supply tokens left as-is or transformed ones, and to get the raw value with [`.getSource()`](apidocs/ml/alternet/parser/util/Dual.html#getSource--) or the transformed one with [`.getTarget()`](apidocs/ml/alternet/parser/util/Dual.html#getTarget--).
 
-For example, if a rule defines a comma-separated list of digits such as "`1,2,3,4`", that the input is `"i=**1,2,3,4**;"`, and that the current **token** is `"2"`, then the **next** elements are `",3,4"` (note that `;` is outside of the rule considered and **not** within the next elements) and the stack is `"i=1,"` (note that `i=` are tokens outside of the scope of the rule considered, but **present** in the stack). Some elements may be consumed during the production of the target node.
+For example, if a rule defines a comma-separated list of digits such as "`1,2,3,4`", that the input is "`i=**1,2,3,4**;`", and that the current **token** is "`2`", then the **next** elements are "`,3,4`" (note that `;` is outside of the rule considered and **not** within the next elements) and the stack is "`i=1,`" (note that "`i=`" are tokens outside of the scope of the rule considered, but **present** in the stack). Some elements may be consumed during the production of the target node.
 
 <a name="tokenMappers"></a>
 
@@ -1766,6 +1767,17 @@ Here is how we can evaluate such expression :
 ```
 
 You can examine the code of the [`ValueTemplateBuilder`](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/step4/ValueTemplateBuilder.java) and [`StringExpression`](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/step4/StringExpression.java) on Github.
+
+<a name="examples"></a>
+
+## Examples
+
+You will find various examples in the [Github repo](https://github.com/alternet/alternet.ml/tree/master/parsing/src/test/java/ml/alternet/parser).
+
+* [WWW-Authenticate parser](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/www/WAuth.java)
+* [Calc grammar and parser](https://github.com/alternet/alternet.ml/tree/master/parsing/src/test/java/ml/alternet/parser/step4)
+* [Argon2 crypt format parser](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/examples/Argon2CryptFormatter.java) : breakdown the crypt in its parts, decode bytes and supply parameters
+
 
 <a name="troubleshooting"></a>
 

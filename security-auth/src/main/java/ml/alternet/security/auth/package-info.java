@@ -1,6 +1,5 @@
 /**
- * Breakdown a crypt to its parts, or format parts to
- * a string representation of a crypt.
+ * Password based authentication
  */
 @ml.alternet.misc.InfoClass
 package ml.alternet.security.auth;
