@@ -227,8 +227,7 @@ public abstract class Grammar$ implements Grammar, Initializable {
      *
      * @return The main rule if one has been set
      *      on the grammar or one of its interfaces.
-     *
-     * @see Grammar.MainRule
+     *      ({@code Grammar.MainRule})
      */
     @Override
     public java.util.Optional<Rule> mainRule() {
@@ -246,11 +245,10 @@ public abstract class Grammar$ implements Grammar, Initializable {
     /**
      * Return the "tokenizer rule", that is to
      * say all the non-fragment tokens explicitly
-     * specified by this grammar.
+     * specified by this grammar ({@code Grammar.Fragment}).
      *
      * @return The rule <code>(T1 | T2 | T3 ...)*</code>
      *
-     * @see Grammar.Fragment
      * @see Grammar#tokenizer()
      */
     @Override

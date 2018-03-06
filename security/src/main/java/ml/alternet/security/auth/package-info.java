@@ -1,7 +1,5 @@
 /**
- * Support for password authentication.
- *
- * See [alternet-security-auth] module
+ * Support for password based authentication.
  *
  * @see ml.alternet.security
  */

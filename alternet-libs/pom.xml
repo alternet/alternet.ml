@@ -339,9 +339,6 @@
                         <link>http://alternet.ml/alternet-libs/apidocs/</link>
                     </links>
                     <excludePackageNames>ml.alternet.util.gen.*:org.isk.jvmhardcore.pjba:org.isk.jvmhardcore.pjba.*</excludePackageNames>
-                    <sourceFileExcludes>
-                        <exclude>${project.basedir}/../tools-generator/download/pjba/jvm_hardcore-p22/03_projects/pjba/01_src/main/**/*.*</exclude>
-                    </sourceFileExcludes>
                 </configuration>
             </plugin>
             <plugin>

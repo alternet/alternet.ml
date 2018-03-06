@@ -6,7 +6,7 @@
  * appear clear in the memory, in order to make it
  * difficult to find when a memory dump is performed.
  *
- * @see <a href="http://alternet.ml/alternet-libs/security/security.html">http://alternet.ml/alternet-libs/security/security.html</a>
+ * <a href="http://alternet.ml/alternet-libs/security/security.html">http://alternet.ml/alternet-libs/security/security.html</a>
  *
  * A password can be created thanks to {@link ml.alternet.security.PasswordManager}, that
  * exist in several flavors. To pick one, use the {@link ml.alternet.security.PasswordManagerFactory}

@@ -100,7 +100,7 @@ public interface TraversableRule {
      * This interface can be used only by subclasses of Rule.
      *
      * It supply a default implementation of the
-     * {@link #traverse(Rule, Set, BiFunction, Function)}
+     * {@code traverse(Rule, Set, BiFunction, Function)}
      * method for such wrappers.
      *
      * @author Philippe Poulard
@@ -148,7 +148,7 @@ public interface TraversableRule {
      * This interface can be used only by subclasses of Rule.
      *
      * It supply a default implementation of the
-     * {@link #traverse(Rule, Set, BiFunction, Function)}
+     * {@code traverse(Rule, Set, BiFunction, Function)}
      * method.
      *
      * @author Philippe Poulard

@@ -1822,12 +1822,8 @@ public interface Grammar {
          * @throws IllegalArgumentException It this token is
          *      not a char token or doesn't wrap a char token.
          *
-         * @see Grammar.CharToken#union(CharRange...)
-         * @see Grammar.CharToken#union(Token...)
-         * @see Grammar.CharToken#except(CharRange...)
-         * @see Grammar.CharToken#except(Token...)
-         * @see TraversableRule.SimpleRule
-         * @see Grammar.CharToken#unwrap(Token)
+         * @see CharToken
+         * @see TraversableRule
          */
         public CharToken unwrap() {
             return CharToken.unwrap(this);
@@ -1867,7 +1863,7 @@ public interface Grammar {
          *
          * @return The char token if any.
          *
-         * @see TraversableRule.SimpleRule
+         * @see TraversableRule
          */
         public static java.util.Optional<CharToken> unwrapSafely(Token token) {
             while (! (token instanceof CharToken) && token instanceof TraversableRule.SimpleRule) {
@@ -1890,7 +1886,7 @@ public interface Grammar {
          * @throws IllegalArgumentException If the token is not a char token and
          *      doesn't wrap a char token.
          *
-         * @see TraversableRule.SimpleRule
+         * @see TraversableRule
          */
         public static CharToken unwrap(Token token) {
             return unwrapSafely(token).orElseThrow(

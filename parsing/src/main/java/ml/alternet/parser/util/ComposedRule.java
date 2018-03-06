@@ -19,7 +19,7 @@ import ml.alternet.parser.Grammar.Rule;
  * </ul>
  * Those optimizations can occur on rules that are compatible : they must be of the same type,
  * must have the same modifiers ({@literal @}Fragment, {@literal @}Skip), and must not be
- * subject to substitution ({@link Grammar.Rule#isGrammarField()})
+ * subject to substitution ({@link Rule#isGrammarField()})
  *
  * @author Philippe Poulard
  *

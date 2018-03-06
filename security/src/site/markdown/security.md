@@ -168,7 +168,7 @@ All four hashes share the following properties:
 
 <div class="alert alert-info" role="alert">
 Argon2 is the recommended choice in Alternet Security : it safely erase sensitive data at the very beginning of hashing, unlike PBKDF2 and BCrypt (that keep a reference to the clear password during all the long hashing process).
-</div>
+However, BCrypt with digest (e.g. `bcrypt-sha256`) is also a good choice since the password is processed only before the iteration phase.</div>
 
 ## Usage
 
@@ -378,6 +378,8 @@ stored in a safe password object ; the raw data are replaced by a dummy value
 uselessly by the application. Of course, this value can't be used in the
 application, instead, the safe password object will be injected in the Web
 application and available in servlets or RESTful applications (see above).
+
+Proof of concept : below there is an implementation for Jetty and Tomcat.
 
 <a name="jetty"></a>
 

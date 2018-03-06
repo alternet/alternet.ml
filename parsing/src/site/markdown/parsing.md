@@ -477,7 +477,7 @@ not yet assigned and a `null` value would be passed :
     Rule Expression = is(Calc.Sum); // ⛔ in fact we have null
 ```
 
-To fix this, we introduce `$("Sum")` and `$("Argument")` that are placeholder for rules not yet defined 
+To fix this, we introduce `$("Sum")` and `$("Argument")` that are placeholders for rules not yet defined 
 or defined later in our Java program :
 
 ```java
@@ -731,7 +731,7 @@ A nice helper tool also allows to extend enums :
     enum MathFunction {
         asin, acos;
         static {
-            EnumUtil.extend(Calc.Function.class);
+            EnumUtil.extend(Calc.Function.class); // other values are imported
         }
     }
     @Replace(grammar=Calc.class, field="FUNCTION")    // replace Calc.FUNCTION
@@ -752,7 +752,7 @@ Here is a parsing example with each grammar :
 Sometimes, you may tend to use tokens directly in rules without defining **named** tokens in the grammar. Using named tokens allow global replacements without needing to rewrite each rule that use them. In our grammar, since we have names for the parenthesis, it is very easy to design a new grammar that just change the parenthesis with, say, square brackets :
 
 ```java
-public interface CalcCurly extends Calc { // 👈 look here, we extend Calc
+public interface CalcSquare extends Calc { // 👈 look here, we extend Calc
 
     Token LBRACKET = is( '[' );
     Token RBRACKET = is( ']' );
@@ -762,7 +762,7 @@ public interface CalcCurly extends Calc { // 👈 look here, we extend Calc
 }
 ```
 
-Substitutions will occur everywhere `LBRACKET` and `RBRACKET` are referred in the new grammar. Now we can parse `sin[ x ] * [1 + var_12]`.
+Substitutions will occur everywhere `LBRACKET` and `RBRACKET` are referred in the new grammar. Now we can parse `sin[ x ] * [1 + var_12]` with the `ClacSquare` grammar.
 
 In the next section we will learn how to build a custom data model.
 
@@ -774,13 +774,13 @@ A **token value** represents the input characters that are parsed. We have seen 
 
 * **a single character** : this is the default behaviour. E.g. `"("`
 * **a string** : this is also the default behaviour when a sequence of characters is matched. E.g. `"var_12"`
-* **a number** : when the token is defined with [`.asNumber()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asNumber--). E.g. `123.45`
+* **a number** : when the token is defined with [`.asNumber()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asNumber--). E.g. `123.45` (it is also possible to specify the type of the number)
 * **an enum value** : when the token is defined with an enum class. E.g. `Axis.ancestor_or_self`
 
 It is also possible to specify in the grammar :
 
 * characters that we want to skip. E.g. `"\\"` where the first `\` stand for an escape character and the second `\` for the data.
-* characters rendered as a custom object. E.g. our class `Challenge` defined here after.
+* characters rendered as a custom object. E.g. our custom class `Challenge` defined here after.
 
 Let's show how.
 
@@ -807,7 +807,9 @@ We will design our `WAuth` grammar and our custom result objects (for the part a
 Our custom classes, first, are very simple ; notice they are agnostic
 regarding our future grammar, they are just POJOs :
 
-```java
+<div style="columns: 2">
+<div>
+<pre class="prettyprint linenums"><![CDATA[
 public class Parameter {
 
     public String name;  // e.g. "realm"
@@ -817,10 +819,10 @@ public class Parameter {
         this.name = name;
         this.value = value;
     }
-}
-```
-
-```java
+}]]></pre>
+</div>
+<div style="break-before: column">
+<pre class="prettyprint linenums"><![CDATA[
 public class Challenge {
 
     public String scheme; // e.g. "Basic"
@@ -831,8 +833,9 @@ public class Challenge {
         this.parameters = parameters;
     }
 
-}
-```
+}]]></pre>
+</div>
+</div>
 
 ### The WAuth grammar
 
@@ -926,7 +929,7 @@ Instead of having `String`s or `Numbers`s, we expect having our types (yes, fiel
 
 We already used [`.asNumber()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asNumber--) for getting a number value and [`.asToken()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asToken--) for turning a rule to a token ; now we will use [`.asToken(mapper)`](apidocs/ml/alternet/parser/Grammar.Rule.html#asToken-java.util.function.Function-) to turn the tokens of a rule to a custom object. Actually, we expect our `Parameter` object, and we have a special type for the counterpart definition : [`TypedToken<T>`](apidocs/ml/alternet/parser/Grammar.TypedToken.html), in our case [`TypedToken<Parameter>`](apidocs/ml/alternet/parser/Grammar.TypedToken.html). The mapper is just a function that takes as argument the `List` of tokens parsed by the rule and that returns a value that can be consumed by the enclosing rule.
 
-Below, the rule will match `aName = aValue` in 3 tokens (`aName` then `=` then `aValue`), and we produce a `Parameter` object with the **first** and the **last** tokens because the `=` token is useless ; we could use [`.drop()`](apidocs/ml/alternet/parser/Grammar.Rule.html#drop--) on it, but it wouldn't change anything because we are just ignoring it.
+Below, the rule will match `aName = aValue` in 3 tokens (`aName` then `=` then `aValue`), and we produce a `Parameter` object with the **first** and the **last** tokens because the `=` token is useless ; we could use [`.drop()`](apidocs/ml/alternet/parser/Grammar.Rule.html#drop--) on it, but it wouldn't change anything because we are just ignoring it :
 
 ```java
     //                    Parameter ::= TOKEN     EQUAL  ParameterValue
@@ -938,7 +941,7 @@ Below, the rule will match `aName = aValue` in 3 tokens (`aName` then `=` then `
         ));
 ```
 
-Similarly, a list of parameters –`List<Parameter>`– can be produced easily, but since we don't know how many tokens will be available in that list, we are streaming the list of tokens. Since the <tt>Parameter<b>s</b></tt> rule is made of `Parameter` rules that create new instances of our `Parameter` POJO (yes, we have the same name for a rule and our POJO), we can safely cast the token value. Below, instead of dropping the `COMMA` token, as an alternative we filter it while processing the stream (but both technique would work) :
+Similarly, a list of parameters –`List<Parameter>`– can be produced easily, but since we don't know how many tokens will be available in that list, we are streaming the list of tokens. Since the <tt>Parameter<b>s</b></tt> rule is made of `Parameter` rules that create new instances of our `Parameter` POJO (yes, we have the same name for a rule and our POJO), we can safely cast the token value. Below, instead of dropping the `COMMA` token, as an alternative we filter it while processing the stream (but both techniques would work) :
 
 ```java
     @WhitespacePolicy
@@ -1455,7 +1458,7 @@ The more often the stack doesn't serve the transformation but sometimes it may h
 * The last parameter contains all the values that are either the **arguments** of the rule to transform, or all the values coming **next** from the token to transform in the context of its enclosed rule. That values can be raw values or transformed values, according to how you process them individually.
 In fact `Value<NumericExpression>` is a wrapper around an object that can be either the raw token or a `NumericExpression`. You are free to supply tokens left as-is or transformed ones, and to get the raw value with [`.getSource()`](apidocs/ml/alternet/parser/util/Dual.html#getSource--) or the transformed one with [`.getTarget()`](apidocs/ml/alternet/parser/util/Dual.html#getTarget--).
 
-For example, if a rule defines a comma-separated list of digits such as "`1,2,3,4`", that the input is "`i=**1,2,3,4**;`", and that the current **token** is "`2`", then the **next** elements are "`,3,4`" (note that `;` is outside of the rule considered and **not** within the next elements) and the stack is "`i=1,`" (note that "`i=`" are tokens outside of the scope of the rule considered, but **present** in the stack). Some elements may be consumed during the production of the target node.
+For example, if a rule defines a comma-separated list of digits such as "`1,2,3,4`", that the input is "<code>i=<b>1,2,3,4</b>;</code>", and that the current **token** is "`2`", then the **next** elements are "`,3,4`" (note that `;` is outside of the rule considered and **not** within the next elements) and the stack is "`i=1,`" (note that "`i=`" are tokens outside of the scope of the rule considered, but **present** in the stack). Some elements may be consumed during the production of the target node.
 
 <a name="tokenMappers"></a>
 
