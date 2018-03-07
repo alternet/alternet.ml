@@ -44,6 +44,8 @@ public class CurlyBracesCryptFormat implements CryptFormat, DiscoverableCryptFor
 
     /**
      * Return the end boundary of the scheme.
+     *
+     * @return '}'
      */
     protected char shemeEndChar() {
         return '}';
@@ -52,6 +54,8 @@ public class CurlyBracesCryptFormat implements CryptFormat, DiscoverableCryptFor
     /**
      * Return the start boundary of the scheme that will test
      * and consume the characters before the scheme, if any.
+     *
+     * @return A predicate that consume the first '{' character.
      */
     protected Predicate<Scanner> schemeStartCondition() {
         return c -> safeCall(() -> c.hasNextChar('{', true));

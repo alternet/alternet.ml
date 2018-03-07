@@ -35,7 +35,7 @@ public class SchemeWithEncoding {
      * @param crypt The crypt to parse, wrapped in a scanner.
      * @param schemeStartCondition Test and consume the characters before the scheme, if necessary.
      * @param shemeEndChar The character that ends the scheme (not consumed by the scanner).
-     * @throws IOException
+     * @throws IOException On I/O error.
      */
     public SchemeWithEncoding(Scanner crypt, Predicate<Scanner> schemeStartCondition, char shemeEndChar) throws IOException {
         if (schemeStartCondition.test(crypt)) {

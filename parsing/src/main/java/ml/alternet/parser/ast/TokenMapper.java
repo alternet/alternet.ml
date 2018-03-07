@@ -54,6 +54,8 @@ public interface TokenMapper<Node> extends Mapper<TokenValue<?>, Node> {
     /**
      * Convenient method for building a set of mappers.
      *
+     * @param <Node> The type of the target node.
+     *
      * @return A token mapper builder.
      */
     static <Node> Builder<TokenMapper<Node>, Token, Node> $() {

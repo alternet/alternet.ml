@@ -22,6 +22,7 @@ public class PBKDF2 {
      *
      * @param password The password.
      * @param salt The salt.
+     * @param algorithm The PBKDF2 algorithm.
      * @param iterCount The number of iterations of the PBKDF2 algorithm.
      * @param keyLength The number of bytes of the hash to produce.
      *

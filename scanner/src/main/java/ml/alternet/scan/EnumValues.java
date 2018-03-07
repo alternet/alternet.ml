@@ -52,6 +52,7 @@ public class EnumValues<T> implements Readable<T>, Presentable { // is a set of 
      * Create a hierarchy of enum values by char.
      *
      * @param values The enum class.
+     * @param <T> The enum type.
      *
      * @return The enum values that holds all the hierarchy.
      */
