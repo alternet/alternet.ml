@@ -198,7 +198,7 @@ public interface Grammar {
      * @return An enum token.
      */
     @SuppressWarnings("rawtypes")
-    static EnumToken<Enum> is(Class<? extends Enum> values) {
+    static EnumToken<? extends Enum> is(Class<? extends Enum> values) {
         return new EnumToken<>(values);
     }
 

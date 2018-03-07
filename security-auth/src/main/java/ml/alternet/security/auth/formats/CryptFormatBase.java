@@ -41,7 +41,7 @@ public abstract class CryptFormatBase implements CryptFormat, DiscoverableCryptF
      */
     protected Optional<Hasher.Builder> getBuiltinHasherBuilder(Scanner crypt) throws IOException {
         return crypt.nextEnumValue(getEnumValues())
-            .map(Supplier::get)
+            .map(Supplier<Hasher>::get)
             .map(Hasher::getBuilder);
     }
 

@@ -34,9 +34,7 @@
     <reporting>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>${version.maven-surefire-report-plugin}</version>
                 <configuration>
                     <reportsDirectories>
                         <file>${project.build.directory}/surefire-reports/</file>
@@ -52,7 +50,6 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${version.maven-surefire-report-plugin}</version>
                 <configuration>
@@ -64,7 +61,6 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>${version.maven-jar-plugin}</version>
                 <executions>
@@ -86,18 +82,6 @@
                     </execution>
                     <execution>
                         <id>attach-test-sources</id>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>${version.maven-jar-plugin}</version>
-                <executions>
-                    <execution>
                         <goals>
                             <goal>test-jar</goal>
                         </goals>

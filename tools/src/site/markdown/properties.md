@@ -44,14 +44,15 @@ Also allow to generate the target class(es), and run that generator as a Maven p
 <div style="columns: 2">
 <div>
 <h3 style="margin: 0">Maven import</h3>
-<pre class="prettyprint"><![CDATA[
-<dependency>
-    <groupId>ml.alternet</groupId>
-    <artifactId>alternet-tools</artifactId>
-    <version>1.0</version>
-</dependency>]]>
+<pre class="prettyprint">
+&lt;dependency&gt;
+    &lt;groupId&gt;ml.alternet&lt;/groupId&gt;
+    &lt;artifactId&gt;alternet-tools&lt;/artifactId&gt;
+    &lt;version&gt;1.0&lt;/version&gt;
+&lt;/dependency>
 </pre>
 </div>
+
 <div style="break-before: column">
 <h3>JavaDoc API documentation</h3>
 <ul><li><a href="apidocs/index.html">Alternet Tools</a></li></ul>
