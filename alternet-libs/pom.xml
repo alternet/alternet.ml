@@ -339,11 +339,7 @@
                         <link>http://alternet.ml/alternet-libs/apidocs/</link>
                     </links>
                     <subpackages>ml.alternet</subpackages>
-<<<<<<< HEAD
                     <excludePackageNames>ml.alternet.util.gen.sample</excludePackageNames>
-=======
-                    <excludePackageNames>ml.alternet.util.gen.sample:org.isk.jvmhardcore.pjba:org.isk.jvmhardcore.pjba.*</excludePackageNames>
->>>>>>> refs/remotes/origin/master
                 </configuration>
             </plugin>
             <plugin>
