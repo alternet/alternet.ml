@@ -98,9 +98,9 @@ public interface EventsHandler {
         public boolean matched;
 
         /**
-         * Create a rule start event.
+         * Create a rule end event.
          *
-         * @param rule The rule that is starting.
+         * @param rule The rule that is ending.
          * @param trackable The scanner from which the value was read.
          *      If the scanner is a trackable scanner, informations
          *      about the position of the value will be available.

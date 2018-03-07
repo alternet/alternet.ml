@@ -3,7 +3,6 @@ package ml.alternet.parser.util;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import ml.alternet.parser.Grammar;
 import ml.alternet.parser.Grammar.Rule;
 
 /**
@@ -49,7 +48,7 @@ public interface ComposedRule<T> {
     Stream<Rule> getComponents();
 
     /**
-     * Recursively flatten **and simplify** when possible the
+     * Recursively flatten <b>and simplify</b> when possible the
      * rules within, and flatten with this rule.
      */
     void flatten();

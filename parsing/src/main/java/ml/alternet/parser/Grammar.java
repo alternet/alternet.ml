@@ -288,7 +288,7 @@ public interface Grammar {
      * The token value will be available
      * as a number.
      *
-     * @see EventsHandler.NumberValue
+     * @see NumberValue
      *
      * <pre>Token NUMBER = number();</pre>
      *
@@ -304,7 +304,7 @@ public interface Grammar {
      * The token value will be available
      * as a number.
      *
-     * @see EventsHandler.NumberValue
+     * @see NumberValue
      *
      * <pre>Token NUMBER = number(NumberConstraint.BYTE_CONSTRAINT);</pre>
      * (in this example the token value will be a Byte).
@@ -470,12 +470,15 @@ public interface Grammar {
     @Target({ ElementType.FIELD })
     @interface Replace {
 
-        /** @return The field name */
+        /**
+         * The name of the field in the grammar.
+         *
+         * @return The field name */
         String field() default "";
 
         /** Indicates the grammar that hold the field.
          * The default value <code>Grammar.class</code>
-         * means unspecified, and a lookup on all the
+         * means <b>unspecified</b>, and a lookup on all the
          * inherited grammars will be performed.
          *
          * @return The grammar.
@@ -493,6 +496,13 @@ public interface Grammar {
 
     /**
      * Hold the parsing status.
+     *
+     * <table border="1">
+     *     <tr><td></td><td>fail ?</td><td>empty ?</td><td>as Optional</td><td>as Mandatory</td></tr>
+     *     <tr><th>FAIL</th><td>true</td><td>true</td><td>EMPTY</td><td>FAIL</td></tr>
+     *     <tr><th>SUCCESS</th><td>false</td><td>false</td><td>SUCCESS</td><td>SUCCESS</td></tr>
+     *     <tr><th>EMPTY</th><td>false</td><td>true</td><td>EMPTY</td><td>FAIL</td></tr>
+     * </table>
      *
      * @author Philippe Poulard
      */
@@ -632,7 +642,7 @@ public interface Grammar {
 
         /**
          * Indicates whether this rule was annotated with {@link Fragment}
-         * or not, and therefore have to be processed by its nested rule.
+         * or not, and therefore have to be processed by its enclosed rule.
          *
          * @return <code>true</code> if this rule/token is a fragment,
          *      <code>false</code> otherwise.
@@ -1337,7 +1347,7 @@ public interface Grammar {
          *
          * @author Philippe Poulard
          */
-        interface Minimal {
+        public interface Minimal {
 
             /**
              * Get the minimal number of repetition.
@@ -1352,7 +1362,7 @@ public interface Grammar {
          *
          * @author Philippe Poulard
          */
-        interface Maximal {
+        public interface Maximal {
 
             /**
              * Get the maximal number of repetition.
@@ -1495,7 +1505,7 @@ public interface Grammar {
          *
          * @author Philippe Poulard
          */
-        interface Simplifiable extends ComposedRule<List<Rule>>, TraversableRule {
+        public interface Simplifiable extends ComposedRule<List<Rule>>, TraversableRule {
 
             @Override
             default java.util.Optional<Rule> simplify() {
@@ -1524,7 +1534,7 @@ public interface Grammar {
          *
          * @author Philippe Poulard
          */
-        interface Flattenable extends ComposedRule<List<Rule>> {
+        public interface Flattenable extends ComposedRule<List<Rule>> {
 
             @Override
             default void flatten() {
@@ -2582,7 +2592,7 @@ public interface Grammar {
      *
      * @return A proxy rule.
      */
-    static Rule $(String rule) {
+    static Proxy $(String rule) {
         assert rule.length() > 0;
         return new Proxy.Named(rule);
     }
