@@ -47,6 +47,8 @@ public interface RuleMapper<Node> extends Mapper<Rule, Node> {
     /**
      * Convenient method for building a set of mappers.
      *
+     * @param <Node> The type of the target node.
+     *
      * @return A rule mapper builder.
      */
     static <Node> Builder<RuleMapper<Node>, Rule, Node> $() {

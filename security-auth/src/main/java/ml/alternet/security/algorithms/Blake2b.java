@@ -26,11 +26,14 @@ import java.util.Arrays;
 import static ml.alternet.security.algorithms.Blake2b.Engine.Assert.*;
 import static ml.alternet.security.binary.LittleEndian.*;
 
-/**  */
+/**
+ * Blake2b
+ */
 public interface Blake2b {
-    // ---------------------------------------------------------------------
-    // Specification
-    // ---------------------------------------------------------------------
+
+    /**
+     * Specification
+     */
     public interface Spec {
         /** pblock size of blake2b */
         int param_bytes         = 64;
@@ -70,7 +73,7 @@ public interface Blake2b {
         /** max tree inner length value */
         int max_tree_inner_length   = 0xFF;
 
-        /** initialization values map ref-Spec IV[i] -> slice iv[i*8:i*8+7] */
+        /** initialization values map ref-Spec IV[i] -&gt; slice iv[i*8:i*8+7] */
         long[] IV = {
                 0x6a09e667f3bcc908L,
                 0xbb67ae8584caa73bL,
@@ -104,44 +107,97 @@ public interface Blake2b {
     // ---------------------------------------------------------------------
     // TODO add ByteBuffer variants
 
-    /** */
-    void update (byte[] input) ;
+    /**
+     * Digest update
+     *
+     * @param input The input
+     */
+    void update(byte[] input) ;
 
-    /** */
-    void update (byte input) ;
+    /**
+     * Digest update
+     *
+     * @param input The input
+     */
+    void update(byte input) ;
 
-    /** */
-    void update (byte[] input, int offset, int len) ;
+    /**
+     * Digest update
+     *
+     * @param input The input
+     * @param offset The offset
+     * @param len The length
+     */
+    void update(byte[] input, int offset, int len) ;
 
-    /** */
-    byte[] digest () ;
+    /**
+     * Return the digest.
+     *
+     * @return The digest.
+     */
+    byte[] digest() ;
 
-    /** */
-    byte[] digest (byte[] input) ;
+    /**
+     * Return the digest.
+     *
+     * @param input The input
+     * @return The digest.
+     */
+    byte[] digest(byte[] input) ;
 
-    /** */
-    void digest (byte[] output, int offset, int len) ;
+    /**
+     * Return the digest.
+     *
+     * @param output The digest
+     * @param offset The offset
+     * @param len The length
+     */
+    void digest(byte[] output, int offset, int len) ;
 
-    /** */
+    /**
+     * Reset
+     */
     void reset () ;
 
     // ---------------------------------------------------------------------
     // Blake2b Message Digest
     // ---------------------------------------------------------------------
 
-    /** Generalized Blake2b digest. */
+    /**
+     * Generalized Blake2b digest.
+     */
     public static class Digest extends Engine implements Blake2b {
-        private Digest (final Param p) { super (p); }
-        private Digest () { super (); }
 
-        public static Digest newInstance () {
+        private Digest (final Param p) { super(p); }
+        private Digest () { super(); }
+
+        /**
+         * Create a new instance.
+         *
+         * @return A new instance.
+         */
+        public static Digest newInstance() {
             return new Digest ();
         }
-        public static Digest newInstance (final int digestLength) {
+
+        /**
+         * Create a new instance.
+         *
+         * @param digestLength Set the digest length
+         * @return A new instance.
+         */
+        public static Digest newInstance(final int digestLength) {
             return new Digest (new Param().setDigestLength(digestLength));
         }
-        public static Digest newInstance (Param p) {
-            return new Digest (p);
+
+        /**
+         * Create a new instance.
+         *
+         * @param p Use the given param.
+         * @return A new instance.
+         */
+        public static Digest newInstance(Param p) {
+            return new Digest(p);
         }
     }
 
@@ -149,26 +205,53 @@ public interface Blake2b {
     // Blake2b Message Authentication Code
     // ---------------------------------------------------------------------
 
-    /** Message Authentication Code (MAC) digest. */
+    /**
+     * Message Authentication Code (MAC) digest.
+     */
     public static class Mac extends Engine implements Blake2b {
+
         private Mac (final Param p) { super (p); }
         private Mac () { super (); }
 
-        /** Blake2b.MAC 512 - using default Blake2b.Spec settings with given key */
-        public static Mac newInstance (final byte[] key) {
+        /**
+         * Blake2b.MAC 512 - using default Blake2b.Spec settings with given key
+         *
+         * @param key The key
+         * @return The MAC
+         */
+        public static Mac newInstance(final byte[] key) {
             return new Mac (new Param().setKey(key));
         }
-        /** Blake2b.MAC - using default Blake2b.Spec settings with given key, with given digest length */
-        public static Mac newInstance (final byte[] key, final int digestLength) {
+
+        /**
+         * Blake2b.MAC - using default Blake2b.Spec settings with given key, with given digest length
+         *
+         * @param key The key
+         * @param digestLength The length
+         * @return The MAC
+         */
+        public static Mac newInstance(final byte[] key, final int digestLength) {
             return new Mac (new Param().setKey(key).setDigestLength(digestLength));
         }
-        /** Blake2b.MAC - using default Blake2b.Spec settings with given java.security.Key, with given digest length */
+
+        /**
+         * Blake2b.MAC - using default Blake2b.Spec settings with given java.security.Key, with given digest length
+         *
+         * @param key The key
+         * @param digestLength The length
+         * @return The MAC
+         */
         public static Mac newInstance (final Key key, final int digestLength) {
             return new Mac (new Param().setKey(key).setDigestLength(digestLength));
         }
-        /** Blake2b.MAC - using the specified Parameters.
-         * @param p asserted valid configured Param with key */
-        public static Mac newInstance (Param p) {
+
+        /**
+         * Blake2b.MAC - using the specified Parameters.
+         *
+         * @param p asserted valid configured Param with key
+         * @return The MAC
+         */
+        public static Mac newInstance(Param p) {
             assert p != null : "Param (p) is null";
             assert p.hasKey() : "Param (p) not configured with a key";
             return new Mac (p);
@@ -195,9 +278,10 @@ public interface Blake2b {
         final int     digest_length;
 
         /**
+         * Create a new Tree
          *
-         * @param fanout
-         * @param depth
+         * @param fanout The fanout
+         * @param depth The depth
          * @param leaf_length size of data input for leaf nodes.
          * @param inner_length note this is used also as digest-length for non-root nodes.
          * @param digest_length final hash out digest-length for the tree
@@ -219,12 +303,22 @@ public interface Blake2b {
             return new Param().
                 setDepth(depth).setFanout(fanout).setLeafLength(leaf_length).setInnerLength(inner_length);
         }
-        /** returns the Digest for tree node @ (depth, offset) */
+        /**
+         * returns the Digest for tree node @ (depth, offset)
+         *
+         * @param depth The depth
+         * @param offset The offset
+         * @return The digest
+         */
         public final Digest getNode (final int depth, final int offset) {
             final Param nodeParam = treeParam().setNodeDepth(depth).setNodeOffset(offset).setDigestLength(inner_length);
             return Digest.newInstance(nodeParam);
         }
-        /** returns the Digest for root node */
+        /**
+         * returns the Digest for root node
+         *
+         * @return The digest
+         */
         public final Digest getRoot () {
             final int depth = this.depth - 1;
             final Param rootParam = treeParam().setNodeDepth(depth).setNodeOffset(0L).setDigestLength(digest_length);
@@ -964,11 +1058,20 @@ public interface Blake2b {
         public Param() {
             System.arraycopy( default_h, 0, h, 0, Spec.state_space_len );
         }
-        /** */
+
+        /**
+         * Initialized H
+         *
+         * @return An array of longs
+         */
         public long[] initialized_H () {
             return h;
         }
-        /** package only - copy returned - do not use in functional loops */
+
+        /** package only - copy returned - do not use in functional loops
+         *
+         * @return the bytes
+         */
         public byte[] getBytes() {
             lazyInitBytes();
             byte[] copy = new byte[ bytes.length ];

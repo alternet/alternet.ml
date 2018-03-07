@@ -203,6 +203,8 @@ public final class NumberUtil {
      *
      * @param number The actual number.
      * @param numberClass The target class.
+     * @param <T> The number type.
+     *
      * @return A number of the expected type.
      */
     @SuppressWarnings("unchecked")

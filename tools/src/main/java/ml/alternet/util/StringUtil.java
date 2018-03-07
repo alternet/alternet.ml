@@ -28,8 +28,8 @@ public final class StringUtil {
      *
      * @param raw
      *            An array of bytes.
-     * @param uppercase <code>true</code> to write hexa chars in uppercase
-     *          <code>false</false> to write hexa chars in lowercase
+     * @param uppercase {@code true} to write hexa chars in uppercase
+     *          {@code false} to write hexa chars in lowercase
      * @return The hexa string conversion of that bytes; each byte is
      *         represented with 2 hexa chars.
      */
@@ -46,8 +46,8 @@ public final class StringUtil {
      *            The start offset.
      * @param length
      *            The length of bytes to convert.
-     * @param uppercase <code>true</code> to write hexa chars in uppercase
-     *          <code>false</false> to write hexa chars in lowercase
+     * @param uppercase {@code true} to write hexa chars in uppercase
+     *          {@code false} to write hexa chars in lowercase
      * @return The hexa string conversion of that bytes; each byte is
      *         represented with 2 hexa chars.
      */

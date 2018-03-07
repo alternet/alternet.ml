@@ -449,7 +449,8 @@ public interface Grammar {
 
     /**
      * Replace a rule/token field when extending
-     * a grammar.
+     * a grammar. The replacement is made on the
+     * new grammar, the original grammar is unchanged.
      *
      * A grammar may extend another grammar,
      * a field can override another field of
@@ -471,12 +472,13 @@ public interface Grammar {
     @interface Replace {
 
         /**
-         * The name of the field in the grammar.
+         * The name of the field to replace.
          *
-         * @return The field name */
+         * @return The field name, when missing the field to replace
+         *      has the same name of the annotated field  */
         String field() default "";
 
-        /** Indicates the grammar that hold the field.
+        /** Indicates the grammar that hold the field to replace.
          * The default value <code>Grammar.class</code>
          * means <b>unspecified</b>, and a lookup on all the
          * inherited grammars will be performed.
@@ -497,7 +499,7 @@ public interface Grammar {
     /**
      * Hold the parsing status.
      *
-     * <table border="1">
+     * <table border="1" summary="Parsing status" style="padding-before: 12px">
      *     <tr><td></td><td>fail ?</td><td>empty ?</td><td>as Optional</td><td>as Mandatory</td></tr>
      *     <tr><th>FAIL</th><td>true</td><td>true</td><td>EMPTY</td><td>FAIL</td></tr>
      *     <tr><th>SUCCESS</th><td>false</td><td>false</td><td>SUCCESS</td><td>SUCCESS</td></tr>
@@ -827,10 +829,11 @@ public interface Grammar {
         }
 
         /**
-         * Make this rule a token number, the token being of the type
+         * Make this rule a token number, the token value being of the type
          * expected.
          *
          * @param numberClass The expected number type.
+         * @param <T> The type of the token value.
          *
          * @return This rule as a token.
          */
@@ -1217,6 +1220,7 @@ public interface Grammar {
          * Create a repeatable rule
          *
          * @param repeatable The rule to make repeatable.
+         * @param min The minimal number of times to repeat.
          */
         public AtLeast(Rule repeatable, int min) {
             super(repeatable);
@@ -1284,6 +1288,7 @@ public interface Grammar {
          * Create a repeatable rule
          *
          * @param repeatable The rule to make repeatable.
+         * @param max The maximal number of times to repeat.
          */
         public AtMost(Rule repeatable, int max) {
             super(repeatable);

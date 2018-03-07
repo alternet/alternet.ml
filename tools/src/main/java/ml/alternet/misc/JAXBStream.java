@@ -97,7 +97,6 @@ public class JAXBStream<T> {
      * @param elem The name of the element to fetch.
      * @param clazz The class of the object to fetch.
      * @param cacheStrategy The cache strategy for reading again.
-     * @throws MalformedURLException When the URL is malformed.
      */
     public JAXBStream(URL xml, QName elem, Class<T> clazz, CacheStrategy cacheStrategy) {
         this.source = new StreamSource(xml);
@@ -114,7 +113,6 @@ public class JAXBStream<T> {
      * @param elem The name of the element to fetch.
      * @param clazz The class of the object to fetch.
      * @param cacheStrategy The cache strategy for reading again.
-     * @throws MalformedURLException When the URL is malformed.
      */
     public JAXBStream(Supplier<InputStream> xml, QName elem, Class<T> clazz, CacheStrategy cacheStrategy) {
         this.source = new StreamSource(() -> new InputSource(xml.get()));
@@ -131,7 +129,6 @@ public class JAXBStream<T> {
      * @param clazz The class of the object to fetch.
      * @param cacheStrategy The cache strategy for reading again.
      * @param xml Give an XML source.
-     * @throws MalformedURLException When the URL is malformed.
      */
     public JAXBStream(QName elem, Class<T> clazz, CacheStrategy cacheStrategy, Supplier<Reader> xml) {
         this.source = new StreamSource(() -> new InputSource(xml.get()));

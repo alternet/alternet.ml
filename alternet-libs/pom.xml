@@ -30,7 +30,7 @@
         <version.maven-compiler-plugin>3.5</version.maven-compiler-plugin><!-- FAIL with 3.5.1 or higher -->
         <version.maven-invoker-plugin>3.0.0</version.maven-invoker-plugin>
         <version.maven-jar-plugin>3.0.2</version.maven-jar-plugin>
-        <version.maven-javadoc-plugin>2.10.4</version.maven-javadoc-plugin>
+        <version.maven-javadoc-plugin>3.0.0</version.maven-javadoc-plugin>
         <version.maven-source-plugin>3.0.1</version.maven-source-plugin>
         <version.maven-gpg-plugin>1.6</version.maven-gpg-plugin>
         <version.maven-jxr-plugin>2.5</version.maven-jxr-plugin>
@@ -338,7 +338,8 @@
                         <link>http://docs.oracle.com/javaee/7/api/</link>
                         <link>http://alternet.ml/alternet-libs/apidocs/</link>
                     </links>
-                    <excludePackageNames>ml.alternet.util.gen.*:org.isk.jvmhardcore.pjba:org.isk.jvmhardcore.pjba.*</excludePackageNames>
+                    <subpackages>ml.alternet</subpackages>
+                    <excludePackageNames>ml.alternet.util.gen.sample:org.isk.jvmhardcore.pjba:org.isk.jvmhardcore.pjba.*</excludePackageNames>
                 </configuration>
             </plugin>
             <plugin>

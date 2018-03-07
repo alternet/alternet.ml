@@ -37,7 +37,7 @@ public class Util {
      * Ensure that a result is {@code true}, otherwise throw a {@code NoSuchElementException}
      *
      * @param whatever The result to check.
-     * @throws NoSuchElementException
+     * @throws NoSuchElementException When the result is {@code false}
      */
     public static void ensure(boolean whatever) {
         if (! whatever) {

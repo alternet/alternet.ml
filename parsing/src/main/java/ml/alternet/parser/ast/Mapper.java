@@ -45,6 +45,10 @@ public interface Mapper<M, Node> {
      * Convenient method for building a set
      * of mappers.
      *
+     * @param <M> A subclass of Mapper.
+     * @param <T> The type of the key : String, Rule, or Token.
+     * @param <Node> The type of the target node.
+     *
      * @return A mapper builder.
      */
     static <M, T, Node> Builder<M, T, Node> $() {
