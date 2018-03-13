@@ -299,14 +299,12 @@ public class EnumUtil {
 
             int i[] = { 0 };
             List<Enum<?>> newValues = new ArrayList<>();
-            // copy the target values, but if one is found within base values, use it instead
+            // copy the target values, but if one is found within base values, remove it
             targetValues.stream().forEach(t -> {
                 for (Iterator<Enum<?>> baseIt = baseValues.iterator() ; baseIt.hasNext() ; ) {
                     Enum<?> b = baseIt.next();
                     if (b.name().equals(t.name())) {
                         baseIt.remove();
-                        String name = t.name();
-                        t = Thrower.safeCall(() -> ec.build(name, i[0], b));
                         break;
                     }
                 }
