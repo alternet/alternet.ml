@@ -13,10 +13,10 @@ import ml.alternet.parser.util.ValueStack;
  *
  * @author Philippe Poulard
  *
- * @param <M> Rule or Token value.
+ * @param <Match> Rule or Token value that matched.
  * @param <Node> The type of the target node.
  */
-public interface Mapper<M, Node> {
+public interface Mapper<Match, Node> {
 
     /**
      * Transform a rule to a node in the context
@@ -38,21 +38,21 @@ public interface Mapper<M, Node> {
      */
     Node transform(
             ValueStack<Value<Node>> stack,
-            M value,
+            Match value,
             Deque<Value<Node>> data);
 
     /**
      * Convenient method for building a set
      * of mappers.
      *
-     * @param <M> A subclass of Mapper.
      * @param <T> The type of the key : String, Rule, or Token.
+     * @param <M> A subclass of Mapper.
      * @param <Node> The type of the target node.
      *
      * @return A mapper builder.
      */
-    static <M, T, Node> Builder<M, T, Node> $() {
-        return new Builder<M, T, Node>();
+    static <T, M extends Mapper<?, Node>, Node> Builder<T, M, Node> $() {
+        return new Builder<T, M, Node>();
     }
 
     /**
@@ -60,11 +60,11 @@ public interface Mapper<M, Node> {
      *
      * @author Philippe Poulard
      *
-     * @param <M> A subclass of Mapper.
      * @param <T> The type of the key : String, Rule, or Token.
+     * @param <M> A subclass of Mapper.
      * @param <Node> The type of the target node.
      */
-    class Builder<M, T, Node> implements Supplier<Map<T, M>> {
+    class Builder<T, M extends Mapper<?, Node>, Node> implements Supplier<Map<T, M>> {
 
         Map<T, M> map = new HashMap<>();
 
@@ -75,7 +75,7 @@ public interface Mapper<M, Node> {
          * @param mapper The mapper
          * @return {@code this}, for chaining.
          */
-        public Builder<M, T, Node> add(T ruleOrToken, M mapper) {
+        public Builder<T, M, Node> add(T ruleOrToken, M mapper) {
             map.put(ruleOrToken, mapper);
             return this;
         }

@@ -39,7 +39,7 @@ import ml.alternet.parser.handlers.TokensCollector;
 import ml.alternet.parser.util.ComposedRule;
 import ml.alternet.parser.util.Grammar$;
 import ml.alternet.parser.util.HasWhitespacePolicy;
-import ml.alternet.parser.util.TraversableRule;
+import ml.alternet.parser.visit.TraversableRule;
 import ml.alternet.scan.EnumValues;
 import ml.alternet.scan.JavaWhitespace;
 import ml.alternet.scan.NumberConstraint;
@@ -374,17 +374,7 @@ public interface Grammar {
      *
      * @throws IOException When the input cause an error.
      */
-    default boolean parse(Scanner scanner, EventsHandler handler, Rule rule, boolean matchAll) throws IOException {
-        Handler h = handler.asHandler();
-        // process substitutions if the rule belongs to another grammar
-        rule = ((Grammar$) this).adopt(rule);
-        Match match = rule.parse(scanner, h);
-        // TODO : notification that characters are available
-        if (matchAll && scanner.hasNext()) {
-//            handler.warning();
-        }
-        return ! match.fail();
-    };
+    boolean parse(Scanner scanner, EventsHandler handler, Rule rule, boolean matchAll) throws IOException;
 
     /**
      * Mark the main rule of a grammar with this annotation.
@@ -940,8 +930,7 @@ public interface Grammar {
 
         @Override
         public boolean parse(Scanner scanner, Handler handler, boolean alreadyMarked) throws IOException {
-            TokensCollector<?> collector = TokensCollector.newStringBuilderHandler();
-            if (! getComponent().parse(scanner, collector).fail()) {
+            if (! getComponent().parse(scanner, Handler.NULL_HANDLER).fail()) {
                 return true;
             }
             return false;
@@ -2088,7 +2077,7 @@ public interface Grammar {
          *
          * @author Philippe Poulard
          */
-        public static class Single extends CharToken implements TraversableRule.SelfRule {
+        public static class Single extends CharToken implements TraversableRule.StandaloneRule {
 
             /**
              * Create a single char token.
@@ -2168,7 +2157,7 @@ public interface Grammar {
      *
      * @author Philippe Poulard
      */
-    class StringToken extends Token implements TraversableRule.SelfRule {
+    class StringToken extends Token implements TraversableRule.StandaloneRule {
 
         String string;
         boolean equal;
@@ -2222,7 +2211,7 @@ public interface Grammar {
      *
      * @see EnumValues
      */
-    class EnumToken<T> extends Token implements TraversableRule.SelfRule {
+    class EnumToken<T> extends Token implements TraversableRule.StandaloneRule {
 
         // hierarchy of enum string values by char
         EnumValues<T> values;
@@ -2260,7 +2249,7 @@ public interface Grammar {
      *
      * @author Philippe Poulard
      */
-    class EnumValueToken extends Token implements TraversableRule.SelfRule {
+    class EnumValueToken extends Token implements TraversableRule.StandaloneRule {
 
         Enum<?> value;
 
@@ -2297,7 +2286,7 @@ public interface Grammar {
      *
      * @author Philippe Poulard
      */
-    class Number extends Token implements TraversableRule.SelfRule {
+    class Number extends Token implements TraversableRule.StandaloneRule {
 
         NumberConstraint constraint;
 
@@ -2354,7 +2343,7 @@ public interface Grammar {
      *
      * @author Philippe Poulard
      */
-    class GrammarToken extends Token implements TraversableRule.SelfRule {
+    class GrammarToken extends Token implements TraversableRule.StandaloneRule {
 
         Grammar grammar;
         Supplier<DataHandler<?>> dataHandlerSupplier;
@@ -2455,6 +2444,7 @@ public interface Grammar {
 
         @Override
         public StringBuilder toPrettyString(StringBuilder buf) {
+            buf.append('%');
             return this.rule.toStringBuilder(buf);
         }
 

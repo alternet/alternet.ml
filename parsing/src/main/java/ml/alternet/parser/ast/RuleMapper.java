@@ -51,8 +51,8 @@ public interface RuleMapper<Node> extends Mapper<Rule, Node> {
      *
      * @return A rule mapper builder.
      */
-    static <Node> Builder<RuleMapper<Node>, Rule, Node> $() {
-        return Mapper.<RuleMapper<Node>, Rule, Node> $();
+    static <Node> Builder<Rule, RuleMapper<Node>, Node> $() {
+        return Mapper.<Rule, RuleMapper<Node>, Node> $();
     }
 
 }
