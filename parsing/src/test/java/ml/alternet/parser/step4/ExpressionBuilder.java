@@ -44,7 +44,7 @@ public class ExpressionBuilder extends NodeBuilder<NumericExpression> {
      *
      * @author Philippe Poulard
      */
-    enum CalcRules implements RuleMapper<NumericExpression> {
+    public enum CalcRules implements RuleMapper<NumericExpression> {
         Sum {
             @SuppressWarnings("unchecked")
             @Override
@@ -127,7 +127,7 @@ public class ExpressionBuilder extends NodeBuilder<NumericExpression> {
      *
      * @author Philippe Poulard
      */
-    enum CalcTokens implements TokenMapper<NumericExpression> {
+    public enum CalcTokens implements TokenMapper<NumericExpression> {
         FUNCTION {
             @Override
             public NumericExpression transform(

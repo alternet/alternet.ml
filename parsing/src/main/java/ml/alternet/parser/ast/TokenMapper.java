@@ -58,8 +58,8 @@ public interface TokenMapper<Node> extends Mapper<TokenValue<?>, Node> {
      *
      * @return A token mapper builder.
      */
-    static <Node> Builder<TokenMapper<Node>, Token, Node> $() {
-        return Mapper.<TokenMapper<Node>, Token, Node> $();
+    static <Node> Builder<Token, TokenMapper<Node>, Node> $() {
+        return Mapper.<Token, TokenMapper<Node>, Node> $();
     }
 
 }

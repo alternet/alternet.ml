@@ -14,7 +14,7 @@ import ml.alternet.parser.tests.GrammarTestBase;
 
 public class RegexpTest extends GrammarTestBase {
 
-    @Test
+    @Test(enabled=false)
     public void simpleRegexp_Should_consumeCharacters() throws IOException {
 //        Rule rule = Grammar.matches("Xc|Yc");
 //
