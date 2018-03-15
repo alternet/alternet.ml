@@ -27,6 +27,7 @@ import ml.alternet.parser.Handler;
 import ml.alternet.parser.visit.Dump;
 import ml.alternet.parser.visit.Transform;
 import ml.alternet.parser.visit.TransformTrackingHost;
+import ml.alternet.parser.visit.TraversableRule;
 import ml.alternet.parser.visit.Visitor;
 import ml.alternet.scan.Scanner;
 import ml.alternet.util.ByteCodeFactory;
@@ -296,7 +297,7 @@ public abstract class Grammar$ implements Grammar, Initializable {
                 .filter(f ->   Token.class.isAssignableFrom(f.getType()) // keep tokens
                             && f.getAnnotation(Fragment.class) == null)  // that ARE NOT fragments
                 .map(f -> (Token) safeCall(() -> f.get(null)))
-                .map(this::adoption) // if it comes from an inherited grammar
+                .map(this::adopt) // if it comes from an inherited grammar
                 .map(t -> (Token) t);
             this.tokenizer = new Choice(tokens).zeroOrMore();
         }
@@ -625,7 +626,11 @@ log.finest("Adding " + Dump.getHash(rule) + rule  +"  to Traversed : " + stream(
                         return s.to; // from -> to
                     }
                 } // unchanged
-                return adopted.computeIfAbsent(from, r -> (Rule) safeCall(r::clone));
+                return adopted.computeIfAbsent(from, r ->
+                    r instanceof TraversableRule.StandaloneRule
+                    ? r
+                    : (Rule) safeCall(r::clone)
+                );
             }
         };
         t.traversed = traversed;
@@ -768,15 +773,19 @@ log.finest("Adding " + Dump.getHash(rule) + rule  +"  to Traversed : " + stream(
     private Rule adoption(Rule rule) {
         Rule adoptedRule = this.adopted.computeIfAbsent(rule, rul -> {
             log.fine(() -> "Adopting " + rul + " in " + getGrammarName() + "\n" + Dump.tree(rul));
-            // start with a clone...
-            Substitution s = substitutions.get(rule.getName());
-            Rule copy = s == null
-              ? (Rule) safeCall(rule::clone)
-              : s.to;
-            // ...and perform substitutions
-            copy.accept(getSubstitutionResolver(copy, new HashSet<>()));
-            log.fine(() -> "Adopted rule is " + copy.toPrettyString() + "\n" + Dump.tree(copy));
-            return copy;
+            if (this.substitutions.isEmpty()) {
+                return rule; // as-is
+            } else {
+                // start with a clone...
+                Substitution s = substitutions.get(rule.getName());
+                Rule copy = s == null
+                  ? (Rule) safeCall(rule::clone)
+                  : s.to;
+                // ...and perform substitutions
+                copy.accept(getSubstitutionResolver(copy, new HashSet<>()));
+                log.fine(() -> "Adopted rule is " + copy.toPrettyString() + "\n" + Dump.tree(copy));
+                return copy;
+            }
         });
         // add an entry for itself for a next lookup with the result
         this.adopted.put(adoptedRule, adoptedRule);
