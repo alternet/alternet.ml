@@ -40,6 +40,8 @@ Published version of this page available HERE</a></div>
     1. [A grammar as a token](#grammarToken)
 1. [Examples](#examples)
 1. [Troubleshooting](#troubleshooting)
+    1. [Dump](#dump)
+    1. [Common issues](#issues)
 
 <a name="overview"></a>
 
@@ -1785,6 +1787,80 @@ You will find various examples in the [Github repo](https://github.com/alternet/
 <a name="troubleshooting"></a>
 
 ## Troubleshooting
+
+<a name="dump"></a>
+
+### Dump
+
+A convenient tool allow to dump a rule :
+
+```java
+    Dump.tree(rule);
+    Dump.detailed(rule); // contains additional informations about the class
+```
+
+Sometimes, a rule exist in a grammar that has been extended, but that rule hasn't been overriden, therefore, it may be helpful to specify from which grammar we want its dump, since it may affect the content :
+
+```java
+    Dump.tree(grammar, rule); // the original rule
+    Dump.tree(extGrammar, rule); // the same rule but maybe altered in the extension
+```
+
+The output looks like this. Every composed rule is expanded once the first time it is encountered. Below is displayed the dump of our `Math` grammar (after rule rewrites) :
+
+```
+Expression
+┗━━ Sum
+    ┗━━ ( SignedTerm ( ADDITIVE Product )* )
+        ┣━━ SignedTerm
+        ┃   ┣━━ ADDITIVE?
+        ┃   ┃   ┗━━ ADDITIVE ━━━ ( '+' | '-' )
+        ┃   ┗━━ Product
+        ┃       ┣━━ Factor
+        ┃       ┃   ┣━━ Argument
+        ┃       ┃   ┃   ┣━━ ( FUNCTION LBRACKET Argument RBRACKET )
+        ┃       ┃   ┃   ┃   ┣━━ FUNCTION ━━━ ( 'ln' | 'cos' | 'exp' | 'sin' | 'acos' | 'asin' | 'sqrt' )
+        ┃       ┃   ┃   ┃   ┣━━ LBRACKET ━━━ '('
+        ┃       ┃   ┃   ┃   ┣━━ Argument
+        ┃       ┃   ┃   ┃   ┗━━ RBRACKET ━━━ ')'
+        ┃       ┃   ┃   ┣━━ Value
+        ┃       ┃   ┃   ┃   ┣━━ NUMBER
+        ┃       ┃   ┃   ┃   ┃   ┗━━ DIGIT+
+        ┃       ┃   ┃   ┃   ┃       ┗━━ DIGIT
+        ┃       ┃   ┃   ┃   ┃           ┗━━ ['0'-'9']
+        ┃       ┃   ┃   ┃   ┗━━ VARIABLE
+        ┃       ┃   ┃   ┃       ┗━━ ( UPPERCASE ( UPPERCASE | DIGIT | UNDERSCORE )* )
+        ┃       ┃   ┃   ┃           ┣━━ UPPERCASE ━━━ ['A'-'Z']
+        ┃       ┃   ┃   ┃           ┗━━ ( UPPERCASE | DIGIT | UNDERSCORE )*
+        ┃       ┃   ┃   ┃               ┗━━ ( UPPERCASE | DIGIT | UNDERSCORE )
+        ┃       ┃   ┃   ┃                   ┣━━ UPPERCASE ━━━ ['A'-'Z']
+        ┃       ┃   ┃   ┃                   ┣━━ DIGIT
+        ┃       ┃   ┃   ┃                   ┗━━ UNDERSCORE ━━━ '_'
+        ┃       ┃   ┃   ┗━━ ( LBRACKET Expression RBRACKET )
+        ┃       ┃   ┃       ┣━━ LBRACKET ━━━ '('
+        ┃       ┃   ┃       ┣━━ Expression
+        ┃       ┃   ┃       ┗━━ RBRACKET ━━━ ')'
+        ┃       ┃   ┗━━ ( RAISED SignedFactor )?
+        ┃       ┃       ┗━━ ( RAISED SignedFactor )
+        ┃       ┃           ┣━━ RAISED ━━━ '^'
+        ┃       ┃           ┗━━ SignedFactor
+        ┃       ┃               ┗━━ ( ADDITIVE? Factor )
+        ┃       ┃                   ┣━━ ADDITIVE?
+        ┃       ┃                   ┃   ┗━━ ADDITIVE ━━━ ( '+' | '-' )
+        ┃       ┃                   ┗━━ Factor
+        ┃       ┗━━ ( MULTIPLICATIVE SignedFactor )*
+        ┃           ┗━━ ( MULTIPLICATIVE SignedFactor )
+        ┃               ┣━━ MULTIPLICATIVE ━━━ ( '×' | '÷' )
+        ┃               ┗━━ SignedFactor
+        ┗━━ ( ADDITIVE Product )*
+            ┗━━ ( ADDITIVE Product )
+                ┣━━ ADDITIVE ━━━ ( '+' | '-' )
+                ┗━━ Product
+```
+
+<a name="issues"></a>
+
+### Common issues
 
 #### Unable to initialize a grammar :
 

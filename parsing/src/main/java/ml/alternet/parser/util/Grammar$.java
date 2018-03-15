@@ -226,10 +226,6 @@ public abstract class Grammar$ implements Grammar, Initializable {
         }
     }
 
-    private String getGrammarName() {
-        return this.grammar.getTypeName();
-    }
-
     // =============== BASIC METHODS
 
     @Override
@@ -325,7 +321,7 @@ public abstract class Grammar$ implements Grammar, Initializable {
         Handler h = handler.asHandler();
         // process substitutions if the rule belongs to another grammar
         Rule r = adopt(rule);
-        log.fine(() -> "Parsing with rule " + r.toPrettyString() + "\n" + Dump.detailed(r));
+        log.fine(() -> "Parsing with rule " + r.toPrettyString() + "\n" + Dump.tree(r));
 
         Match match = r.parse(scanner, h);
         // TODO : notification that characters are available
@@ -336,6 +332,10 @@ public abstract class Grammar$ implements Grammar, Initializable {
     };
 
     // =============== UTILITIES
+
+    private String getGrammarName() {
+        return this.grammar.getTypeName();
+    }
 
     private void addSubstitution(Field from, Rule to) {
         try {                            // from is a static field
@@ -589,13 +589,6 @@ public abstract class Grammar$ implements Grammar, Initializable {
         // 3) apply the substitutions to all fields
         if (! this.substitutions.isEmpty()) {
             Set<Rule> traversed = new HashSet<>();
-            /* {
-                @Override
-                public boolean add(Rule rule) {
-log.finest("Adding " + Dump.getHash(rule) + rule  +"  to Traversed : " + stream().map(r -> Dump.getHash(r) + ' ' + r.getName()).collect(Collectors.joining(", ")));
-                    return super.add(rule);
-                };
-            };*/
             getRuleFields().forEach(rf -> {
                 Rule rule = rf.rule();
                 log.finest(() -> "Looking for substitution in " + Dump.getHash(rule) + ' ' + rf.field.getName());
@@ -617,15 +610,16 @@ log.finest("Adding " + Dump.getHash(rule) + rule  +"  to Traversed : " + stream(
                             + Dump.getHash(s.to) + ' ' + s.to.getName()
                             + "\nTraversed : " + traversed.stream().map(r -> Dump.getHash(r) + ' ' + r.getName()).collect(Collectors.joining(", "))
                         );
+                        if (getHostRule() != s.to) // prevent substitution on extension
+                           // e.g.  Grammar g2 extends g1 {
+                           //          Rule r = g1.r.asToken(...);
+                        {
+                            return s.to; // from -> to
+                        } else { // unchanged
+                            return from;
+                        }
                     }
-                    if (s != null
-                        && getHostRule() != s.to) // prevent substitution on extension
-                       // e.g.  Grammar g2 extends g1 {
-                       //          Rule r = g1.r.asToken(...);
-                    {
-                        return s.to; // from -> to
-                    }
-                } // unchanged
+                }
                 return adopted.computeIfAbsent(from, r ->
                     r instanceof TraversableRule.StandaloneRule
                     ? r
@@ -653,6 +647,7 @@ log.finest("Adding " + Dump.getHash(rule) + rule  +"  to Traversed : " + stream(
                         rf.field.getAnnotation(Grammar.WhitespacePolicy.class),
                         () -> globalWhitespacePolicy // by default, inherit the default of the grammar
                 );
+//System.out.println("WhitespacePolicy = " + Dump.detailed((Rule) token) + " " + whitespacePolicy);
                 token.setWhitespacePolicy(whitespacePolicy);
             }
         });
