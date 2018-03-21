@@ -13,7 +13,7 @@ import ml.alternet.parser.Grammar.Rule;
 import ml.alternet.parser.ast.NodeBuilder;
 import ml.alternet.parser.ast.RuleMapper;
 import ml.alternet.parser.ast.TokenMapper;
-import ml.alternet.parser.handlers.TreeHandler.Value;
+import ml.alternet.parser.handlers.ValueMapper.Value;
 import ml.alternet.parser.step4.ExpressionBuilder;
 import ml.alternet.parser.step4.NumericExpression;
 import ml.alternet.parser.util.ValueStack;

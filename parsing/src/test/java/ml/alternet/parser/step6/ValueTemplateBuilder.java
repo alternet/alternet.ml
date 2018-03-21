@@ -1,4 +1,4 @@
-package ml.alternet.parser.step4;
+package ml.alternet.parser.step6;
 
 import java.util.Deque;
 import java.util.List;
@@ -8,21 +8,24 @@ import ml.alternet.parser.ast.NodeBuilder;
 import ml.alternet.parser.ast.RuleMapper;
 import ml.alternet.parser.ast.TokenMapper;
 import ml.alternet.parser.handlers.ValueMapper.Value;
+import ml.alternet.parser.step6.StringExpression.*;
 import ml.alternet.parser.util.ValueStack;
-import ml.alternet.parser.EventsHandler.StringValue;
 import ml.alternet.parser.EventsHandler.TokenValue;
+import ml.alternet.parser.Grammar;
 import ml.alternet.parser.Grammar.Rule;
-import ml.alternet.parser.step4.StringExpression.*;
-import ml.alternet.parser.step4.NumericExpression;
-import ml.alternet.parser.step4.StringExpression;
-import ml.alternet.parser.step4.StringExpression.CalcExpression;
-import ml.alternet.parser.step4.StringExpression.TextExpression;
-import ml.alternet.parser.step4.StringExpression.ValueTemplateExpression;
 
 public class ValueTemplateBuilder extends NodeBuilder<StringExpression> {
 
-    public ValueTemplateBuilder() {
-        super(ValueTemplate.$);
+    public static ValueTemplateBuilder forCalcGrammar() {
+        return new ValueTemplateBuilder(ValueTemplate.$);
+    }
+
+    public static ValueTemplateBuilder forMathGrammar() {
+        return new ValueTemplateBuilder(MathValueTemplate.$);
+    }
+
+    public ValueTemplateBuilder(Grammar g) {
+        super(g);
         setTokenMapper(Tokens.class);
         setRuleMapper(Rules.class);
     }

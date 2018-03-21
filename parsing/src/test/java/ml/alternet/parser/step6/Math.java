@@ -10,8 +10,8 @@ import ml.alternet.parser.Grammar.Replace;
 import ml.alternet.parser.Grammar.Rule;
 import ml.alternet.parser.Grammar.Token;
 import ml.alternet.parser.Grammar.WhitespacePolicy;
-import ml.alternet.parser.step6.Operation.Multiplication;
 import ml.alternet.parser.step6.Operation.Function;
+import ml.alternet.parser.step6.Operation.Multiplication;
 import ml.alternet.util.EnumUtil;
 
 @WhitespacePolicy

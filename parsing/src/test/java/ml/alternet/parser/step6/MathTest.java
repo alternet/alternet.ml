@@ -20,8 +20,9 @@ import ml.alternet.parser.Grammar.Rule;
 import ml.alternet.parser.EventsHandler.TokenValue;
 import ml.alternet.parser.ast.RuleMapper;
 import ml.alternet.parser.ast.TokenMapper;
-import ml.alternet.parser.handlers.TreeHandler.Value;
+import ml.alternet.parser.handlers.ValueMapper.Value;
 import ml.alternet.parser.util.ValueStack;
+import ml.alternet.parser.visit.Dump;
 import ml.alternet.util.EnumUtil;
 
 public class MathTest {
@@ -79,6 +80,28 @@ public class MathTest {
 
         Number res = exp.get().eval(variables);
         assertThat(res.doubleValue()).isEqualTo(expected);
+    }
+
+    public static void main(String[] args) {
+        System.out.println(Dump.tree(Calc.$, Math.Expression));
+        System.out.println(Dump.tree(Math.$, Math.Expression));
+        System.out.println(Dump.tree(Calc.$, Math.Argument));
+        System.out.println(Dump.tree(Math.$, Math.Argument));
+
+        System.out.println("================");
+        Dump d = new Dump().withoutClass().withoutHash().setVisited(Calc.Product);
+        Calc.SignedTerm.accept(d);
+        System.out.println(d);
+
+        System.out.println("================");
+        d = new Dump().withoutClass().withoutHash().setVisited(Calc.Factor);
+        Calc.SignedFactor.accept(d);
+        System.out.println(d);
+
+        System.out.println("================");
+        d = new Dump().withoutClass().withoutHash().setVisited(Calc.SignedTerm).setVisited(Calc.Product);
+        Calc.Sum.accept(d);
+        System.out.println(d);
     }
 
 }

@@ -13,15 +13,15 @@ import ml.alternet.parser.Grammar.Rule;
 import ml.alternet.parser.ast.NodeBuilder;
 import ml.alternet.parser.ast.RuleMapper;
 import ml.alternet.parser.ast.TokenMapper;
-import ml.alternet.parser.handlers.TreeHandler.Value;
-import ml.alternet.parser.step6.Operation.Multiplication;
+import ml.alternet.parser.handlers.ValueMapper.Value;
 import ml.alternet.parser.step6.ExpressionBuilder;
 import ml.alternet.parser.step6.NumericExpression;
+import ml.alternet.parser.step6.Math.MathMultiplicative;
+import ml.alternet.parser.step6.NumericExpression.Product;
+import ml.alternet.parser.step6.NumericExpression.Term;
+import ml.alternet.parser.step6.Operation.Multiplication;
 import ml.alternet.parser.util.ValueStack;
 import ml.alternet.util.EnumUtil;
-import ml.alternet.parser.step6.NumericExpression.Term;
-import ml.alternet.parser.step6.NumericExpression.Product;
-import ml.alternet.parser.step6.Math.MathMultiplicative;
 
 public class MathExpressionBuilder extends NodeBuilder<NumericExpression> {
 
@@ -62,7 +62,7 @@ public class MathExpressionBuilder extends NodeBuilder<NumericExpression> {
         RuleMapper<NumericExpression> rm;
 
         MathRules(ExpressionBuilder.CalcRules cr) {
-            this.rm = cr::transform;
+            this.rm = cr;
         }
 
         MathRules(RuleMapper<NumericExpression> rm) {
@@ -94,7 +94,7 @@ public class MathExpressionBuilder extends NodeBuilder<NumericExpression> {
         TokenMapper<NumericExpression> tm;
 
         MathTokens(ExpressionBuilder.CalcTokens ct) {
-            this.tm = ct::transform;
+            this.tm = ct;
         }
 
         MathTokens(TokenMapper<NumericExpression> tm) {
