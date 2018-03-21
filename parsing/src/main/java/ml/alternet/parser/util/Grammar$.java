@@ -44,9 +44,13 @@ import ml.alternet.util.gen.ByteCodeSpec;
  * perform initialization of the name fields,
  * some optimizations, and substitutions.
  *
+ * Logging : the system property
+ * {@code ml.alternet.parser.Grammar.logLevel}
+ * can be set for logging.
+ *
  * @author Philippe Poulard
  */
-public abstract class Grammar$ implements Grammar, Initializable {
+public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
 
     // =============== LOW-LEVEL TOOLS
 
@@ -229,7 +233,7 @@ public abstract class Grammar$ implements Grammar, Initializable {
     // =============== BASIC METHODS
 
     @Override
-    public <T> T init() { // see below INITIALIZERS
+    public Grammar init() { // see below INITIALIZERS
         if (! this.init) {
             // preconditions will be checked by RuleField on the first field browse
             this.init = true;
@@ -253,7 +257,7 @@ public abstract class Grammar$ implements Grammar, Initializable {
                 return Thrower.doThrow(e);
             }
         }
-        return null;
+        return this;
     }
 
     /**
@@ -448,45 +452,48 @@ public abstract class Grammar$ implements Grammar, Initializable {
                 // lookup for a method that has the same name as the field
                 // Proxy foo = proxy();
                 Proxy proxy = ((Proxy) rule);
-                try {
-                    // static Rule foo() {
-                    //     return SomeRule.zeroOrMore();
-                    // }
-                    Method method = this.grammar.getDeclaredMethod(name);
+                if (proxy.getComponent() == null) {
                     try {
-                        // call the method
-                        // Rule rule = foo();
-                        Rule r = (Rule) method.invoke(proxy);
-                        // set it to the proxy
-                        proxy.is(r);
-                        log.finest(() -> "Setting proxy " + name + " to " + method);
-                    } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                        Thrower.doThrow(e);
-                    }
-                } catch (NoSuchMethodException | SecurityException e) {
-                    // lookup for a field that has the same name as the field prepend with $
-                    try {
-                        // Supplier<Rule> $foo = () -> SomeRule.zeroOrMore();
-                        Field field = this.grammar.getDeclaredField('$' + name);
+                        // static Rule foo() {
+                        //     return SomeRule.zeroOrMore();
+                        // }
+                        Method method = this.grammar.getDeclaredMethod(name);
                         try {
-                            // get the field and get the rule
-                            @SuppressWarnings("unchecked")
-                            Rule r = ((Supplier<Rule>) field.get(null)).get();
+                            // call the method
+                            // Rule rule = foo();
+                            Rule r = (Rule) method.invoke(proxy);
                             // set it to the proxy
                             proxy.is(r);
-                            log.finest(() -> "Setting proxy " + name + " to " + r.toString());
-                        } catch (IllegalArgumentException | IllegalAccessException e1) {
+                            log.finest(() -> "Setting proxy " + name + " to " + method);
+                        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
                             Thrower.doThrow(e);
                         }
-                    } catch (NoSuchFieldException | SecurityException e1) {
-                        // ignore : the proxy is initialize by other mean
+                    } catch (NoSuchMethodException | SecurityException e) {
+                        // lookup for a field that has the same name as the field prepend with $
+                        try {
+                            // Supplier<Rule> $foo = () -> SomeRule.zeroOrMore();
+                            Field field = this.grammar.getDeclaredField('$' + name);
+                            try {
+                                // get the field and get the rule
+                                @SuppressWarnings("unchecked")
+                                Rule r = ((Supplier<Rule>) field.get(null)).get();
+                                // set it to the proxy
+                                proxy.is(r);
+                                log.finest(() -> "Setting proxy " + name + " to " + r.toString());
+                            } catch (IllegalArgumentException | IllegalAccessException e1) {
+                                Thrower.doThrow(e);
+                            }
+                        } catch (NoSuchFieldException | SecurityException e1) {
+                            // ignore : the proxy is initialize by other mean
+                        }
                     }
                 }
             }
             if (rule instanceof Initializable) {
-                ((Initializable) rule).init();
+                ((Initializable<?>) rule).init();
                 log.finest(() -> "Initializing rule/token " + name + " to " + rule.toString());
             }
+
         });
     }
 
@@ -533,6 +540,7 @@ public abstract class Grammar$ implements Grammar, Initializable {
             Rule r = rf.rule();
             if (r instanceof ComposedRule) {
                 ((ComposedRule<?>) r).flatten();
+                // don't simplify named rules
             }
         });
     }
@@ -788,7 +796,11 @@ public abstract class Grammar$ implements Grammar, Initializable {
     }
 
     static {
-        Arrays.stream(LogManager.getLogManager().getLogger("").getHandlers()).forEach(h -> h.setLevel(Level.FINEST));
+        String logLevel = System.getProperty("ml.alternet.parser.Grammar.logLevel");
+        if (logLevel != null) {
+            Level level = Level.parse(logLevel);
+            Arrays.stream(LogManager.getLogManager().getLogger("").getHandlers()).forEach(h -> h.setLevel(level));
+        }
     }
 
 }

@@ -41,7 +41,7 @@ public class ValueTemplateTest {
         variables.put("x", 1.0);
         variables.put("var_12", 10.0);
 
-        Optional<StringExpression> exp = ValueTemplateBuilder.forCalcGrammar().build(expression, true);
+        Optional<StringExpression> exp = ValueTemplateBuilder.forCalcGrammar().parse(expression, true);
 
         assertThat(exp).isNotEmpty();
 

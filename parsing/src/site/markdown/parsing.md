@@ -27,6 +27,7 @@ Published version of this page available HERE</a></div>
     1. [Mapping tokens](#mapping)
     1. [Separating the raw grammar and the augmented grammar](#augmented)
 1. [Parsing](#parsing)
+    1. [Parsing a standalone grammar](#standalone)
     1. [Parsing an input](#input)
         1. [The “tokenizer” rule](#tokenizer)
         1. [The remainder](#remainder)
@@ -38,7 +39,8 @@ Published version of this page available HERE</a></div>
         1. [Token mappers](#tokenMappers)
         1. [Rule mappers](#ruleMappers)
     1. [A grammar as a token](#grammarToken)
-1. [Examples](#examples)
+    1. [Extending the mappings](#extendingMapping)
+1. [Additional examples](#examples)
 1. [Troubleshooting](#troubleshooting)
     1. [Dump](#dump)
     1. [Common issues](#issues)
@@ -232,7 +234,13 @@ import static ml.alternet.util.EnumUtil.replace;
 
 ...and use it in the constructor like this in order to replace the token value by the one supplied :
 
-```java
+<div class="tabs">
+
+<input class="tab1" id="tabAdditiveEnum" type="radio" name="enumTokens" checked="checked"><label for="tabAdditiveEnum">Additive</label></input>
+<input class="tab2" id="tabMultiplicativeEnum" type="radio" name="enumTokens"><label for="tabMultiplicativeEnum">Multiplicative</label></input>
+
+<div class="tab1">
+<pre class="prettyprint linenums"><![CDATA[
     // ADDITIVE ::= '+' | '-'
     enum Additive {
         PLUS("+"), MINUS("-");
@@ -240,18 +248,12 @@ import static ml.alternet.util.EnumUtil.replace;
             replace(this, s -> str);
         }
     }
-    Token ADDITIVE = is(Additive.class);
-```
+    Token ADDITIVE = is(Additive.class);]]></pre>
+</div>
 
-The <code>PLUS</code> value will be replaced by the <code>+</code> value, 
-and the <code>MINUS</code> value will be replaced by the <code>-</code> value.
-The idea is to have in enum types tokens that are exactly those expected
-in the input text. If the input to parse contains "`+`" the token value get
-will be `Additive.PLUS`.
-
+<div class="tab2">
 Repeat for the multiplicative token :
-
-```java
+<pre class="prettyprint linenums"><![CDATA[
     // MULTIPLICATIVE ::= '*' | '/'
     enum Multiplicative {
         MULT("*"), DIV("/");
@@ -260,7 +262,16 @@ Repeat for the multiplicative token :
         }
     }
     Token MULTIPLICATIVE = is(Multiplicative.class);
-```
+]]></pre>
+</div>
+
+</div>
+
+The <code>PLUS</code> value will be replaced by the <code>+</code> value, 
+and the <code>MINUS</code> value will be replaced by the <code>-</code> value.
+The idea is to have in enum types tokens that are exactly those expected
+in the input text. If the input to parse contains "`+`" the token value get
+will be `Additive.PLUS`.
 
 Sometimes, the replacement is generic. Let's consider the XPath grammar : if you look at the [XPath specification](https://www.w3.org/TR/xpath/#axes), you will find 13 axis that contain a "`-`" in their names, which is an invalid character in Java names. Instead, we will write the values with "`_`" and replace them in the constructor like this :
 
@@ -524,40 +535,45 @@ If you are in trouble by writing `$("Sum")` (which reduce the ease of reading), 
 
 ...and later in the grammar, you supply its definition when appropriate. You can write it in 3 different flavors, plus the possibility to write it inline :
 
-* The former writing consist on mimicking a static block :
+<div class="tabs">
 
-```java
+<input class="tab1" id="tabStaticBlock" type="radio" name="proxy" checked="checked"><label for="tabStaticBlock">as static block</label></input>
+<input class="tab2" id="tabStaticMethod" type="radio" name="proxy"><label for="tabStaticMethod">as static method</label></input>
+<input class="tab3" id="tabAsProperty" type="radio" name="proxy"><label for="tabAsProperty">as $property</label></input>
+<input class="tab4" id="tabInline" type="radio" name="proxy"><label for="tabInline">inline</label></input>
+
+<div class="tab1">
+<ul><li>The former writing consist on mimicking a static block :</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
     boolean b1 = 
     // Sum ::= SignedTerm (ADDITIVE Product)*
     Sum.is(
         SignedTerm.seq(ADDITIVE.seq(Product).zeroOrMore())
-    );
-```
+    );]]></pre>
+<p>Why do we have a boolean ? In fact we just want to set a value to <code>Sum</code>, but since it has
+already been defined before, this writing is just a convenient way with Java to supply its value ; since an interface can't have static blocks, we are creating a dummy field <code>b1</code>.</p>
+</div>
 
-Why do we have a boolean ? In fact we just want to set a value to `Sum`, but since it has
-already been defined before, this writing is just a convenient way with Java to supply its value ; since an interface can't have static blocks, we are creating a dummy field `b1`.
-
-* The second writing consist on declaring a `static` method that has the same name of the field, actually `Sum()`, that return the actual rule.
-
-```java
+<div class="tab2">
+<ul><li>The second writing consist on declaring a <code>static</code> method that has the same name of the field, actually <code>Sum()</code>, that return the actual rule.</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
     // Sum ::= SignedTerm (ADDITIVE Product)*
     static Rule Sum() {
         return SignedTerm.seq(ADDITIVE.seq(Product).zeroOrMore());
-    }
-```
+    }]]></pre>
+</div>
 
-* The latter writing consist on declaring a property that has the same name of the field prepend with $, actually `$Sum`, this property being a **supplier** of the expected rule.
-
-```java
+<div class="tab3">
+<ul><li>The latter writing consist on declaring a property that has the same name of the field prepend with $, actually <code>$Sum</code>, this property being a <b>supplier</b> of the expected rule.</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
     // Sum ::= SignedTerm (ADDITIVE Product)*
-    Supplier<Rule> $Sum = () -> SignedTerm.seq(ADDITIVE.seq(Product).zeroOrMore());
-```
+    Supplier<Rule> $Sum = () -> SignedTerm.seq(ADDITIVE.seq(Product).zeroOrMore());]]></pre>
+</div>
 
-* Alternatively, you can also supply the definition *inline*, at the place the rule field is declared. In that case, each field not yet defined in the grammar has to be taken from the grammar class ; in our example the fields `SignedTerm` and `Product` have not yet been defined, and we must refer them as class members : `Calc.SignedTerm` and `Calc.Product`.
-
-Unlike previously, we don't get null values because the supplier is a deferred method that will set the rule definition after all fields initialization :
-
-```java
+<div class="tab4">
+<ul><li>Alternatively, you can also supply the definition <i>inline</i>, at the place the rule field is declared. In that case, each field not yet defined in the grammar has to be taken from the grammar class ; in our example the fields <code>SignedTerm</code> and <code>Product</code> have not yet been defined, and we must refer them as class members : <code>Calc.SignedTerm</code> and <code>Calc.Product</code>.</li>
+<li>Unlike previously, we don't get <code>null</code> values because the supplier is a deferred method that will set the rule definition after all fields initialization :</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
     // Sum ::= SignedTerm (ADDITIVE Product)*
     Rule Sum = $(() -> 
                Calc.SignedTerm.seq(ADDITIVE.seq(Calc.Product).zeroOrMore())
@@ -566,9 +582,13 @@ Unlike previously, we don't get null values because the supplier is a deferred m
     Rule Expression = is(Sum);
     //   Argument ::= FUNCTION    Argument  |   Value   |   LBRACKET      Expression  RBRACKET
     Rule Argument =   FUNCTION.seq( $self ).or( Value ).or( LBRACKET.seq( Expression, RBRACKET ) );
-```
+]]></pre>
+<p>The advantage of this writing is that the rule is defined in place, but at the cost of few extra syntax.</p>
+</div>
 
-The advantage of this writing is that the rule is defined in place, but at the cost of extra syntax.
+</div>
+
+<hr/>
 
 Choose your style of writing : `$()` with its inline or deferred assignment is interchangeable with `$("foo")` with a normal definition.
 
@@ -592,7 +612,7 @@ you might wonder why we didn't write it like that :
     Rule Expression = Sum; // ⛔ you will have an error
 ```
 
-The engine won't let you write that and reject such grammar. Rules must hold a specific value, not identical values because if one rule was annotated, it would affect both fields. Therefore it is forbidden.
+The engine won't let you write that and reject such grammar. Rules must hold a specific value, not identical values because if one rule was annotated (read after), it would affect both fields. Therefore it is forbidden.
 
 <a name="whitespaces"></a>
 
@@ -604,7 +624,7 @@ In fact, we would like to parse inputs like this :
 sin (x) * ( 1 + var_12 )
 ```
 
-So simple in Alternet Parsing ;) with [`@WhitespacePolicy`](../scanner/apidocs/ml/alternet/parser/Grammar.WhitespacePolicy.html)
+So simple in Alternet Parsing ;) with [`@WhitespacePolicy`](apidocs/ml/alternet/parser/Grammar.WhitespacePolicy.html)
 
 By default, whitespaces are left as-is, but if you want to ignore them, simply set this annotation to your grammar :
 
@@ -698,9 +718,11 @@ If the new field have the same name as an existing field in the other grammar, i
     // same name than in Calc grammar -> automatic replacement
     Token MULTIPLICATIVE = is(MathMultiplicative.class);
 
-    //   Argument ::= FUNCTION      LBRACKET  Argument RBRACKET   |   Value   |   LBRACKET      Expression  RBRACKET
+    //   Argument ::= FUNCTION      LBRACKET  Argument RBRACKET   |   Value
+    //                                       |   LBRACKET      Expression  RBRACKET
     // same name than in Calc grammar -> automatic replacement
-    Rule Argument =   FUNCTION.seq( LBRACKET, $self,   RBRACKET ).or( Value ).or( LBRACKET.seq( Expression, RBRACKET ) );
+    Rule Argument =   FUNCTION.seq( LBRACKET, $self,   RBRACKET ).or( Value )
+                                            .or( LBRACKET.seq( Expression, RBRACKET ) );
 ```
 
 If the new field has another name, we have to specify with the
@@ -759,7 +781,7 @@ public interface CalcSquare extends Calc { // 👈 look here, we extend Calc
     Token LBRACKET = is( '[' );
     Token RBRACKET = is( ']' );
 
-    CalcCurly $ = $();
+    CalcSquare $ = $();
 
 }
 ```
@@ -843,24 +865,24 @@ public class Challenge {
 
 Now, the grammar (using the "Augmented BNF" syntax, see §2.1 in [RFC-2616](https://www.ietf.org/rfc/rfc2616.txt)) :
 
-```
-    # from RFC-2617 (HTTP Basic and Digest authentication)
+<div class="source"><pre class="prettyprint">
+&#35; from RFC-2617 (HTTP Basic and Digest authentication)
 
-    challenge      = auth-scheme 1*SP 1#auth-param
-    auth-scheme    = token
-    auth-param     = token "=" ( token | quoted-string )
+challenge      = auth-scheme 1*SP 1#auth-param
+auth-scheme    = token
+auth-param     = token "=" ( token | quoted-string )
 
-    # from RFC-2616 (HTTP/1.1)
+&#35; from RFC-2616 (HTTP/1.1)
 
-    token          = 1*<any CHAR except CTLs or separators>
-    separators     = "(" | ")" | "<" | ">" | "@"
-                   | "," | ";" | ":" | "\" | <">
-                   | "/" | "[" | "]" | "?" | "="
-                   | "{" | "}" | SP | HT
-    quoted-string  = ( <"> *(qdtext | quoted-pair ) <"> )
-    qdtext         = <any TEXT except <">>
-    quoted-pair    = "\" CHAR
-```
+token          = 1*&lt;any CHAR except CTLs or separators&gt;
+separators     = "(" | ")" | "&lt;" | "&gt;" | "@"
+               | "," | ";" | ":" | "\" | &lt;"&gt;
+               | "/" | "[" | "]" | "?" | "="
+               | "{" | "}" | SP | HT
+quoted-string  = ( &lt;"&gt; *(qdtext | quoted-pair ) &lt;"&gt; )
+qdtext         = &lt;any TEXT except &lt;"&gt;&gt;
+quoted-pair    = "\" CHAR
+</pre></div>
 
 <a name="drop"></a>
 
@@ -981,7 +1003,7 @@ Now we can create a parser (outside of our grammar), to get optionally our chall
 public class WAuthParser {
 
     public Challenge parse(String input) {
-        Optional<Challenge> result = new NodeBuilder<Challenge>(WAuth.$).build(input, true);
+        Optional<Challenge> result = new NodeBuilder<Challenge>(WAuth.$).parse(input, true);
         return result.get(); // or throw an error
     }
 }
@@ -1067,7 +1089,21 @@ It is certainly a good practice to follow this pattern to make your grammar real
 
 ## Parsing
 
-Now that your grammar is well designed, you are able to parse your data.
+Now that your grammar is well designed, you are able to parse your data and get custom objects.
+
+<a name="standalone"></a>
+
+### Parsing a standalone grammar
+
+For standalone grammars (grammars that produce typed tokens like our `WAuthAugmented` grammar), getting our custom object `Challenge` is straigthforward :
+
+```java
+    String input = ...
+    NodeBuilder<Challenge> parser = new NodeBuilder<>(WAuthAugmented.$);
+    Optional<Challenge> challenge = parser.parse(input, true);
+```
+
+We get an optional instance because the input might not be parsable with that grammar.
 
 <a name="input"></a>
 
@@ -1146,14 +1182,14 @@ Then, the [`scanner`](http://alternet.ml/alternet-libs/scanner/apidocs/ml/altern
 
 ### Handlers
 
-Alternet Parsing comes with out-of-the-box [`Handler`s](apidocs/ml/alternet/parser/Handler.html)
-that can receive the result of the parsing, that will be handy for processing that result :
+Alternet Parsing comes with out-of-the-box [`Handler`s](apidocs/ml/alternet/parser/Handler.html) that can receive the result of the parsing, that will be handy for processing that result :
 
 * [`TreeHandler`](apidocs/ml/alternet/parser/handlers/TreeHandler.html) : low-level API
-* [`NodeBuilder`](apidocs/ml/alternet/parser/ast/NodeBuilder.html) : high-level API
+* [`NodeBuilder`](apidocs/ml/alternet/parser/ast/NodeBuilder.html) : high-level API for building an AST made of homogeneous nodes.
+* [`ValueBuilder`](apidocs/ml/alternet/parser/ast/ValueBuilder.html) : high-level API for building an heterogeneous AST.
 
 The [AST package](apidocs/ml/alternet/parser/ast/package-summary.html) contains helper classes to build
-an abstract syntax tree while parsing.
+an Abstract Syntax Tree (**AST**) while parsing.
 
 <a name="dataModel"></a>
 
@@ -1175,9 +1211,23 @@ public interface NumericExpression extends Expression<Number, Map<String,Number>
 
 From this base, we are defining every kind of `NumericExpression` expected :
 
-* A constant expression wraps a number value :
+<div class="alert alert-info" role="alert">
+Notice that those classes are agnostic regarding <b>Alternet Parsing</b>, they are just user classes that doesn't require to extend or to implement anything related to <b>Alternet Parsing</b>
+</div>
 
-```java
+<div class="tabs">
+
+<input class="tab1" id="tabConstant" type="radio" name="dataModel" checked="checked"><label for="tabConstant">Constant</label></input>
+<input class="tab2" id="tabVariable" type="radio" name="dataModel"><label for="tabVariable">Variable</label></input>
+<input class="tab3" id="tabExponent" type="radio" name="dataModel"><label for="tabExponent">Exponent</label></input>
+<input class="tab4" id="tabFunction" type="radio" name="dataModel"><label for="tabFunction">Function</label></input>
+<input class="tab5" id="tabTerm" type="radio" name="dataModel"><label for="tabTerm">Term</label></input>
+<input class="tab6" id="tabSum" type="radio" name="dataModel"><label for="tabSum">Sum</label></input>
+<input class="tab7" id="tabProduct" type="radio" name="dataModel"><label for="tabProduct">Product</label></input>
+
+<div class="tab1">
+<ul><li>A constant expression wraps a number value :</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
 public class Constant implements NumericExpression {
 
     Number n;
@@ -1191,12 +1241,11 @@ public class Constant implements NumericExpression {
         return n;
     }
 
-}
-```
+}]]></pre></div>
 
-* A variable expression wraps a variable name and can be resolved with the context :
-
-```java
+<div class="tab2">
+<ul><li>A variable expression wraps a variable name and can be resolved with the context :</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
 public class Variable implements NumericExpression {
 
     String name;
@@ -1210,12 +1259,11 @@ public class Variable implements NumericExpression {
         return variables.get(this.name);
     }
 
-}
-```
+}]]></pre></div>
 
-* An exponent expression is made of a base and an exponent :
-
-```java
+<div class="tab3">
+<ul><li>An exponent expression is made of a base and an exponent :</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
 public class Exponent implements NumericExpression {
 
     NumericExpression base;
@@ -1232,12 +1280,16 @@ public class Exponent implements NumericExpression {
         Number exponent = this.exponent.eval(variables);
         return Math.pow(base.doubleValue(), exponent.doubleValue());
     }
-}
-```
+}]]></pre></div>
 
-* A function expression embeds an evaluable function :
+<div class="tab4">
 
-```java
+<input class="tab1" id="tabFuncModel" type="radio" name="dataModelFunc" checked="checked"><label for="tabFuncModel">Model</label></input>
+<input class="tab2" id="tabFuncGrammar" type="radio" name="dataModelFunc"><label for="tabFuncGrammar">Grammar</label></input>
+
+<div class="tab1">
+<ul><li>A function expression embeds an evaluable function :</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
 public class Function implements NumericExpression {
 
     NumericExpression argument;
@@ -1254,19 +1306,18 @@ public class Function implements NumericExpression {
         return function.eval(arg);
     }
 
-}
-```
+}]]></pre>
 
-```java
+<pre class="prettyprint linenums"><![CDATA[
 public interface EvaluableFunction {
 
     Number eval(Number value);
-}
-```
+}]]></pre>
+</div>
 
-In the `Calc` grammar, we enhance the enum class accordingly :
-
-```java
+<div class="tab2">
+<p>In the <code>Calc</code> grammar, we enhance the enum class accordingly :</p>
+<pre class="prettyprint linenums"><![CDATA[
     // FUNCTION ::= 'sin' | 'cos' | 'exp' | 'ln' | 'sqrt'
     enum Function implements EvaluableFunction {
         sin {
@@ -1300,12 +1351,12 @@ In the `Calc` grammar, we enhance the enum class accordingly :
             }
         };
     }
-    Token FUNCTION = is(Function.class);
-```
+    Token FUNCTION = is(Function.class);]]></pre></div>
+</div>
 
-* A term is an expression bound with an operation that appears in sums or products :
-
-```java
+<div class="tab5">
+<ul><li>A term is an expression bound with an operation that appears in sums or products :</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
 public class Term<T> implements NumericExpression {
     T operation;
     NumericExpression term;
@@ -1322,10 +1373,10 @@ public class Term<T> implements NumericExpression {
             + term.eval(variables).doubleValue();
         // alone, a term can have +a or -a but can't have *a or /a
     }
-}
-```
+}]]></pre></div>
 
-```java
+<div class="tab6">
+<pre class="prettyprint linenums"><![CDATA[
 public class Sum implements NumericExpression {
 
     List<Term<Additive>> arguments = new ArrayList<>();
@@ -1344,10 +1395,10 @@ public class Sum implements NumericExpression {
         return sum;
     }
 
-}
-```
+}]]></pre></div>
 
-```java
+<div class="tab7">
+<pre class="prettyprint linenums"><![CDATA[
 public class Product implements NumericExpression {
 
     List<Term<Multiplicative>> arguments = new ArrayList<>();
@@ -1367,8 +1418,8 @@ public class Product implements NumericExpression {
         return product;
     }
 
-}
-```
+}]]></pre></div>
+</div>
 
 Here is the complete code of [`NumericExpression`](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/step4/NumericExpression.java)
 
@@ -1378,8 +1429,7 @@ Here is the complete code of [`NumericExpression`](https://github.com/alternet/a
 
 As mentionned previously, a node builder can be designed from our `Calc` grammar instance.
 
-We just need to map every token to the relevant class, and every rule to the relevant class. For that purpose, we will use [`TokenMapper<T>`](apidocs/ml/alternet/parser/ast/TokenMapper.html) and [`RuleMapper<T>`](apidocs/ml/alternet/parser/ast/RuleMapper.html) where `T` is our `NumericExpression`. The simplest way to create such
-mappers is to enumerate the mappings :
+We just need to map every token to the relevant class, and every rule to the relevant class. For that purpose, we will use [`TokenMapper<T>`](apidocs/ml/alternet/parser/ast/TokenMapper.html) and [`RuleMapper<T>`](apidocs/ml/alternet/parser/ast/RuleMapper.html) where `<T>` is our `<NumericExpression>`. The simplest way to create such mappers is to enumerate the mappings :
 
 ```java
     enum CalcTokens implements TokenMapper<NumericExpression> {
@@ -1425,7 +1475,7 @@ And run the result :
     variables.put("x", 1.0);
     variables.put("var_12", 10.0);
 
-    Optional<NumericExpression> exp = new ExpressionBuilder().build("sin( x )* (1 + var_12)", true);
+    Optional<NumericExpression> exp = new ExpressionBuilder().parse("sin( x )* (1 + var_12)", true);
     Number result = exp.get().eval(variables);
 ```
 
@@ -1434,23 +1484,28 @@ And run the result :
 #### AST mappers
 
 What is missing is the implementation of each mapper `CalcTokens` and `CalcRules`.
-The signature of a token mapper is :
 
-```java
+<div style="columns: 2">
+<div>
+<p>The signature of a token mapper is :</p>
+<div class="source"><pre class="prettyprint"><![CDATA[
     Node transform(
             ValueStack<Value<Node>> stack,
             TokenValue<?> token,
-            Deque<Value<Node>> next);
-```
-
-The signature of a rule mapper is :
-
-```java
+            Deque<Value<Node>> next);]]>
+</pre></div>
+</div>
+<div style="break-before: column">
+<p>The signature of a rule mapper is :</p>
+<div class="source"><pre class="prettyprint"><![CDATA[
     Node transform(
             ValueStack<Value<Node>> stack,
             Rule rule,
             Deque<Value<Node>> args);
-```
+]]>
+</pre></div>
+</div>
+</div>
 
 They are both very similar, and apply to the `<Node>` type, which is in our builder the `<NumericExpression>` type :
 
@@ -1462,139 +1517,239 @@ In fact `Value<NumericExpression>` is a wrapper around an object that can be eit
 
 For example, if a rule defines a comma-separated list of digits such as "`1,2,3,4`", that the input is "<code>i=<b>1,2,3,4</b>;</code>", and that the current **token** is "`2`", then the **next** elements are "`,3,4`" (note that `;` is outside of the rule considered and **not** within the next elements) and the stack is "`i=1,`" (note that "`i=`" are tokens outside of the scope of the rule considered, but **present** in the stack). Some elements may be consumed during the production of the target node.
 
+In our enum classes `CalcTokens` and `CalcRules`, we are creating a constructor that accept the mapper to which the transformation will be delegated. This let us using a lambda in our enum values :
+
+<div class="tabs">
+
+<input class="tab1" id="tabCalcRules" type="radio" name="calcMappers" checked="checked"><label for="tabCalcRules">CalcRules</label></input>
+<input class="tab2" id="tabCalcTokens" type="radio" name="calcMappers" checked="checked"><label for="tabCalcTokens">CalcTokens</label></input>
+
+<div class="tab1"><pre class="prettyprint linenums"><![CDATA[
+enum CalcRules implements RuleMapper<NumericExpression> {
+
+    Sum( (stack, rule, args) -> {} ),    // implementation code supplied later
+    Product( (stack, rule, args) -> {} ),
+    Factor( (stack, rule, args) -> {} );
+
+    RuleMapper<NumericExpression> mapper;
+
+    CalcRules(RuleMapper<NumericExpression> mapper) { // pass the mapper to the constructor
+        this.mapper = mapper;
+    }
+
+    @Override
+    public NumericExpression transform(
+            ValueStack<Value<NumericExpression>> stack,
+            Rule rule,
+            Deque<Value<NumericExpression>> args)
+    {
+        return this.mapper.transform(stack, rule, args); // delegate the mapping
+    }
+
+}]]></pre></div>
+
+<div class="tab2"><pre class="prettyprint linenums"><![CDATA[
+enum CalcTokens implements TokenMapper<NumericExpression> {
+
+    FUNCTION( (stack, token, next) -> {} ),    // implementation code supplied later
+    RAISED( (stack, token, next) -> {} ),
+    ADDITIVE( (stack, token, next) -> {} ),
+    MULTIPLICATIVE( (stack, token, next) -> {} ),
+    NUMBER( (stack, token, next) -> {} ),
+    VARIABLE( (stack, token, next) -> {} );
+
+    TokenMapper<NumericExpression> mapper;
+
+    CalcTokens(TokenMapper<NumericExpression> mapper) { // pass the mapper to the constructor
+        this.mapper = mapper;
+    }
+
+    @Override
+    public NumericExpression transform(
+        ValueStack<Value<NumericExpression>> stack,
+        TokenValue<?> token,
+        Deque<Value<NumericExpression>> next)
+    {
+        return this.mapper.transform(stack, token, next); // delegate the mapping
+    }
+
+}]]></pre>
+</div>
+
+</div>
+
 <a name="tokenMappers"></a>
 
 #### Token mappers
 
-Now we can write the mappers inside `enum CalcTokens`, starting with the simplest ones :
+Now we can focus on the mappers inside `enum CalcTokens`, starting with the simplest ones :
 
-* the `VARIABLE` **token** is just a sequence of characters, we write the `VARIABLE` **mapper**
-(with the same name as the token) that create a `Variable` **instance** from our data model with that token :
+<div class="tabs">
 
-```java
-    VARIABLE { // mapper for : Token VARIABLE = ( (LOWERCASE).or( <etc...> ) .asToken()
-        @Override
-        public NumericExpression transform(
-                ValueStack<Value<NumericExpression>> stack,
-                TokenValue<?> token,
-                Deque<Value<NumericExpression>> next)
-        {
-            String name = token.getValue();
-            return new Variable(name);
-        }
-    };
-```
+<input class="tab1" id="tabVARIABLE" type="radio" name="tokenMappers" checked="checked"><label for="tabVARIABLE">VARIABLE</label></input>
+<input class="tab2" id="tabNUMBER" type="radio" name="tokenMappers"><label for="tabNUMBER">NUMBER</label></input>
+<input class="tab3" id="tabFUNCTION" type="radio" name="tokenMappers"><label for="tabFUNCTION">FUNCTION</label></input>
+<input class="tab4" id="tabRAISED" type="radio" name="tokenMappers"><label for="tabRAISED">RAISED</label></input>
+<input class="tab5" id="tabMULTIPLICATIVE" type="radio" name="tokenMappers"><label for="tabMULTIPLICATIVE">MULTIPLICATIVE</label></input>
+<input class="tab6" id="tabADDITIVE" type="radio" name="tokenMappers"><label for="tabADDITIVE">ADDITIVE</label></input>
 
-* the `NUMBER` token is produced in the grammar with [`.asNumber()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asNumber--), we write the `NUMBER` mapper that create a `Constant` instance from our data model with that number token :
+<div class="tab1">
+<ul><li>the <code>VARIABLE</code> <b>token</b> is just a sequence of characters, we write the <code>VARIABLE</code> <b>mapper</b> (with the same name as the token) that create a <code>Variable</code> <b>instance</b> from our data model with that token :</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
+    VARIABLE( (stack, token, next) -> {
+        // mapper for : Token VARIABLE = ( (LOWERCASE).or( <etc...> ).asToken()
+        String name = token.getValue();
+        return new Variable(name);
+    });]]></pre>
+</div>
 
-```java
-    NUMBER { // mapper for : Token NUMBER = DIGIT.oneOrMore().asNumber();
-        @Override
-        public NumericExpression transform(
-                ValueStack<Value<NumericExpression>> stack,
-                TokenValue<?> token,
-                Deque<Value<NumericExpression>> next)
-        {
-            Number n = token.getValue();
-            return new Constant(n);
-        }
-    },
-```
+<div class="tab2">
+<ul><li>the <code>NUMBER</code> token is produced in the grammar with <a href="apidocs/ml/alternet/parser/Grammar.Rule.html#asNumber--"><code>.asNumber()</code></a>, we write the <code>NUMBER</code> mapper that create a <code>Constant</code> instance from our data model with that number token :</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
+    NUMBER( (stack, token, next) -> {
+        // mapper for : Token NUMBER = DIGIT.oneOrMore().asNumber();
+        Number n = token.getValue(); // thanks to ".asNumber();"
+        return new Constant(n);
+    }),]]></pre>
+</div>
 
-* the `FUNCTION` token is produced in the grammar with the `Calc.Function` enum class, we write the `FUNCTION` mapper that create a `Function` instance from our data model with that enum value token. In our grammar, functions are taking a single argument, we can retrieve it as the next following value :
+<div class="tab3">
+<ul><li>the <code>FUNCTION</code> token is produced in the grammar with the <code>Calc.Function</code> enum class, we write the <code>FUNCTION</code> mapper that create a <code>Function</code> instance from our data model with that enum value token. In our grammar, functions are taking a single argument, we can retrieve it as the next following value :</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
+    FUNCTION( (stack, token, next) -> {
+        // mapper for : Token FUNCTION = is(Calc.Function.class);
+        // e.g.   sin  x
+        //   function  argument
+        Operation.Function function = token.getValue();            // e.g.   Calc.Function.sin
+        NumericExpression argument = next.pollFirst().getTarget(); // e.g.   Expression.Variable("x")
+        return new Function(function, argument);
+    }),]]></pre>
+</div>
 
-```java
-    FUNCTION { // mapper for : Token FUNCTION = is(Calc.Function.class);
-        @Override
-        public NumericExpression transform(
-                ValueStack<Value<NumericExpression>> stack,
-                TokenValue<?> token,
-                Deque<Value<NumericExpression>> next)
-        {
-            // e.g.   sin  x
-            //   function  argument
-            Calc.Function function = token.getValue();   // e.g.   Calc.Function.sin
-            NumericExpression argument = next.pollFirst().getTarget(); // e.g.   Variable("x")
-            return new Function(function, argument);
-        }
-    },
-```
+<div class="tab4">
+<ul><li>the <code>RAISED</code> token is a little special because it uses the previous item and the next one. Unfortunately, the previous item (which is in the stack) is not yet transformed to a <code>NumericExpression</code>, therefore we can't do something useful in that mapper : we must delegate the mapping to the enclosed rule mapper <code>Factor</code> (see later) :</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
+    RAISED( (stack, token, next) -> {
+        // mapper for : Token RAISED = is('^');
+        // e.g. a ^ b
+        return null; // we don't know how to process it here => keep the source value
+    }),]]></pre>
+</div>
 
-* the `RAISED` token is a little special because it uses the previous item and the next one. Unfortunately, the previous item (which is in the stack) is not yet transformed to a `NumericExpression`, therefore we can't do something useful in that mapper : we must delegate the mapping to the counterpart rule mapper `Factor` (see later) :
+<div class="tab5">
+<ul><li>the <code>MULTIPLICATIVE</code> token is produced in the grammar with the <code>Calc.Multiplicative</code> enum class. It is transformed to a <code>Term&lt;Calc.Multiplicative&gt;</code> ; the grammar say that the token is <b>always</b> followed by an argument :</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
+    MULTIPLICATIVE( (stack, token, next) -> {
+        // mapper for : Token MULTIPLICATIVE = is(Multiplicative.class);
+        // e.g. a * b
+        Multiplication op = token.getValue(); // * | /
+        // * is always followed by an argument
+        NumericExpression arg = next.pollFirst().getTarget(); // b argument
+        Term<Multiplication> term = new Term<>(op, arg);
+        return term;
+    }),]]></pre>
+</div>
 
-```java
-    RAISED { // mapper for : Token RAISED = is('^');
-        @Override
-        public NumericExpression transform(
-                ValueStack<Value<NumericExpression>> stack,
-                TokenValue<?> token,
-                Deque<Value<NumericExpression>> next)
-        {
-            // e.g. a ^ b
-            return null; // we don't know how to process it here => keep the source value
-        }
-    },
-```
+<div class="tab6">
+<ul><li><code>Calc.Additive</code> is slightly different because it always appears alone in <code>SignedTerm</code> and <code>SignedFactor</code>. Both rules are wrapping the additive term <b>within</b> an optional rule, which means that <b>nothing</b> comes next in that rule.</li></ul>
 
-* the `MULTIPLICATIVE` token is produced in the grammar with the `Calc.Multiplicative` enum class. It is transformed to a `Term<Calc.Multiplicative>` ; the grammar say that the token is **always** followed by an argument :
-
-```java
-    MULTIPLICATIVE { // mapper for : Token MULTIPLICATIVE = is(Multiplicative.class);
-        @Override
-        public NumericExpression transform(
-                ValueStack<Value<NumericExpression>> stack,
-                TokenValue<?> token,
-                Deque<Value<NumericExpression>> next)
-        {
-            // e.g. a * b
-            Multiplicative op = token.getValue(); // * | /
-            // * is always followed by an argument
-            NumericExpression arg = next.pollFirst().getTarget(); // b argument
-            Term<Multiplicative> term = new Term<>(op, arg);
-            return term;
-        }
-    },
-```
-
-* `Calc.Additive` is slightly different because it always appears alone in `SignedTerm` and `SignedFactor`. Both rules are wrapping the additive term **within** an optional rule, which means that **nothing** comes next in that rule (below `Product` or `Factor` are after the optional rule, **not after** the `ADDITIVE` term, which means that we have to consider just `ADDITIVE?` as the enclosed rule) :
-
-```
+<div style="columns: 2">
+<div>
+<p>Aside, <code>Product</code> or <code>Factor</code> are after the optional rule, <b>not after</b> the <code>ADDITIVE</code> term, which means that we have to consider just <code>ADDITIVE?</code> as the enclosed rule.</p>
+</div>
+<div style="break-before: column">
+<div class="source"><pre class="prettyprint">
 SignedTerm   ::= ADDITIVE? Product
 SignedFactor ::= ADDITIVE? Factor
-```
+</pre></div>
+</div>
+</div>
 
-Conversely, in a `Sum`, the `ADDITIVE` term is **always** followed by a term :
-
-```
+<div style="columns: 2">
+<div>
+<p>Conversely, in a <code>Sum</code>, the <code>ADDITIVE</code> term is <b>always</b> followed by a term.</p>
+</div>
+<div style="break-before: column">
+<div class="source"><pre class="prettyprint">
 Sum ::= SignedTerm (ADDITIVE Product)*
-```
+</pre></div>
+</div>
+</div>
 
-We can check what comes next to decide if we can create a `Term<Calc.Additive>` :
+<p>A partial dump allow to visualize the relevant rules :</p>
+<input class="tab1" id="tabSTermDump" type="radio" name="partialDump" checked="checked"><label for="tabSTermDump">SignedTerm</label></input>
+<input class="tab2" id="tabSFactorDump" type="radio" name="partialDump"><label for="tabSFactorDump">SignedFactor</label></input>
+<input class="tab3" id="tabSumDump" type="radio" name="partialDump"><label for="tabSumDump">Sum</label></input>
+<input class="tab4" id="tabCodeDump" type="radio" name="partialDump"><label for="tabCodeDump">Java code</label></input>
+<input class="tab5" id="tabWhyDump" type="radio" name="partialDump"><label for="tabWhyDump">Why ?</label></input>
+<div class="tab1">
+<p><code>ADDITIVE</code> <b>is not</b> followed by <code>Product</code></p>
+<div class="source"><pre class="prettyprint" style="line-height: 17px">
+SignedTerm
+┣━━ ADDITIVE?
+┃   ┗━━ ADDITIVE ━━━ ( '+' | '-' )
+┗━━ Product</pre>
+</div>
+</div>
+<div class="tab2">
+<p><code>ADDITIVE</code> <b>is not</b> followed by <code>Product</code></p>
+<div class="source"><pre class="prettyprint" style="line-height: 17px">
+SignedFactor
+┗━━ ( ADDITIVE? Factor )
+    ┣━━ ADDITIVE?
+    ┃   ┗━━ ADDITIVE ━━━ ( '+' | '-' )
+    ┗━━ Factor</pre>
+</div>
+</div>
+<div class="tab3">
+<p><code>ADDITIVE</code> <b>IS</b> followed by <code>Product</code> !!!</p>
+<div class="source"><pre class="prettyprint" style="line-height: 17px">
+Sum
+┗━━ ( SignedTerm ( ADDITIVE Product )* )
+    ┣━━ SignedTerm
+    ┗━━ ( ADDITIVE Product )*
+        ┗━━ ( ADDITIVE Product )
+            ┣━━ ADDITIVE ━━━ ( '+' | '-' )
+            ┗━━ Product</pre></div>
+</div>
+<div class="tab4">
+<p>Java program allowing to dump a rule or token :</p>
+<pre class="prettyprint linenums">
+    Dump dump = new Dump().withoutClass()
+                          .withoutHash()
+                          .setVisited(Calc.SignedTerm)
+                          .setVisited(Calc.Product);
+    Calc.Sum.accept(dump);
+    System.out.println(dump);</pre></div>
 
-```java
-    ADDITIVE { // mapper for : Token ADDITIVE = is(Additive.class);
-        @Override
-        public NumericExpression transform(
-                ValueStack<Value<NumericExpression>> stack,
-                TokenValue<?> token,
-                Deque<Value<NumericExpression>> next)
-        {
-                // e.g. a + b
-                Additive op = token.getValue(); // + | -
-                if (next.isEmpty()) {
-                    // SignedTerm   ::= ADDITIVE? Product
-                    // SignedFactor ::= ADDITIVE? Factor
-                    return null; // raw value Additive
-                } else {
-                    // + is always followed by an argument
-                    // Sum ::= SignedTerm (ADDITIVE Product)*
-                    NumericExpression arg = next.pollFirst().getTarget(); // b argument
-                    Term<Additive> term = new Term<>(op, arg);
-                    return term;
-                }
+<div class="tab5">
+Why <code>SignedTerm</code> and <code>SignedFactor</code> doesn't look the same in the dump ? This is because <code>SignedFactor</code> is not defined directly but is enclosed in a proxy rule, unlike <code>SignedTerm</code>.
+<pre class="prettyprint linenums"><![CDATA[
+    Rule SignedTerm = ADDITIVE.optional().seq(Product);
+    Rule SignedFactor = $(() -> ADDITIVE.optional().seq(Calc.Factor));]]></pre>
+</div>
+
+<p>Therefore, we can check what comes next to decide if we can create a <code>Term&lt;Calc.Additive&gt;</code> :</p>
+<pre class="prettyprint linenums"><![CDATA[
+    ADDITIVE( (stack, token, next) -> {
+        // mapper for : Token ADDITIVE = is(Additive.class);
+        // e.g. a + b
+        Addition op = token.getValue(); // + | -
+        if (next.isEmpty()) {
+            // SignedTerm   ::= ADDITIVE? Product
+            // SignedFactor ::= ADDITIVE? Factor
+            return null; // raw value Additive
+        } else {
+            // + is always followed by an argument
+            // Sum ::= SignedTerm (ADDITIVE Product)*
+            NumericExpression arg = next.pollFirst().getTarget(); // b argument
+            Term<Addition> term = new Term<>(op, arg);
+            return term;
         }
-    },
-```
+    }),]]></pre>
+</div>
+
+</div>
 
 <a name="ruleMappers"></a>
 
@@ -1602,105 +1757,84 @@ We can check what comes next to decide if we can create a `Term<Calc.Additive>` 
 
 The last but not the least is to map the rules inside `enum CalcRules`.
 
-* let's start with the `Factor` rule, that handles the `RAISED` token. But this time, all
-values are available within the **arguments** :
+<div class="tabs">
 
-```java
-    Factor { // mapper for : Rule Factor = ...
-        @Override
-        public NumericExpression transform(
-                ValueStack<Value<NumericExpression>> stack,
-                Rule rule,
-                Deque<Value<NumericExpression>> args)
-        {
-            // Factor ::= Argument ('^' SignedFactor)?
-            //              base         exponent
-            NumericExpression base = args.pollFirst().getTarget();
-            Value<NumericExpression> raised = args.peekFirst();
-            if (raised != null && raised.isSource() && raised.getSource().getRule() == Calc.RAISED) {
-                args.pollFirst(); // ^
-                NumericExpression exponent = args.pollFirst().getTarget();
-                return new Exponent(base, exponent);
-            } else {
-                // a single term is not a factor
-                return base;
-            }
+<input class="tab1" id="tabFactorMapper" type="radio" name="ruleMappers" checked="checked"><label for="tabFactorMapper">Factor</label></input>
+<input class="tab2" id="tabProductMapper" type="radio" name="ruleMappers"><label for="tabProductMapper">Product</label></input>
+<input class="tab3" id="tabSumMapper" type="radio" name="ruleMappers"><label for="tabSumMapper">Sum</label></input>
+
+<div class="tab1">
+<ul><li>let's start with the <code>Factor</code> rule, that handles the <code>RAISED</code> token. But this time, all values are available within the <b>arguments</b> :</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
+    Factor( (stack, rule, args) -> { // mapper for : Rule Factor = ...
+        // Factor ::= Argument ('^' SignedFactor)?
+        //              base         exponent
+        NumericExpression base = args.pollFirst().getTarget();
+        Value<NumericExpression> raised = args.peekFirst();
+        if (raised != null && raised.isSource() && raised.getSource().getRule() == Calc.RAISED) {
+            args.pollFirst(); // ^
+            NumericExpression exponent = args.pollFirst().getTarget();
+            return new Exponent(base, exponent);
+        } else {
+            // a single term is not a factor
+            return base;
         }
-    };
-```
+    });]]></pre>
+<p>Note that the <code>Factor</code> mapper doesn't necessary give an <code>Exponent</code> instance. Sometimes it is traversed because it doesn't contain the <code>^</code> token. In that case we return the argument as-is.</p>
+<p>Similarly, for the <code>Sum</code> and <code>Product</code> mappers, the semantic of the grammar allow to traverse the counterpart rules without producing the target instances.</p>
+</div>
 
-Note that the `Factor` mapper doesn't necessary give an `Exponent` instance. Sometimes it
-is traversed because it doesn't contain the `^` token. In that case we return the
-argument as-is.
-
-Similarly, for the `Sum` and `Product` mappers, the semantic of the grammar allow to traverse
-the counterpart rules without producing the target instances.
-
-* for the `Sum` rule, when we do have several arguments, we must check whether the first
-term had a sign, or was just an argument, and transform it to conform with the signature
-of the target constructor :
-
-```java
-    Sum { // mapper for : Rule Sum = ...
-        @SuppressWarnings("unchecked")
-        @Override
-        public NumericExpression transform(
-                ValueStack<Value<NumericExpression>> stack,
-                Rule rule,
-                Deque<Value<NumericExpression>> args)
-        {
-            // Sum ::= SignedTerm (ADDITIVE Product)*
-            if (args.size() == 1) {
-                // a single term is not a sum
-                return args.pollFirst().getTarget();
-            } else {
-                NumericExpression signedTerm = args.removeFirst().getTarget();
-                if (! (signedTerm instanceof Term<?>)
-                    || ! (((Term<?>) signedTerm).operation instanceof Additive)) {
-                    // force "x" to be "+x"
-                    signedTerm = new Term<>(Additive.PLUS, signedTerm);
-                }
-                List<Term<Additive>> arguments = new LinkedList<>();
-                arguments.add((Term<Additive>) signedTerm);
-                args.stream()
-                    // next arguments are all Term<Additive>
-                    .map(v -> (Term<Additive>) v.getTarget())
-                    .forEachOrdered(arguments::add);
-                return new Sum(arguments);
-            }
+<div class="tab2">
+<ul><li>the <code>Product</code> mapper is more simpler than the <code>Sum</code> mapper :</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
+    Product( (stack, rule, args) -> { // mapper for : Rule Product = ...
+        // Product ::= Factor (MULTIPLICATIVE SignedFactor)*
+        if (args.size() == 1) {
+            // a single term is not a product
+            return args.pollFirst().getTarget();
+        } else {
+            // assume x to be *x, because the product will start by 1*x
+            Term<Multiplication> factor = new Term<>(Multiplicative.MULT, args.removeFirst().getTarget());
+            List<Term<Multiplication>> arguments = new LinkedList<>();
+            arguments.add(factor);
+            args.stream()
+                // next arguments are all Term<Multiplicative>
+                .map(v -> (Term<Multiplication>) v.getTarget())
+                .forEachOrdered(arguments::add);
+            return new Product(arguments);
         }
-    },
-```
+    }),]]></pre>
+</div>
 
-* the `Product` mapper is more simpler :
-
-```java
-    Product { // mapper for : Rule Product = ...
-        @SuppressWarnings("unchecked")
-        @Override
-        public NumericExpression transform(
-                ValueStack<Value<NumericExpression>> stack,
-                Rule rule,
-                Deque<Value<NumericExpression>> args)
-        {
-            // Product ::= Factor (MULTIPLICATIVE SignedFactor)*
-            if (args.size() == 1) {
-                // a single term is not a product
-                return args.pollFirst().getTarget();
-            } else {
-                // assume x to be *x, because the product will start by 1*x
-                Term<Multiplicative> factor = new Term<>(Multiplicative.MULT, args.removeFirst().getTarget());
-                List<Term<Multiplicative>> arguments = new LinkedList<>();
-                arguments.add(factor);
-                args.stream()
-                    // next arguments are all Term<Multiplicative>
-                    .map(v -> (Term<Multiplicative>) v.getTarget())
-                    .forEachOrdered(arguments::add);
-                return new Product(arguments);
+<div class="tab3">
+<ul><li>for the <code>Sum</code> rule, when we do have several arguments, we must check whether the first term had a sign, or was just an argument, and transform it to conform with the signature of the target constructor :</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
+    Sum( (stack, rule, args) -> { // mapper for : Rule Sum = ...
+        // Sum ::= SignedTerm (ADDITIVE Product)*
+        if (args.size() == 1) {
+            // a single term is not a sum
+            return args.pollFirst().getTarget();
+        } else {
+            NumericExpression signedTerm = args.removeFirst().getTarget();
+            if (! (signedTerm instanceof Term<?>)
+                || ! (((Term<?>) signedTerm).operator instanceof Addition)) {
+                // force "x" to be "+x"
+                signedTerm = new Term<>(Additive.PLUS, signedTerm);
             }
+            List<Term<Addition>> arguments = new LinkedList<>();
+            arguments.add((Term<Addition>) signedTerm);
+            args.stream()
+                // next arguments are all Term<Additive>
+                .map(v -> (Term<Addition>) v.getTarget())
+                .forEachOrdered(arguments::add);
+            return new Sum(arguments);
         }
-    },
-```
+    }),]]></pre>
+</div>
+
+</div>
+
+<hr/>
 
 Here is the complete code of [`ExpressionBuilder`](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/step4/ExpressionBuilder.java)
 
@@ -1766,16 +1900,165 @@ Here is how we can evaluate such expression :
     variables.put("var_12", 10.0);
 
     Optional<StringExpression> exp = new ValueTemplateBuilder()
-        .build(expression, true);
+        .parse(expression, true);
 
     String res = exp.get().eval(variables);
 ```
 
 You can examine the code of the [`ValueTemplateBuilder`](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/step4/ValueTemplateBuilder.java) and [`StringExpression`](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/step4/StringExpression.java) on Github.
 
+<a name="extendingMapping"></a>
+
+### Extending the mappings
+
+We already extend our `Calc` grammar to the `Math` grammar, by rewriting some rules and tokens. Those rewritings has an impact on our mappings. We have to rewrite those that changed accordingly.
+
+First, our custom model is not really ideal for extension : our additions and multiplications are just exposed as enum values, whereas their underlying operations should be exposed as interfaces. This let us rewrite more easily a new multiplication with `×` and `÷` instead of `*` and `/` : with an interface, we don't change the operation, just the token.
+
+<div class="alert alert-info" role="alert">
+Each time an enum is defined in a grammar, it should implement an interface in order to ease extensibility.
+</div>
+
+With that enhancements, it is really easy to extend the existing mappings (the extension of `Calc` to `Math` has been discussed previously). You can check them here : [`Calc`](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/step6/Calc.java) as well as [`ExpressionBuilder`](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/step6/ExpressionBuilder.java), now use [`Operation`s](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/step6/Operation.java) ; the extension grammar [`Math`](https://github.com/alternet/alternet.ml/blob/master/parsing/src/test/java/ml/alternet/parser/step6/Math.java) also uses operations, and we will use them in `MathExpressionBuilder` (see below).
+
+Here is a reminder of the changes :
+
+<div class="source"><pre class="prettyprint">
+[03] FUNCTION       ::= 'sin' | 'cos' | 'exp' | 'ln' | 'sqrt' | 'asin' | 'acos'
+[05] MULTIPLICATIVE ::= '×' | '÷'
+[11] VARIABLE       ::= UPPERCASE (UPPERCASE | DIGIT | UNDERSCORE)*
+
+[14] Argument       ::= FUNCTION LBRACKET Argument RBRACKET | Value | LBRACKET Expression RBRACKET
+</pre></div>
+
+In fact, with our enhanced data model, the sole impact is around the multiplicative operation because the enum class changed ; therefore we need to rewrite the mapping where it is produced (the `MULTIPLICATIVE` mapper) and where it is consumed (the `Product` mapper) :
+
+<div class="tabs">
+
+<input class="tab1" id="tabMathExpressionBuilder" type="radio" name="mathBuilder" checked="checked"><label for="tabMathExpressionBuilder">MathExpressionBuilder</label></input>
+<input class="tab2" id="tabMathRules" type="radio" name="mathBuilder"><label for="tabMathRules">MathRules</label></input>
+<input class="tab3" id="tabMathTokens" type="radio" name="mathBuilder"><label for="tabMathTokens">MathTokens</label></input>
+
+<div class="tab1"><pre class="prettyprint linenums"><![CDATA[
+public class MathExpressionBuilder extends NodeBuilder<NumericExpression> {
+
+    public MathExpressionBuilder() {
+        this(Math.$);
+    }
+
+    public MathExpressionBuilder(Grammar g) {
+        super(g);
+        setTokenMapper(MathTokens.class);
+        setRuleMapper(MathRules.class);
+    }
+
+}]]></pre></div>
+
+<div class="tab2"><pre class="prettyprint linenums"><![CDATA[
+enum MathRules implements RuleMapper<NumericExpression> {
+
+    Product( (stack, rule, args) -> {
+        // Product ::= Factor (MULTIPLICATIVE SignedFactor)*
+        if (args.size() == 1) {
+            // a single term is not a product
+            return args.pollFirst().getTarget();
+        } else {
+            // assume x to be ×x, because the product will start by 1×x
+            Term<Multiplication> factor = new Term<>(MathMultiplicative.MULT, args.removeFirst().getTarget());
+            List<Term<Multiplication >> arguments = new LinkedList<>();
+            arguments.add(factor);
+            args.stream()
+                // next arguments are all Term<Multiplicative>
+                .map(v -> (Term<Multiplication>) v.getTarget())
+                .forEachOrdered(arguments::add);
+            return new Product(arguments);
+        }
+    });
+
+    static {
+        EnumUtil.extend(ExpressionBuilder.CalcRules.class); // look, Ma ! Easy enum extension !
+    }
+
+    RuleMapper<NumericExpression> rm;
+
+    MathRules(ExpressionBuilder.CalcRules cr) { // constructor required by EnumUtil.extend
+        this.rm = cr;
+    }
+
+    MathRules(RuleMapper<NumericExpression> rm) {
+        this.rm = rm;
+    }
+
+    @Override
+    public NumericExpression transform(
+        ValueStack<Value<NumericExpression>> stack,
+        Rule rule,
+        Deque<Value<NumericExpression>> args)
+    {
+        return rm.transform(stack, rule, args);
+    }
+
+}]]></pre></div>
+
+<div class="tab3"><pre class="prettyprint linenums"><![CDATA[
+enum MathTokens implements TokenMapper<NumericExpression> {
+
+    MULTIPLICATIVE( (stack, token, next) -> {
+        // e.g. a × b
+        MathMultiplicative op = token.getValue(); // × | ÷
+        // × is always followed by an argument
+        NumericExpression arg = next.pollFirst().getTarget(); // b argument
+        Term<MathMultiplicative> term = new Term<>(op, arg);
+        return term;
+    });
+
+    static {
+        EnumUtil.extend(ExpressionBuilder.CalcTokens.class);
+    }
+
+    TokenMapper<NumericExpression> tm;
+
+    MathTokens(ExpressionBuilder.CalcTokens ct) { // constructor required by EnumUtil.extend
+        this.tm = ct;
+    }
+
+    MathTokens(TokenMapper<NumericExpression> tm) {
+        this.tm = tm;
+    }
+
+    @Override
+    public NumericExpression transform(
+        ValueStack<Value<NumericExpression>> stack,
+        TokenValue<?> token,
+        Deque<Value<NumericExpression>> next)
+    {
+        return tm.transform(stack, token, next);
+    }
+
+}]]></pre></div>
+
+</div>
+
+Finally, if we also expect a value template based on the `Math` builder instead of the `Calc` builder, we just need this new grammar :
+
+```java
+public interface MathValueTemplate extends ValueTemplate {
+
+    //    EXPRESSION ::= Math
+    Token EXPRESSION = is(
+            Math.$,
+            () -> new MathExpressionBuilder());
+
+    MathValueTemplate $ = $();
+
+}
+```
+
+We don't need a new builder for this grammar, because the token value produced by `MathExpressionBuilder` is a `NumericExpression`, just like for `ExpressionBuilder`. Therefore, the existing `ValueTemplateBuilder` is just enough, but need a minor update to be able to accept either the `ValueTemplate` grammar or the `MathValueTemplate` grammar.
+
 <a name="examples"></a>
 
-## Examples
+## Additional examples
 
 You will find various examples in the [Github repo](https://github.com/alternet/alternet.ml/tree/master/parsing/src/test/java/ml/alternet/parser).
 
@@ -1792,23 +2075,32 @@ You will find various examples in the [Github repo](https://github.com/alternet/
 
 ### Dump
 
-A convenient tool allow to dump a rule :
+A convenient tool allow to [dump](apidocs/ml/alternet/parser/visit/Dump.html) a rule :
 
 ```java
     Dump.tree(rule);
-    Dump.detailed(rule); // contains additional informations about the class
+    Dump.tree(grammar); // dump the main rule
+
+    Dump.detailed(rule); // displays additional informations about the class
 ```
 
 Sometimes, a rule exist in a grammar that has been extended, but that rule hasn't been overriden, therefore, it may be helpful to specify from which grammar we want its dump, since it may affect the content :
 
 ```java
-    Dump.tree(grammar, rule); // the original rule
-    Dump.tree(extGrammar, rule); // the same rule but maybe altered in the extension
+    Dump.tree(Calc.$, Math.Expression); // the original rule
+    Dump.tree(Math.$, Math.Expression); // the same rule but altered in the extension
 ```
 
-The output looks like this. Every composed rule is expanded once the first time it is encountered. Below is displayed the dump of our `Math` grammar (after rule rewrites) :
+The output looks like this. Every named rule composed is expanded once the first time it is encountered.
 
-```
+<div class="tabs">
+
+<input class="tab1" id="tabExpr" type="radio" name="dump" checked="checked"><label for="tabExpr">Expression</label></input>
+<input class="tab2" id="tabArg" type="radio" name="dump"><label for="tabArg">Argument</label></input>
+
+<div class="tab1">
+<p>Below is displayed the dump of our <code>Math</code> grammar (after rule rewrites) :</p>
+<div class="source"><pre class="prettyprint" style="line-height: 17px">
 Expression
 ┗━━ Sum
     ┗━━ ( SignedTerm ( ADDITIVE Product )* )
@@ -1856,7 +2148,63 @@ Expression
             ┗━━ ( ADDITIVE Product )
                 ┣━━ ADDITIVE ━━━ ( '+' | '-' )
                 ┗━━ Product
-```
+</pre></div>
+</div>
+
+<div class="tab2"> 
+<p>The dump of <code>Argument</code> in the <code>Math</code> grammar :</p>
+<div class="source"><pre class="prettyprint" style="line-height: 17px">
+Argument
+┣━━ ( FUNCTION LBRACKET Argument RBRACKET )
+┃   ┣━━ FUNCTION ━━━ ( 'ln' | 'cos' | 'exp' | 'sin' | 'acos' | 'asin' | 'sqrt' )
+┃   ┣━━ LBRACKET ━━━ '('
+┃   ┣━━ Argument
+┃   ┗━━ RBRACKET ━━━ ')'
+┣━━ Value
+┃   ┣━━ NUMBER
+┃   ┃   ┗━━ DIGIT+
+┃   ┃       ┗━━ DIGIT
+┃   ┃           ┗━━ ['0'-'9']
+┃   ┗━━ VARIABLE
+┃       ┗━━ ( UPPERCASE ( UPPERCASE | DIGIT | UNDERSCORE )* )
+┃           ┣━━ UPPERCASE ━━━ ['A'-'Z']
+┃           ┗━━ ( UPPERCASE | DIGIT | UNDERSCORE )*
+┃               ┗━━ ( UPPERCASE | DIGIT | UNDERSCORE )
+┃                   ┣━━ UPPERCASE ━━━ ['A'-'Z']
+┃                   ┣━━ DIGIT
+┃                   ┗━━ UNDERSCORE ━━━ '_'
+┗━━ ( LBRACKET Expression RBRACKET )
+    ┣━━ LBRACKET ━━━ '('
+    ┣━━ Expression
+    ┃   ┗━━ Sum
+    ┃       ┗━━ ( SignedTerm ( ADDITIVE Product )* )
+    ┃           ┣━━ SignedTerm
+    ┃           ┃   ┣━━ ADDITIVE?
+    ┃           ┃   ┃   ┗━━ ADDITIVE ━━━ ( '+' | '-' )
+    ┃           ┃   ┗━━ Product
+    ┃           ┃       ┣━━ Factor
+    ┃           ┃       ┃   ┣━━ Argument
+    ┃           ┃       ┃   ┗━━ ( RAISED SignedFactor )?
+    ┃           ┃       ┃       ┗━━ ( RAISED SignedFactor )
+    ┃           ┃       ┃           ┣━━ RAISED ━━━ '^'
+    ┃           ┃       ┃           ┗━━ SignedFactor
+    ┃           ┃       ┃               ┗━━ ( ADDITIVE? Factor )
+    ┃           ┃       ┃                   ┣━━ ADDITIVE?
+    ┃           ┃       ┃                   ┃   ┗━━ ADDITIVE ━━━ ( '+' | '-' )
+    ┃           ┃       ┃                   ┗━━ Factor
+    ┃           ┃       ┗━━ ( MULTIPLICATIVE SignedFactor )*
+    ┃           ┃           ┗━━ ( MULTIPLICATIVE SignedFactor )
+    ┃           ┃               ┣━━ MULTIPLICATIVE ━━━ ( '×' | '÷' )
+    ┃           ┃               ┗━━ SignedFactor
+    ┃           ┗━━ ( ADDITIVE Product )*
+    ┃               ┗━━ ( ADDITIVE Product )
+    ┃                   ┣━━ ADDITIVE ━━━ ( '+' | '-' )
+    ┃                   ┗━━ Product
+    ┗━━ RBRACKET ━━━ ')'
+</pre></div>
+</div>
+</div>
+
 
 <a name="issues"></a>
 

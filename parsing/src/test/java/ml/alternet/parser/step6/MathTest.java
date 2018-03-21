@@ -42,7 +42,7 @@ public class MathTest {
         variables.put("X", 1.0);
         variables.put("VAR_12", 10.0);
 
-        Optional<NumericExpression> exp = new MathExpressionBuilder().build("asin(X)×(1+VAR_12)", true);
+        Optional<NumericExpression> exp = new MathExpressionBuilder().parse("asin(X)×(1+VAR_12)", true);
 
         assertThat(exp).isNotEmpty();
 
@@ -74,7 +74,7 @@ public class MathTest {
         variables.put("X", 1.0);
         variables.put("VAR_12", 10.0);
 
-        Optional<NumericExpression> exp = new MathExpressionBuilder().build(expression, true);
+        Optional<NumericExpression> exp = new MathExpressionBuilder().parse(expression, true);
 
         assertThat(exp).isNotEmpty();
 

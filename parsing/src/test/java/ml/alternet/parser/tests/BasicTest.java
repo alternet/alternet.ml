@@ -22,7 +22,7 @@ import ml.alternet.parser.ast.NodeBuilder;
 import ml.alternet.parser.handlers.DataHandler;
 import ml.alternet.parser.handlers.TokensCollector;
 import ml.alternet.parser.handlers.TreeHandler;
-import ml.alternet.parser.handlers.TreeHandler.Value;
+import ml.alternet.parser.handlers.ValueMapper.Value;
 
 import static ml.alternet.parser.Grammar.*;
 import ml.alternet.parser.step4.ValueTemplate;
@@ -127,15 +127,15 @@ public class BasicTest {
 
     @Test
     public void escapedChar_Should_matchCharWithTreeHandler() throws IOException {
-        TreeHandler th = new TreeHandler<String>() {
+        TreeHandler th = new TreeHandler<String, String>() {
             @Override
-            public TreeHandler.Value<String> tokenToNode(TokenValue<?> token,
+            public TreeHandler.Value<String> tokenToValue(TokenValue<?> token,
                     Deque<TreeHandler.Value<String>> next) {
                 String val = token.getType().getSimpleName() + ":" + token.getValue();
                 return new Value<String>().setTarget(val);
             }
             @Override
-            public TreeHandler.Value<String> ruleToNode(Rule rule,
+            public TreeHandler.Value<String> ruleToValue(Rule rule,
                     Deque<TreeHandler.Value<String>> args) {
                 return null;
             }

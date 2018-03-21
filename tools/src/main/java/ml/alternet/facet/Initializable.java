@@ -3,17 +3,17 @@ package ml.alternet.facet;
 /**
  * An object can be initialized.
  *
+ * @param <T> The type of the initialized object.
+ *
  * @author Philippe Poulard
  */
-public interface Initializable {
+public interface Initializable<T> {
 
     /**
      * Perform an initialization.
      *
      * @return A value.
-     *
-     * @param <T> The return type.
      */
-    <T> T init();
+    T init();
 
 }

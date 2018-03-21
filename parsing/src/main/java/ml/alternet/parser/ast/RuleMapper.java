@@ -4,7 +4,7 @@ import java.util.Deque;
 
 import ml.alternet.parser.Grammar.Fragment;
 import ml.alternet.parser.Grammar.Rule;
-import ml.alternet.parser.handlers.TreeHandler.Value;
+import ml.alternet.parser.handlers.ValueMapper.Value;
 import ml.alternet.parser.util.ValueStack;
 
 /**

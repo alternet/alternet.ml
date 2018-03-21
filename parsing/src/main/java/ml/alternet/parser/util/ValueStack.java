@@ -17,6 +17,24 @@ import ml.alternet.facet.Rewindable;
 public class ValueStack<V> implements Rewindable, Iterable<V>, Supplier<V> {
 
     /**
+     * Can stack values.
+     *
+     * @author Philippe Poulard
+     *
+     * @param <V> The type of value.
+     */
+    public interface Stackable<V> {
+
+        /**
+         * Get the stack.
+         *
+         * @return The stack of values.
+         */
+        ValueStack<V> getStack();
+
+    }
+
+    /**
      * Chain values.
      *
      * @author Philippe Poulard
@@ -146,7 +164,7 @@ public class ValueStack<V> implements Rewindable, Iterable<V>, Supplier<V> {
      *
      * @param values The actual values.
      */
-    public void pushAll(V... values) {
+    public void pushAll(@SuppressWarnings("unchecked") V... values) {
         head = null;
         for (V value : values) {
             push(value);
@@ -266,7 +284,7 @@ public class ValueStack<V> implements Rewindable, Iterable<V>, Supplier<V> {
     /**
      * Swap the 2 first values.
      */
-    public void swap() {
+    public void swap2() {
         Value<V> down1 = head.tail;
         head = new Value<>(down1.value, new Value<>(head.value, down1.tail));
     }

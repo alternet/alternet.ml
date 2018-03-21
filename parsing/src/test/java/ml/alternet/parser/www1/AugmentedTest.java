@@ -26,7 +26,7 @@ public class AugmentedTest {
     public void wwwChallenge_Should_be_processed() throws IOException {
         String input = "Basic realm=\"FooCorp\"";
         NodeBuilder<Challenge> parser = new NodeBuilder<>(WAuthAugmented.$);
-        Optional<Challenge> result = parser.build(input, true);
+        Optional<Challenge> result = parser.parse(input, true);
 
         assertThat(result).isNotEmpty();
         Challenge challenge = result.get();
@@ -38,7 +38,7 @@ public class AugmentedTest {
     public void wwwChallengeWithSeveralParameters_Should_be_processed() throws IOException {
         String input = "Basic realm=\"FooCorp\", error=invalid_token, error_description=\"The \\\"access token \\\" has expired\"";
         NodeBuilder<Challenge> parser = new NodeBuilder<>(WAuthAugmented.$);
-        Optional<Challenge> result = parser.build(input, true);
+        Optional<Challenge> result = parser.parse(input, true);
 
         assertThat(result).isNotEmpty();
         Challenge challenge = result.get();

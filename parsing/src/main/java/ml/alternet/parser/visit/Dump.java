@@ -2,11 +2,11 @@ package ml.alternet.parser.visit;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import ml.alternet.parser.Grammar;
 import ml.alternet.parser.Grammar.Rule;
-import ml.alternet.parser.util.Grammar$;
 import ml.alternet.parser.visit.TraversableRule.CombinedRule;
 import ml.alternet.parser.visit.TraversableRule.StandaloneRule;
 import ml.alternet.parser.visit.TraversableRule.SimpleRule;
@@ -34,6 +34,21 @@ public class Dump extends Traverse implements Visitor, Supplier<StringBuffer> {
     }
 
     /**
+     * Convenient method for dumping a grammar with details
+     * (rules class names and hash codes).
+     *
+     * @param grammar The grammar to dump.
+     *
+     * @return The tree-string representation of the internals
+     *      of the main rule if it exists, or "".
+     */
+    public static String detailed(Grammar grammar) {
+        return grammar.mainRule()
+                .map(Dump::detailed)
+                .orElse("");
+    }
+
+    /**
      * Convenient method for dumping a rule with details
      * (rules class names and hash codes).
      *
@@ -51,7 +66,7 @@ public class Dump extends Traverse implements Visitor, Supplier<StringBuffer> {
      */
     public static String detailed(Grammar grammar, Rule rule) {
         Dump dumper = new Dump();
-        rule = ((Grammar$) grammar).adopt(rule);
+        rule = grammar.adopt(rule);
         rule.accept(dumper);
         return dumper.toString();
     }
@@ -65,6 +80,7 @@ public class Dump extends Traverse implements Visitor, Supplier<StringBuffer> {
      * without the grammar argument) or as an imported
      * rule in the extended grammar.
      *
+     * @param grammar The grammar that owns the rule to dump.
      * @param rule The rule to dump.
      *
      * @return The tree-string representation of the internals
@@ -72,9 +88,23 @@ public class Dump extends Traverse implements Visitor, Supplier<StringBuffer> {
      */
     public static String tree(Grammar grammar, Rule rule) {
         Dump dumper = new Dump().withoutClass().withoutHash();
-        rule = ((Grammar$) grammar).adopt(rule);
+        rule = grammar.adopt(rule);
         rule.accept(dumper);
         return dumper.toString();
+    }
+
+    /**
+     * Convenient method for dumping a grammar.
+     *
+     * @param grammar The grammar to dump.
+     *
+     * @return The tree-string representation of the internals
+     *      of the main rule if it exists, or "".
+     */
+    public static String tree(Grammar grammar) {
+        return grammar.mainRule()
+                .map(Dump::tree)
+                .orElse("");
     }
 
     /**
@@ -103,6 +133,9 @@ public class Dump extends Traverse implements Visitor, Supplier<StringBuffer> {
     int size = 0; // state for list of rules
     int index = 0; // state for list of rules
 
+    /**
+     * Create a dump visitor.
+     */
     public Dump() {
         this.depth = true;
     }
@@ -150,6 +183,32 @@ public class Dump extends Traverse implements Visitor, Supplier<StringBuffer> {
      */
     public Dump withoutClass() {
         this.withClass = false;
+        return this;
+    }
+
+    /**
+     * Configure this dump by setting a set of rules
+     * considered to be already visited.
+     *
+     * @param visited The already visited rules.
+     *
+     * @return {@code this}, for chaining
+     */
+    public Dump setVisited(Set<Rule> visited) {
+        this.traversed.addAll(visited);
+        return this;
+    }
+
+    /**
+     * Configure this dump by setting a rule
+     * considered to be already visited.
+     *
+     * @param visited The already visited rule.
+     *
+     * @return {@code this}, for chaining
+     */
+    public Dump setVisited(Rule visited) {
+        this.traversed.add(visited);
         return this;
     }
 

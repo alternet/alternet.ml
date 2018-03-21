@@ -23,6 +23,12 @@ import ml.alternet.misc.Thrower;
 /**
  * Enum-related utilities.
  *
+ * <h1>Java 9 usage</h1>
+ * Ensure to import <code>sun.reflect.*</code> classes in your module :
+ * <pre>module foo.bar {
+ *    requires jdk.unsupported;
+ *}</pre>
+ *
  * @author Philippe Poulard
  */
 @Util

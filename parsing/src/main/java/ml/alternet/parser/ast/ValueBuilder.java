@@ -10,18 +10,18 @@ import ml.alternet.parser.handlers.TreeHandler;
 import ml.alternet.scan.Scanner;
 
 /**
- * Build an homogeneous AST from a grammar, tokens mapper,
+ * Build an heterogeneous AST from a grammar, tokens mapper,
  * and rules mapper.
  *
  * @author Philippe Poulard
  *
- * @param <Node> The type of the target node.
+ * @param <T> The type of the result value.
  */
-public class NodeBuilder<Node> extends TreeHandler<Node, Node> implements Builder<Node>, Mappers<Node> {
+public class ValueBuilder<T> extends TreeHandler<Object, T> implements Builder<T>, Mappers<Object> {
 
     Grammar grammar;
-    Map<String, TokenMapper<Node>> tokenMapper = new HashMap<>();
-    Map<String, RuleMapper<Node>> ruleMapper = new HashMap<>();
+    Map<String, TokenMapper<Object>> tokenMapper = new HashMap<>();
+    Map<String, RuleMapper<Object>> ruleMapper = new HashMap<>();
 
     /**
      * Create a node builder.
@@ -30,12 +30,12 @@ public class NodeBuilder<Node> extends TreeHandler<Node, Node> implements Builde
      *
      * @param grammar The grammar used during parsing.
      */
-    public NodeBuilder(Grammar grammar) {
+    public ValueBuilder(Grammar grammar) {
         this.grammar = grammar;
     }
 
     @Override
-    public Optional<Node> parse(Scanner input, boolean matchAll) throws IOException {
+    public Optional<T> parse(Scanner input, boolean matchAll) throws IOException {
         if (this.grammar.parse(input, this, matchAll)) {
             return Optional.of(this.get());
         } else {
@@ -44,12 +44,12 @@ public class NodeBuilder<Node> extends TreeHandler<Node, Node> implements Builde
     }
 
     @Override
-    public Map<String, TokenMapper<Node>> getTokenMapper() {
+    public Map<String, TokenMapper<Object>> getTokenMapper() {
         return this.tokenMapper;
     }
 
     @Override
-    public Map<String, RuleMapper<Node>> getRuleMapper() {
+    public Map<String, RuleMapper<Object>> getRuleMapper() {
         return this.ruleMapper;
     }
 

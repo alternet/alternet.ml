@@ -112,7 +112,7 @@ public class SimpleAugmentedTest {
     public void augmentedInPlaceGrammar_Should_supplyCustomObject() throws IOException {
         String input = "2018-01-16";
         NodeBuilder<LocalDate> parser = new NodeBuilder<>(AugmentedInPlace.$);
-        Optional<LocalDate> result = parser.build(input, true);
+        Optional<LocalDate> result = parser.parse(input, true);
 
         assertThat(result).isNotEmpty();
         LocalDate date = result.get();
@@ -123,7 +123,7 @@ public class SimpleAugmentedTest {
     public void augmentedGrammar_Should_supplyCustomObject() throws IOException {
         String input = "2018-01-16";
         NodeBuilder<LocalDate> parser = new NodeBuilder<>(Augmented.$);
-        Optional<LocalDate> result = parser.build(input, true);
+        Optional<LocalDate> result = parser.parse(input, true);
 
         assertThat(result).isNotEmpty();
         LocalDate date = result.get();
@@ -134,7 +134,7 @@ public class SimpleAugmentedTest {
     public void augmentedWithRefGrammar_Should_supplyCustomObject() throws IOException {
         String input = "2018-01-16";
         NodeBuilder<List<LocalDate>> parser = new NodeBuilder<>(AugmentedWithRef.$);
-        Optional<List<LocalDate>> result = parser.build(input, true);
+        Optional<List<LocalDate>> result = parser.parse(input, true);
 
         assertThat(result).isNotEmpty();
         LocalDate date = result.get().get(0);

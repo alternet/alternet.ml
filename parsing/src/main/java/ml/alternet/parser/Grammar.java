@@ -33,6 +33,7 @@ import ml.alternet.parser.EventsHandler.RuleEnd;
 import ml.alternet.parser.EventsHandler.RuleStart;
 import ml.alternet.parser.EventsHandler.StringValue;
 import ml.alternet.parser.EventsHandler.TokenValue;
+import ml.alternet.parser.Grammar.Rule;
 import ml.alternet.parser.ast.NodeBuilder;
 import ml.alternet.parser.handlers.DataHandler;
 import ml.alternet.parser.handlers.TokensCollector;
@@ -1044,7 +1045,7 @@ public interface Grammar {
          *
          * @author Philippe Poulard
          */
-        public static class Deferred extends Proxy implements Initializable {
+        public static class Deferred extends Proxy implements Initializable<Rule> {
 
             Supplier<Rule> initializer;
 
@@ -1059,11 +1060,14 @@ public interface Grammar {
             }
 
             @Override
-            public <T> T init() {
+            public Rule init() {
                 if (this.initializer != null) {
-                    is(this.initializer.get());
+                    Rule r = this.initializer.get();
+                    is(r);
+                    return r;
+                } else {
+                    return null;
                 }
-                return null;
             }
 
         }
@@ -2741,5 +2745,19 @@ public interface Grammar {
      * @see MainRule
      */
     java.util.Optional<Rule> mainRule();
+
+    /**
+     * Adopt a rule of another grammar in this grammar, that
+     * is to say apply the relevant substitutions if any.
+     *
+     * The rule to adopt should be a field in a grammar that
+     * is extended by this grammar.
+     *
+     * @param rule The rule to adopt, should be a rule of this
+     *      grammar or an inherited grammar.
+     * @return The same rule if this rule is already a field of
+     *      this grammar, or a clone otherwise.
+     */
+    Rule adopt(Rule rule);
 
 }

@@ -29,7 +29,7 @@ public class CalcTest {
         variables.put("x", 1.0);
         variables.put("var_12", 10.0);
 
-        Optional<NumericExpression> exp = new ExpressionBuilder().build("sin(x)*(1+var_12)", true);
+        Optional<NumericExpression> exp = new ExpressionBuilder().parse("sin(x)*(1+var_12)", true);
 
         assertThat(exp).isNotEmpty();
 
@@ -61,7 +61,7 @@ public class CalcTest {
         variables.put("x", 1.0);
         variables.put("var_12", 10.0);
 
-        Optional<NumericExpression> exp = new ExpressionBuilder().build(expression, true);
+        Optional<NumericExpression> exp = new ExpressionBuilder().parse(expression, true);
 
         assertThat(exp).isNotEmpty();
 
