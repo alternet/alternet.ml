@@ -5,7 +5,7 @@ import java.util.Deque;
 import ml.alternet.parser.EventsHandler.TokenValue;
 import ml.alternet.parser.Grammar.Fragment;
 import ml.alternet.parser.Grammar.Token;
-import ml.alternet.parser.handlers.TreeHandler.Value;
+import ml.alternet.parser.handlers.ValueMapper.Value;
 import ml.alternet.parser.util.ValueStack;
 
 /**

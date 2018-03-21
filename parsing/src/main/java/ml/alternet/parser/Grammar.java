@@ -1044,7 +1044,7 @@ public interface Grammar {
          *
          * @author Philippe Poulard
          */
-        public static class Deferred extends Proxy implements Initializable {
+        public static class Deferred extends Proxy implements Initializable<Rule> {
 
             Supplier<Rule> initializer;
 
@@ -1059,11 +1059,14 @@ public interface Grammar {
             }
 
             @Override
-            public <T> T init() {
+            public Rule init() {
                 if (this.initializer != null) {
-                    is(this.initializer.get());
+                    Rule r = this.initializer.get();
+                    is(r);
+                    return r;
+                } else {
+                    return null;
                 }
-                return null;
             }
 
         }

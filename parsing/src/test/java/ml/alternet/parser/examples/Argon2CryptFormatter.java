@@ -10,6 +10,7 @@ import ml.alternet.parser.Grammar;
 import ml.alternet.parser.ast.NodeBuilder;
 import ml.alternet.parser.ast.RuleMapper;
 import ml.alternet.parser.ast.TokenMapper;
+import ml.alternet.parser.ast.ValueBuilder;
 import ml.alternet.security.auth.CryptFormat;
 import ml.alternet.security.auth.CryptFormatter;
 import ml.alternet.security.auth.Hasher;
@@ -100,7 +101,7 @@ public class Argon2CryptFormatter implements CryptFormatter<Argon2Parts> {
 
     }
 
-    public static class Argon2PartsBuilder extends NodeBuilder<Object> {
+    public static class Argon2PartsBuilder extends ValueBuilder<Argon2Parts> {
 
         Hasher hr;
 
@@ -163,7 +164,7 @@ public class Argon2CryptFormatter implements CryptFormatter<Argon2Parts> {
 
     @Override
     public Argon2Parts parse(String crypt, Hasher hr) {
-        return (Argon2Parts) Thrower.safeCall(() ->
+        return Thrower.safeCall(() ->
             new Argon2PartsBuilder(hr).build(crypt, true).get()
         );
     }

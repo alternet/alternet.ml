@@ -99,3 +99,129 @@ a.externalLink[href^=https] {
     background: url(../images/internet-web-browser.png) right center no-repeat;
     padding-right: 18px;
 }
+
+/*
+<div class="accordion">
+    <div class="item">
+      <input id="acc1" type="radio" name="myacc" checked="checked"></input>
+      <label for="acc1">Acc 1</label>
+      <div class="content">
+      Content 1
+      </div>
+    </div>
+    <div class="item">
+      <input id="acc2" type="radio" name="myacc"></input>
+      <label for="acc2">Acc 2</label>
+      <div class="content">
+      Content 2
+      </div>
+    </div>
+</div>
+*/
+div.accordion .item {
+  display: inline;
+}
+
+div.accordion .content {
+  display: none;
+  padding: 10px 0 0;
+  border-top: 1px solid #ddd;
+}
+
+div.accordion input {
+  display: none;
+}
+
+div.accordion input:checked ~ .content {
+  display: block;
+}
+
+div.accordion label {
+  margin: 0 0 -1px;
+  padding: 10px 10px;
+  font-weight: 600;
+  text-align: center;
+  color: #bbb;
+  border: 1px solid transparent;
+}
+
+div.accordion label:before {
+  font-weight: normal;
+  margin-right: 10px;
+}
+
+div.accordion label:hover {
+  color: #888;
+  cursor: pointer;
+}
+
+div.accordion input:checked + label {
+  color: #555;
+  border: 1px solid #ddd;
+  border-top: 2px solid #ee5f5b;
+  border-bottom: 1px solid #fff;
+}
+
+/*
+<div class="tabs">
+  <input class="tab1" id="TAB1" type="radio" name="mytabs" checked="checked"></input>
+  <label for="TAB1">Tab 1</label>
+  <input class="tab2" id="TAB2" type="radio" name="mytabs"></input>
+  <label for="TAB2">Tab 2</label>
+  <div class="tab1">
+  Content 1
+  </div>
+  <div class="tab2">
+  Content 2
+  </div>
+</div>
+*/
+div.tabs div[class^="tab"] {
+  display: none;
+  padding: 10px 0 0;
+  border-top: 1px solid #ddd;
+}
+
+div.tabs input.tab1:checked ~ .tab1,
+div.tabs input.tab2:checked ~ .tab2,
+div.tabs input.tab3:checked ~ .tab3,
+div.tabs input.tab4:checked ~ .tab4,
+div.tabs input.tab5:checked ~ .tab5,
+div.tabs input.tab6:checked ~ .tab6,
+div.tabs input.tab7:checked ~ .tab7,
+div.tabs input.tab8:checked ~ .tab8,
+div.tabs input.tab9:checked ~ .tab9,
+div.tabs input.tab0:checked ~ .tab0 {
+  display: block;
+}
+
+div.tabs input {
+  display: none;
+}
+
+div.tabs label {
+  display: inline-block;
+  margin: 0 0 -1px;
+  padding: 10px 10px;
+  font-weight: 600;
+  text-align: center;
+  color: #bbb;
+  border: 1px solid transparent;
+}
+
+div.tabs label:before {
+  font-weight: normal;
+  margin-right: 10px;
+}
+
+div.tabs label:hover {
+  color: #888;
+  cursor: pointer;
+}
+
+div.tabs input:checked + label {
+  color: #555;
+  border: 1px solid #ddd;
+  border-top: 2px solid #ee5f5b;
+  border-bottom: 1px solid #fff;
+}

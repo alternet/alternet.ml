@@ -2,6 +2,7 @@ package ml.alternet.parser.visit;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import ml.alternet.parser.Grammar;
@@ -31,6 +32,21 @@ public class Dump extends Traverse implements Visitor, Supplier<StringBuffer> {
         Dump dumper = new Dump();
         rule.accept(dumper);
         return dumper.toString();
+    }
+
+    /**
+     * Convenient method for dumping a grammar with details
+     * (rules class names and hash codes).
+     *
+     * @param grammar The grammar to dump.
+     *
+     * @return The tree-string representation of the internals
+     *      of the main rule if it exists, or "".
+     */
+    public static String detailed(Grammar grammar) {
+        return grammar.mainRule()
+                .map(Dump::detailed)
+                .orElse("");
     }
 
     /**
@@ -78,6 +94,20 @@ public class Dump extends Traverse implements Visitor, Supplier<StringBuffer> {
     }
 
     /**
+     * Convenient method for dumping a grammar.
+     *
+     * @param grammar The grammar to dump.
+     *
+     * @return The tree-string representation of the internals
+     *      of the main rule if it exists, or "".
+     */
+    public static String tree(Grammar grammar) {
+        return grammar.mainRule()
+                .map(Dump::tree)
+                .orElse("");
+    }
+
+    /**
      * Convenient method for dumping a rule.
      *
      * @param rule The rule to dump.
@@ -103,6 +133,9 @@ public class Dump extends Traverse implements Visitor, Supplier<StringBuffer> {
     int size = 0; // state for list of rules
     int index = 0; // state for list of rules
 
+    /**
+     * Create a dump visitor.
+     */
     public Dump() {
         this.depth = true;
     }
@@ -150,6 +183,28 @@ public class Dump extends Traverse implements Visitor, Supplier<StringBuffer> {
      */
     public Dump withoutClass() {
         this.withClass = false;
+        return this;
+    }
+
+    /**
+     * Configure this dump by setting a set of rules
+     * considered to be already visited.
+     *
+     * @return {@code this}, for chaining
+     */
+    public Dump setVisited(Set<Rule> visited) {
+        this.traversed.addAll(visited);
+        return this;
+    }
+
+    /**
+     * Configure this dump by setting a rule
+     * considered to be already visited.
+     *
+     * @return {@code this}, for chaining
+     */
+    public Dump setVisited(Rule visited) {
+        this.traversed.add(visited);
         return this;
     }
 

@@ -26,10 +26,10 @@ import ml.alternet.scan.Scanner;
  *
  * @author Philippe Poulard
  */
-public class ExpressionBuilder extends TreeHandler<Expression> {
+public class ExpressionBuilder extends TreeHandler<Expression, Expression> {
 
     @Override
-    public Value<Expression> tokenToNode(TokenValue<?> token, Deque<Value<Expression>> next) {
+    public Value<Expression> tokenToValue(TokenValue<?> token, Deque<Value<Expression>> next) {
         String tokenName = token.getRule().getName(); // e.g. "FUNCTION"
         // find it with the same name and ask it to transform the token to an expression
         Expression expr = Tokens.valueOf(tokenName).asExpression(token, next);
@@ -43,7 +43,7 @@ public class ExpressionBuilder extends TreeHandler<Expression> {
     }
 
     @Override
-    public Value<Expression> ruleToNode(Rule rule, Deque<Value<Expression>> args) {
+    public Value<Expression> ruleToValue(Rule rule, Deque<Value<Expression>> args) {
         String ruleName = rule.getName(); // e.g. "Product"
         // find it with the same name and ask it to transform the rule to an expression
         Expression expr = Rules.valueOf(ruleName).asExpression(rule, args);
