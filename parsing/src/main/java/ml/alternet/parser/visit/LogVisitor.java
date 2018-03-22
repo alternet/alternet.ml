@@ -39,7 +39,8 @@ public class LogVisitor implements Visitor {
     }
 
     void log(String msg, Rule rule) {
-        this.log.info(() -> "Visiting " + msg + ' ' + Dump.getHash(rule) + rule.getName() + " -> " + rule.toPrettyString());
+        this.log.info(() -> "Visiting " + msg + ' ' + Dump.getHash(rule) + rule.getName()
+                                                        + " -> " + rule.toPrettyString());
     }
 
     @Override

@@ -9,7 +9,8 @@ import ml.alternet.parser.util.ValueStack.Stackable;
 import ml.alternet.parser.handlers.ValueMapper.Value;
 
 /**
- * A tree handler builds a target data structure while parsing.
+ * A tree handler builds a target data structure while parsing
+ * with the help of a stack.
  *
  * @author Philippe Poulard
  *
@@ -34,9 +35,9 @@ public abstract class TreeHandler<T, R extends T> implements DataHandler<R>, Val
         // get the final value
         Value<T> val = getStack().get();
         if (val.isSource()) {
-            // but it need to be transformed
+            // but it has to be transformed
             TokenValue<T> value = (TokenValue<T>) val.getSource();
-            val = tokenToValue(value, null);
+            val = tokenToValue(value, new LinkedList<Value<T>>());
             if (val.isSource()) {
                 // no mapper : unwrap the token value
                 return (R) value.getValue();

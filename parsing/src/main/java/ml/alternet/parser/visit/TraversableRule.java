@@ -74,8 +74,8 @@ public interface TraversableRule {
 
         @Override
         default void flatten() {
-            if (getComponent() instanceof ComposedRule &&
-                ! getComponent().isGrammarField())
+            if (getComponent() instanceof ComposedRule
+                    && ! getComponent().isGrammarField())
             {
                 ((ComposedRule<?>) getComponent()).flatten();
             }

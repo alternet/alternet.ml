@@ -33,8 +33,8 @@ import ml.alternet.parser.EventsHandler.RuleEnd;
 import ml.alternet.parser.EventsHandler.RuleStart;
 import ml.alternet.parser.EventsHandler.StringValue;
 import ml.alternet.parser.EventsHandler.TokenValue;
-import ml.alternet.parser.Grammar.Rule;
 import ml.alternet.parser.ast.NodeBuilder;
+import ml.alternet.parser.ast.ValueBuilder;
 import ml.alternet.parser.handlers.DataHandler;
 import ml.alternet.parser.handlers.TokensCollector;
 import ml.alternet.parser.util.ComposedRule;
@@ -95,7 +95,7 @@ public interface Grammar {
      * <pre>// RAISED ::= '^'
      *Token RAISED = is('^');</pre>
      *
-     * @param car The actual Unicode character.
+     * @param car The actual Unicode codepoint.
      *
      * @return A char token.
      */
@@ -109,7 +109,7 @@ public interface Grammar {
      * <pre>// NOT_A_STAR ::= ! '*'
      *Token NOT_A_STAR = isNot('*');</pre>
      *
-     * @param car The Unicode character to exclude.
+     * @param car The Unicode codepoint to exclude.
      *
      * @return A char token.
      */
@@ -254,7 +254,7 @@ public interface Grammar {
     }
 
     /**
-     * Turn a grammar in a token.
+     * Turn a grammar to a token.
      *
      * When matching, the token value will be of the
      * type built by the data handler.
@@ -792,13 +792,13 @@ public interface Grammar {
          */
         public Rule bounds(int min, int max) {
             assert min <= max : "min must be <= max";
-            assert min >=0 : "min must be positive or nul";
-            assert max >=1 : "min must be positive";
+            assert min >= 0 : "min must be positive or nul";
+            assert max >= 1 : "min must be positive";
             if (min == 1) {
                 if (max == 1) {
                     return this;
                 }
-            } else if (max == 1 && min == 0){
+            } else if (max == 1 && min == 0) {
                 return new Optional(this);
             }
             return new Bounds(this, min, max);
@@ -846,19 +846,7 @@ public interface Grammar {
          * @param <T> The type of the target data.
          */
         public <T> TypedToken<T> asToken(Function<LinkedList<TokenValue<?>>, T> mapper) {
-            return new TypedToken<T>(this) {
-                @Override
-                public TokenValue<T> newTokenValue(TokensCollector<?> buf, Trackable trackable) {
-                    @SuppressWarnings("unchecked")
-                    LinkedList<TokenValue<?>> tokens = ((TokensCollector<LinkedList<TokenValue<?>>>) buf).get();
-                    T obj = mapper.apply(tokens);
-                    return new TokenValue<>(this, obj, trackable);
-                }
-                @Override
-                public TokensCollector<?> collector() {
-                    return TokensCollector.newTokenValueHandler();
-                }
-            };
+            return new TypedToken.Mapper<T>(this, mapper);
         }
 
         /**
@@ -871,15 +859,7 @@ public interface Grammar {
          * @return This rule as a token.
          */
         public TypedToken<String> asToken(BiFunction<String, Rule, String> mapper) {
-            return new TypedToken.String(this) {
-                @Override
-                public TokenValue<java.lang.String> newTokenValue(TokensCollector<?> buf, Trackable trackable) {
-                    @SuppressWarnings("unchecked")
-                    StringBuilder sb = ((TokensCollector<StringBuilder>) buf).get();
-                    java.lang.String s = mapper.apply(sb.toString(), this);
-                    return new StringValue(this, s, trackable);
-                }
-            };
+            return new TypedToken.String(this, sb -> mapper.apply(sb.toString(), this));
         }
 
         /**
@@ -1253,13 +1233,11 @@ public interface Grammar {
 
         @Override
         public java.util.Optional<Rule> simplify() {
-            if (! getComponent().isGrammarField()) {
-                if (getComponent() instanceof AtMost) {
-                    AtMost atMost = (AtMost) getComponent();
-                    return java.util.Optional.of(
-                        atMost.getComponent().bounds(this.min, atMost.max)
-                    );
-                }
+            if (! getComponent().isGrammarField() && getComponent() instanceof AtMost) {
+                AtMost atMost = (AtMost) getComponent();
+                return java.util.Optional.of(
+                    atMost.getComponent().bounds(this.min, atMost.max)
+                );
             }
             return java.util.Optional.empty();
         }
@@ -1318,13 +1296,11 @@ public interface Grammar {
 
         @Override
         public java.util.Optional<Rule> simplify() {
-            if (! getComponent().isGrammarField()) {
-                if (getComponent() instanceof AtLeast) {
-                    AtLeast atLeast = (AtLeast) getComponent();
-                    return java.util.Optional.of(
-                        atLeast.getComponent().bounds(atLeast.min, this.max)
-                    );
-                }
+            if (! getComponent().isGrammarField() && getComponent() instanceof AtLeast) {
+                AtLeast atLeast = (AtLeast) getComponent();
+                return java.util.Optional.of(
+                    atLeast.getComponent().bounds(atLeast.min, this.max)
+                );
             }
             return java.util.Optional.empty();
         }
@@ -1549,8 +1525,8 @@ public interface Grammar {
                 compRule.setComponent(
                     compRule.getComponents().flatMap(r -> {
                         if (r.isGrammarField() // don't flatten NAMED rules
-                                || ! (compRule.getClass().isAssignableFrom(r.getClass()))
-                        ) {
+                                || ! (compRule.getClass().isAssignableFrom(r.getClass())) )
+                        {
                             return Stream.of(r);
                         }
                         if (r instanceof ComposedRule) {
@@ -2117,7 +2093,9 @@ public interface Grammar {
              * @see CharRange#union(CharRange...)
              * @see CharRange#except(CharRange...)
              */
-            public Composed(CharRange charRange, List<Rule> charTokens, BiFunction<CharRange, CharRange[], CharRange> composition) {
+            public Composed(CharRange charRange, List<Rule> charTokens,
+                    BiFunction<CharRange, CharRange[], CharRange> composition)
+            {
                 super(null);
                 this.base = charRange;
                 this.charTokens = charTokens;
@@ -2359,6 +2337,7 @@ public interface Grammar {
          * @param dataHandlerSupplier Allow to supply the result parsing object.
          *
          * @see NodeBuilder
+         * @see ValueBuilder
          */
         public GrammarToken(Grammar grammar, Supplier<DataHandler<?>> dataHandlerSupplier) {
             this.grammar = grammar;
@@ -2465,14 +2444,28 @@ public interface Grammar {
              * @param rule The rule that this token is made of.
              */
             public String(Rule rule) {
-                super(rule);
+                this(rule, StringBuilder::toString);
             }
+
+            /**
+             * This token is made of subrules.
+             *
+             * @param rule The rule that this token is made of.
+             * @param toString Post process to apply on the collected token
+             *      to the string value.
+             */
+            public String(Rule rule, Function<StringBuilder, java.lang.String> toString) {
+                super(rule);
+                this.toString = toString;
+            }
+
+            Function<StringBuilder, java.lang.String> toString;
 
             @Override
             public TokenValue<java.lang.String> newTokenValue(TokensCollector<?> buf, Trackable trackable) {
                 @SuppressWarnings("unchecked")
                 StringBuilder sb = ((TokensCollector<StringBuilder>) buf).get();
-                return new StringValue(this, sb.toString(), trackable);
+                return new StringValue(this, this.toString.apply(sb), trackable);
             }
 
             @Override
@@ -2575,6 +2568,45 @@ public interface Grammar {
                 @SuppressWarnings("unchecked")
                 T number = (T) NumberUtil.parseNumber(s, true, this.numberClass);
                 return new TokenValue<T>(this, number, trackable);
+            }
+
+            @Override
+            public TokensCollector<?> collector() {
+                return TokensCollector.newTokenValueHandler();
+            }
+
+        }
+
+        /**
+         * A token that collect its subrules to a list of items
+         * that are mapped to a value.
+         *
+         * @author Philippe Poulard
+         *
+         * @see TokensCollector#newTokenValueHandler()
+         */
+        public static class Mapper<T> extends TypedToken<T> {
+
+            Function<LinkedList<TokenValue<?>>, T> mapper;
+
+            /**
+             * Create a mapper typed token.
+             *
+             * @param rule The rule that this token is made of.
+             * @param mapper The function that produce the final value
+             *                          from the list of collected items.
+             */
+            public Mapper(Rule rule, Function<LinkedList<TokenValue<?>>, T> mapper) {
+                super(rule);
+                this.mapper = mapper;
+            }
+
+            @Override
+            public TokenValue<T> newTokenValue(TokensCollector<?> buf, Trackable trackable) {
+                @SuppressWarnings("unchecked")
+                LinkedList<TokenValue<?>> tokens = ((TokensCollector<LinkedList<TokenValue<?>>>) buf).get();
+                T obj = mapper.apply(tokens);
+                return new TokenValue<>(this, obj, trackable);
             }
 
             @Override

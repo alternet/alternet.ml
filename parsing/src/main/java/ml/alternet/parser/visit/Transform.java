@@ -18,8 +18,10 @@ import ml.alternet.parser.visit.TraversableRule.SimpleRule;
  */
 public abstract class Transform implements Visitor, Function<Rule, Rule> {
 
-    // Contains and store the rules while traversing in order
-    // to prevent infinite loop.
+    /**
+     * Contains and store the rules while traversing in order
+     * to prevent infinite loop.
+     */
     public Set<Rule> traversed;
 
     /**

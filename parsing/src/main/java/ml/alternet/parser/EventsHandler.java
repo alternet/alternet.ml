@@ -95,6 +95,9 @@ public interface EventsHandler {
      */
     class RuleEnd extends RuleEvent<Rule> {
 
+        /**
+         * Indicates whether this rule was fulfilled or not.
+         */
         public boolean matched;
 
         /**

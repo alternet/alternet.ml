@@ -224,7 +224,7 @@ public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
     private static class Substitution {
         Rule from;
         Rule to;
-        public Substitution(Rule from, Rule to) {
+        Substitution(Rule from, Rule to) {
             this.from = from;
             this.to = to;
         }
@@ -379,7 +379,7 @@ public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
         Field field;
         Class<? extends Grammar> grammar;
 
-        public RuleField(Class<? extends Grammar> grammar, Field field) {
+        RuleField(Class<? extends Grammar> grammar, Field field) {
             this.field = field;
             this.grammar = grammar;
         }
@@ -451,7 +451,7 @@ public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
             if (rule instanceof Proxy) {
                 // lookup for a method that has the same name as the field
                 // Proxy foo = proxy();
-                Proxy proxy = ((Proxy) rule);
+                Proxy proxy = (Proxy) rule;
                 if (proxy.getComponent() == null) {
                     try {
                         // static Rule foo() {
@@ -516,7 +516,8 @@ public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
                             try {
                                 Field f = Grammar$.this.grammar.getDeclaredField(proxy.getProxyName());
                                 rule = (Rule) f.get(Grammar$.this.grammar);
-                                log.finest(() -> "Resolving $" + proxy.getProxyName() + " in " + getHostRule().getName());
+                                log.finest(() -> "Resolving $" + proxy.getProxyName() + " in "
+                                                                        + getHostRule().getName());
                             } catch (NoSuchFieldException | SecurityException
                                     | IllegalArgumentException | IllegalAccessException e)
                             {
@@ -589,8 +590,10 @@ public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
         log.fine(() -> "Substitutions in " + getGrammarName() + " :" + (this.substitutions.isEmpty()
             ? " NONE"
             : this.substitutions.entrySet().stream()
-                .map(e -> "\n   FROM " + Dump.getHash(e.getValue().from) + ' ' + e.getKey() + " = " + e.getValue().from.toPrettyString() +
-                          "\n     TO " + Dump.getHash(e.getValue().to) + ' ' + e.getValue().to  + " = " + e.getValue().to.toPrettyString())
+                .map(e -> "\n   FROM " + Dump.getHash(e.getValue().from) + ' ' + e.getKey()
+                        + " = " + e.getValue().from.toPrettyString()
+                        + "\n     TO " + Dump.getHash(e.getValue().to) + ' ' + e.getValue().to
+                        + " = " + e.getValue().to.toPrettyString())
                 .collect(Collectors.joining("")))
         );
 
@@ -612,11 +615,13 @@ public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
                 if (from.isGrammarField()) {
                     Substitution s = substitutions.get(from.getName());
                     if (s != null) {
-                        log.finest(() -> "Substitution found in " + Dump.getHash(getHostRule()) + ' ' + getHostRule().getName()
+                        log.finest(() -> "Substitution found in " + Dump.getHash(getHostRule()) + ' '
+                            + getHostRule().getName()
                             + " for " + Dump.getHash(from) + ' ' + from.getName() + " FROM "
                             + Dump.getHash(s.from) + ' ' + s.from.getName() + " TO "
                             + Dump.getHash(s.to) + ' ' + s.to.getName()
-                            + "\nTraversed : " + traversed.stream().map(r -> Dump.getHash(r) + ' ' + r.getName()).collect(Collectors.joining(", "))
+                            + "\nTraversed : " + traversed.stream().map(r -> Dump.getHash(r) + ' '
+                            + r.getName()).collect(Collectors.joining(", "))
                         );
                         if (getHostRule() != s.to) // prevent substitution on extension
                            // e.g.  Grammar g2 extends g1 {
@@ -757,6 +762,7 @@ public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
      * @return The same rule if no modifications were expected,
      *      a new rule otherwise.
      */
+    @Override
     public Rule adopt(Rule rule) {
         if (rule == this.tokenizer) { // || rule == this.mainRule.orElse(null)) {
             return rule;

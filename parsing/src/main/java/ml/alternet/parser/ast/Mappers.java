@@ -18,6 +18,8 @@ import ml.alternet.parser.util.ValueStack.Stackable;
  * or the current rule and its arguments.
  *
  * @author Philippe Poulard
+ *
+ * @param <T> The type of the target value.
  */
 public interface Mappers<T> extends Stackable<Value<T>>, ValueMapper<T> {
 
@@ -73,7 +75,9 @@ public interface Mappers<T> extends Stackable<Value<T>>, ValueMapper<T> {
      * @param <B> This mapper must be a builder.
      */
     @SuppressWarnings({ "unchecked" })
-    default <B extends Mappers<T> & Builder<?>> B setTokenMapper(Class<? extends Enum<? extends TokenMapper<T>>> tokenMapper) {
+    default <B extends Mappers<T> & Builder<?>> B setTokenMapper(
+            Class<? extends Enum<? extends TokenMapper<T>>> tokenMapper)
+    {
         getTokenMapper().clear();
         Stream.of(tokenMapper.getEnumConstants())
             .forEach(e -> getTokenMapper().put(e.name(), (TokenMapper<T>) e));
@@ -122,7 +126,9 @@ public interface Mappers<T> extends Stackable<Value<T>>, ValueMapper<T> {
      * @param <B> This mapper must be a builder.
      */
     @SuppressWarnings({ "unchecked" })
-    default <B extends Mappers<T> & Builder<?>> B setRuleMapper(Class<? extends Enum<? extends RuleMapper<T>>> ruleMapper) {
+    default <B extends Mappers<T> & Builder<?>> B setRuleMapper(
+            Class<? extends Enum<? extends RuleMapper<T>>> ruleMapper)
+    {
         getRuleMapper().clear();
         Stream.of(ruleMapper.getEnumConstants())
             .forEach(e -> getRuleMapper().put(e.name(), (RuleMapper<T>) e));

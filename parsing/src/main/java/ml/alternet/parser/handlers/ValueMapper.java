@@ -69,7 +69,7 @@ public interface ValueMapper<T> {
      *
      * @param <V> The type of value.
      */
-    public static class Value<V> extends Dual<RuleEvent<?>, V> {
+    class Value<V> extends Dual<RuleEvent<?>, V> {
 
         /**
          * Indicates whether this value is the counterpart

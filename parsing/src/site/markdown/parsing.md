@@ -29,6 +29,7 @@ Published version of this page available HERE</a></div>
 1. [Parsing](#parsing)
     1. [Parsing a standalone grammar](#standalone)
     1. [Parsing an input](#input)
+        1. [The "main" rule](#mainRule)
         1. [The “tokenizer” rule](#tokenizer)
         1. [The remainder](#remainder)
     1. [Handlers](#handlers)
@@ -333,9 +334,9 @@ The production of variable names (`var_12` in our example) is made of "`_`", dig
 * The production of `Token VARIABLE` ends with [`.asToken();`](apidocs/ml/alternet/parser/Grammar.Rule.html#asToken--). In fact, we have written our first `Rule` but we want to turn the entire rule in a simple token. We will examine rules in detail in the next section.
 * In fact, the `Token VARIABLE` is made of smaller tokens, that are marked as `@Fragment`.
 
-[`@Fragment`](apidocs/ml/alternet/parser/Grammar.Fragment.html) ? A token is not necessary the smallest component of a grammar, but rather the smallest *useful* component of a grammar. In fact, we have convenient `@Fragment`s tokens that are defined here because they may be used elsewhere. But the real useful part is to have a `VARIABLE` produced by the parser, we don't care that that variable name is made of a mix of uppercase, lowercase, digits, and underscore characters (our grammar ensure that it will be the case), we just want a variable name. If we omit the `@Fragment` annotation, each individual token will be produced by the parser and may mask the production of a `VARIABLE` token. However, when entering a token composed of other tokens, the components will be considered as fragments. Setting a `@Fragment` annotation indicates that the target token is not eligible for selection.
+[`@Fragment`](apidocs/ml/alternet/parser/Grammar.Fragment.html) ? A token is not necessary the smallest component of a grammar, but rather the smallest *useful* component of a grammar. In fact, we have convenient `@Fragment`s tokens that are defined here because they may be used elsewhere. But the real useful part is to have a `VARIABLE` produced by the parser, we don't care that that variable name is made of a mix of uppercase, lowercase, digits, and underscore characters (our grammar ensure that it will be the case), we just want a variable name. If we omit the `@Fragment` annotation, each individual token will be produced by the parser and may mask the production of a `VARIABLE` token. However, when entering a token composed of other tokens, the components will be considered as fragments.
 
-We can reuse the previously fragments defined elsewhere by using [`.asToken()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asToken--) if we want a string token, or [`.asNumber()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asNumber--) if we want a number. A token annotated as fragment will be discarded, except if it is used in a rule exposed itself as a token with `.asToken()` or `.asNumber()` : such rule will aggregate the tokens. Be aware that for a rule made of non-fragment tokens, the matched characters will be reported twice !
+We can reuse the previously fragments defined elsewhere by using [`.asToken()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asToken--) if we want a string token, or [`.asNumber()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asNumber--) if we want a number. A token annotated as fragment should be discarded, except if it is used in a rule exposed itself as a token with `.asToken()` or `.asNumber()` : such rule will aggregate the fragment tokens.
 
 ```java
     // NUMBER  ::= DIGIT+
@@ -1130,6 +1131,10 @@ From that instance, we can parse with [`Calc.$.parse()`](apidocs/index.html?ml/a
 
 The [Handler](apidocs/ml/alternet/parser/Handler.html) is the component that accept low-level parsing events (more about that on see next section). We will see that out-of-the-box sophisticated handler implementations are available.
 
+<a name="mainRule"></a>
+
+#### The "main" rule
+
 If we consider that the field `Expression` is the [main rule](apidocs/ml/alternet/parser/Grammar.MainRule.html) in our grammar, we can annotate it like this :
 
 ```java
@@ -1176,7 +1181,8 @@ Sometimes, you want to parse your data until no more matching is possible :
         false);  // false to stop parsing when nothing matches any longer
 ```
 
-Then, the [`scanner`](http://alternet.ml/alternet-libs/scanner/apidocs/ml/alternet/scan/Scanner.html) instance contains the remainder, ready for further processing with whatever ; you can also extract the remainder as a character `Reader` or a `String`.
+Then, the [`scanner`](http://alternet.ml/alternet-libs/scanner/apidocs/ml/alternet/scan/Scanner.html) instance contains the remainder, ready for further processing with whatever ; you can also extract the remainder as a character `Reader` or a `String`
+(in the example above, the remainder characters are "is an expression").
 
 <a name="handlers"></a>
 
@@ -1509,11 +1515,11 @@ What is missing is the implementation of each mapper `CalcTokens` and `CalcRules
 
 They are both very similar, and apply to the `<Node>` type, which is in our builder the `<NumericExpression>` type :
 
-* The first parameter contains the **stack** of raw items encountered so far. "Raw" means that they are not yet transformed since the production is performed bottom up.
+* The first parameter contains the **stack** of raw items encountered so far. "Raw" means that they are not yet transformed since the production is performed bottom up. "Raw" items are just typed token values produced by the grammar.
 The more often the stack doesn't serve the transformation but sometimes it may help to peek the last previous item.
 * The second parameter is the current **token** / **rule**.
 * The last parameter contains all the values that are either the **arguments** of the rule to transform, or all the values coming **next** from the token to transform in the context of its enclosed rule. That values can be raw values or transformed values, according to how you process them individually.
-In fact `Value<NumericExpression>` is a wrapper around an object that can be either the raw token or a `NumericExpression`. You are free to supply tokens left as-is or transformed ones, and to get the raw value with [`.getSource()`](apidocs/ml/alternet/parser/util/Dual.html#getSource--) or the transformed one with [`.getTarget()`](apidocs/ml/alternet/parser/util/Dual.html#getTarget--).
+In fact `Value<NumericExpression>` is a wrapper around an object that can be either the raw token value `TokenValue<T>` or a `NumericExpression`. You are free to supply token values left as-is or transformed ones, and to get the raw value with [`.getSource()`](apidocs/ml/alternet/parser/util/Dual.html#getSource--) or the transformed one with [`.getTarget()`](apidocs/ml/alternet/parser/util/Dual.html#getTarget--) as long as you are aware that the types you produce may be consumed.
 
 For example, if a rule defines a comma-separated list of digits such as "`1,2,3,4`", that the input is "<code>i=<b>1,2,3,4</b>;</code>", and that the current **token** is "`2`", then the **next** elements are "`,3,4`" (note that `;` is outside of the rule considered and **not** within the next elements) and the stack is "`i=1,`" (note that "`i=`" are tokens outside of the scope of the rule considered, but **present** in the stack). Some elements may be consumed during the production of the target node.
 
@@ -1629,11 +1635,11 @@ Now we can focus on the mappers inside `enum CalcTokens`, starting with the simp
 <div class="tab4">
 <ul><li>the <code>RAISED</code> token is a little special because it uses the previous item and the next one. Unfortunately, the previous item (which is in the stack) is not yet transformed to a <code>NumericExpression</code>, therefore we can't do something useful in that mapper : we must delegate the mapping to the enclosed rule mapper <code>Factor</code> (see later) :</li></ul>
 <pre class="prettyprint linenums"><![CDATA[
-    RAISED( (stack, token, next) -> {
+    RAISED( (stack, token, next) ->
         // mapper for : Token RAISED = is('^');
         // e.g. a ^ b
-        return null; // we don't know how to process it here => keep the source value
-    }),]]></pre>
+        null // we don't know how to process it here => keep the source value
+    ),]]></pre>
 </div>
 
 <div class="tab5">
@@ -1676,14 +1682,14 @@ Sum ::= SignedTerm (ADDITIVE Product)*
 </div>
 </div>
 
-<p>A partial dump allow to visualize the relevant rules :</p>
+<p>A partial dump allow to visualize the relevant rules and compare them :</p>
 <input class="tab1" id="tabSTermDump" type="radio" name="partialDump" checked="checked"><label for="tabSTermDump">SignedTerm</label></input>
 <input class="tab2" id="tabSFactorDump" type="radio" name="partialDump"><label for="tabSFactorDump">SignedFactor</label></input>
 <input class="tab3" id="tabSumDump" type="radio" name="partialDump"><label for="tabSumDump">Sum</label></input>
 <input class="tab4" id="tabCodeDump" type="radio" name="partialDump"><label for="tabCodeDump">Java code</label></input>
 <input class="tab5" id="tabWhyDump" type="radio" name="partialDump"><label for="tabWhyDump">Why ?</label></input>
 <div class="tab1">
-<p><code>ADDITIVE</code> <b>is not</b> followed by <code>Product</code></p>
+<p><code>ADDITIVE</code> <b>is not</b> followed by <code>Product</code>, but <code>ADDITIVE ?</code> is followed by <code>Product</code></p>
 <div class="source"><pre class="prettyprint" style="line-height: 17px">
 SignedTerm
 ┣━━ ADDITIVE?
@@ -1692,7 +1698,7 @@ SignedTerm
 </div>
 </div>
 <div class="tab2">
-<p><code>ADDITIVE</code> <b>is not</b> followed by <code>Product</code></p>
+<p><code>ADDITIVE</code> <b>is not</b> followed by <code>Factor</code></p>
 <div class="source"><pre class="prettyprint" style="line-height: 17px">
 SignedFactor
 ┗━━ ( ADDITIVE? Factor )
@@ -1717,13 +1723,13 @@ Sum
 <pre class="prettyprint linenums">
     Dump dump = new Dump().withoutClass()
                           .withoutHash()
-                          .setVisited(Calc.SignedTerm)
-                          .setVisited(Calc.Product);
+                          .setVisited(Calc.SignedTerm) // we don't want to dump
+                          .setVisited(Calc.Product);   // those subtrees
     Calc.Sum.accept(dump);
     System.out.println(dump);</pre></div>
 
 <div class="tab5">
-Why <code>SignedTerm</code> and <code>SignedFactor</code> doesn't look the same in the dump ? This is because <code>SignedFactor</code> is not defined directly but is enclosed in a proxy rule, unlike <code>SignedTerm</code>.
+Why <code>SignedTerm</code> and <code>SignedFactor</code> doesn't look the same in the dump ? This is because <code>SignedFactor</code> is not defined directly but is enclosed in a proxy rule, unlike <code>SignedTerm</code> :
 <pre class="prettyprint linenums"><![CDATA[
     Rule SignedTerm = ADDITIVE.optional().seq(Product);
     Rule SignedFactor = $(() -> ADDITIVE.optional().seq(Calc.Factor));]]></pre>
@@ -1848,13 +1854,13 @@ Even if the [`NodeBuilder`](apidocs/ml/alternet/parser/ast/NodeBuilder.html) can
 
 Sometimes it is preferable to expose a grammar as a token rather than extending an existing grammar.
 
-For example, imagine that our expression `sin( x ) * ( 1 + var_12 )` always appear in fact in value templates, delimited with `{` and `}` like this :
+For example, imagine that our expression `sin( x ) * ( 1 + var_12 )` always appear in fact in value templates, delimited with `{` and `}` :
 
 <div class="source"><pre class="prettyprint">
 the result of the expression sin(x)*(1+var_12) is { sin(x)*(1+var_12) } !
 </pre></div>
 
-Everything between the curly braces is the expression, and everything around is just text, and after parsing and evaluating, we expect an output like this :
+Everything between the curly braces is the expression, and everything around is just text, and after parsing and evaluating, we expect this output :
 
 <div class="source"><pre class="prettyprint">
 the result of the expression sin(x)*(1+var_12) is 42 !
@@ -2088,7 +2094,7 @@ Sometimes, a rule exist in a grammar that has been extended, but that rule hasn'
 
 ```java
     Dump.tree(Calc.$, Math.Expression); // the original rule
-    Dump.tree(Math.$, Math.Expression); // the same rule but altered in the extension
+    Dump.tree(Math.$, Math.Expression); // the same rule but altered in the extension grammar
 ```
 
 The output looks like this. Every named rule composed is expanded once the first time it is encountered.

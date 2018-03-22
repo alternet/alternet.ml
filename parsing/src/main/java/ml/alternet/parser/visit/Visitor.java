@@ -21,7 +21,7 @@ public interface Visitor {
      *
      * @param selfRule A rule that is not a composed rule.
      */
-    default void visit(StandaloneRule selfRule) {}
+    default void visit(StandaloneRule selfRule) { }
 
     /**
      * Visit a rule composed of a single nested rule.
