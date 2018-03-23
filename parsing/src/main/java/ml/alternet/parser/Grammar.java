@@ -27,6 +27,7 @@ import ml.alternet.facet.Initializable;
 import ml.alternet.facet.Presentable;
 import ml.alternet.facet.Trackable;
 import ml.alternet.misc.CharRange;
+import ml.alternet.misc.Thrower;
 import ml.alternet.misc.Type;
 import ml.alternet.parser.EventsHandler.NumberValue;
 import ml.alternet.parser.EventsHandler.RuleEnd;
@@ -40,6 +41,7 @@ import ml.alternet.parser.handlers.TokensCollector;
 import ml.alternet.parser.util.ComposedRule;
 import ml.alternet.parser.util.Grammar$;
 import ml.alternet.parser.util.HasWhitespacePolicy;
+import ml.alternet.parser.util.Parser;
 import ml.alternet.parser.visit.TraversableRule;
 import ml.alternet.scan.EnumValues;
 import ml.alternet.scan.JavaWhitespace;
@@ -691,10 +693,14 @@ public interface Grammar {
          * @param handler The receiver.
          *
          * @return Indicates whether this rule matched or not.
-         *
-         * @throws IOException When the input cause an error.
          */
-        public abstract Match parse(Scanner scanner, Handler handler) throws IOException;
+        @SuppressWarnings("unchecked")
+        public final Match parse(Scanner scanner, Handler handler) {
+            return this.parser.parse(this, scanner, handler);
+        };
+
+        @SuppressWarnings("rawtypes")
+        protected Parser parser;
 
         /**
          * Compose this rule with a <b>choice</b> of other rules.
@@ -972,13 +978,29 @@ public interface Grammar {
          */
         public Proxy(Rule proxiedRule) {
             super(proxiedRule);
+            setParser();
         }
 
         /**
          * Create a proxy rule that need further
          * configuration.
          */
-        public Proxy() { }
+        public Proxy() {
+            setParser();
+        }
+
+        void setParser() {
+            this.parser = (Parser<Proxy>) (proxy, scanner, handler) -> {
+                handler.mark();
+
+                handler.receive(new RuleStart(proxy, scanner));
+                Match match = proxy.getComponent().parse(scanner, handler);
+                handler.receive(new RuleEnd(proxy, scanner, ! match.fail()));
+
+                handler.commit(! match.fail());
+                return match;
+            };
+        }
 
         @Override
         public Rule getComponent() {
@@ -1001,18 +1023,6 @@ public interface Grammar {
         public boolean is(Rule proxiedRule) {
             setComponent(proxiedRule);
             return true;
-        }
-
-        @Override
-        public Match parse(Scanner scanner, Handler handler) throws IOException {
-            handler.mark();
-
-            handler.receive(new RuleStart(this, scanner));
-            Match match = this.rule.parse(scanner, handler);
-            handler.receive(new RuleEnd(this, scanner, ! match.fail()));
-
-            handler.commit(! match.fail());
-            return match;
         }
 
         @Override
@@ -1109,14 +1119,12 @@ public interface Grammar {
          */
         public Optional(Rule optionalRule) {
             super(optionalRule);
-        }
-
-        @Override
-        public Match parse(Scanner scanner, Handler handler) throws IOException {
-            handler.receive(new RuleStart(this, scanner));
-            Match match = getComponent().parse(scanner, handler);
-            handler.receive(new RuleEnd(this, scanner, true));
-            return match.asOptional();
+            this.parser = (Parser<Optional>) (rule, scanner, handler) -> {
+                handler.receive(new RuleStart(rule, scanner));
+                Match match = rule.getComponent().parse(scanner, handler);
+                handler.receive(new RuleEnd(rule, scanner, true));
+                return match.asOptional();
+            };
         }
 
         @Override
@@ -1150,25 +1158,23 @@ public interface Grammar {
          */
         public ZeroOrMore(Rule repeatableRule) {
             super(repeatableRule);
-        }
-
-        @Override
-        public Match parse(Scanner scanner, Handler handler) throws IOException {
-            // never fail, don't need to mark
-            handler.receive(new RuleStart(this, scanner));
-            Match ruleMatch = Match.EMPTY;
-            if (scanner.hasNext()) {
-                do {
-                    Match match = getComponent().parse(scanner, handler);
-                    if (match.empty()) {
-                        break;
-                    } else {
-                        ruleMatch = Match.SUCCESS;
-                    }
-                } while (scanner.hasNext());
-            }
-            handler.receive(new RuleEnd(this, scanner, true));
-            return ruleMatch;
+            this.parser = (Parser<ZeroOrMore>) (rule, scanner, handler) -> {
+                // never fail, don't need to mark
+                handler.receive(new RuleStart(rule, scanner));
+                Match ruleMatch = Match.EMPTY;
+                if (scanner.hasNext()) {
+                    do {
+                        Match match = rule.getComponent().parse(scanner, handler);
+                        if (match.empty()) {
+                            break;
+                        } else {
+                            ruleMatch = Match.SUCCESS;
+                        }
+                    } while (scanner.hasNext());
+                }
+                handler.receive(new RuleEnd(rule, scanner, true));
+                return ruleMatch;
+            };
         }
 
         @Override
@@ -1201,27 +1207,27 @@ public interface Grammar {
         public AtLeast(Rule repeatable, int min) {
             super(repeatable);
             this.min = min;
-        }
-
-        @Override
-        public Match parse(Scanner scanner, Handler handler) throws IOException {
-            int count = 0;
-            handler.mark();
-            handler.receive(new RuleStart(this, scanner));
-            Match ruleMatch = scanner.hasNext() ? getComponent().parse(scanner, handler) : Match.FAIL;
-            if (! ruleMatch.empty() && scanner.hasNext()) {
-                do {
-                    Match match = rule.parse(scanner, handler);
-                    if (match.empty()) {
-                        break;
-                    } else if (++count == this.min) {
-                        ruleMatch = Match.SUCCESS;
-                    }
-                } while (scanner.hasNext());
-            }
-            handler.receive(new RuleEnd(this, scanner, ! ruleMatch.fail()));
-            handler.commit(! ruleMatch.fail());
-            return ruleMatch.asMandatory();
+            this.parser = (Parser<AtLeast>) (rule, scanner, handler) -> {
+                int count = 0;
+                handler.mark();
+                handler.receive(new RuleStart(rule, scanner));
+                Match ruleMatch = scanner.hasNext()
+                        ? rule.getComponent().parse(scanner, handler)
+                        : Match.FAIL;
+                if (! ruleMatch.empty() && scanner.hasNext()) {
+                    do {
+                        Match match = rule.getComponent().parse(scanner, handler);
+                        if (match.empty()) {
+                            break;
+                        } else if (++count == this.min) {
+                            ruleMatch = Match.SUCCESS;
+                        }
+                    } while (scanner.hasNext());
+                }
+                handler.receive(new RuleEnd(rule, scanner, ! ruleMatch.fail()));
+                handler.commit(! ruleMatch.fail());
+                return ruleMatch.asMandatory();
+            };
         }
 
         @Override
@@ -1267,26 +1273,24 @@ public interface Grammar {
         public AtMost(Rule repeatable, int max) {
             super(repeatable);
             this.max = max;
-        }
-
-        @Override
-        public Match parse(Scanner scanner, Handler handler) throws IOException {
-            int count = 0;
-            // never fail, don't need to mark
-            handler.receive(new RuleStart(this, scanner));
-            Match ruleMatch = Match.EMPTY;
-            if (scanner.hasNext()) {
-                do {
-                    Match match = getComponent().parse(scanner, handler);
-                    if (match.empty()) {
-                        break;
-                    } else {
-                        ruleMatch = Match.SUCCESS;
-                    }
-                } while (scanner.hasNext() && ++count <= this.max);
-            }
-            handler.receive(new RuleEnd(this, scanner, true));
-            return ruleMatch;
+            this.parser = (Parser<AtMost>) (rule, scanner, handler) -> {
+                int count = 0;
+                // never fail, don't need to mark
+                handler.receive(new RuleStart(rule, scanner));
+                Match ruleMatch = Match.EMPTY;
+                if (scanner.hasNext()) {
+                    do {
+                        Match match = rule.getComponent().parse(scanner, handler);
+                        if (match.empty()) {
+                            break;
+                        } else {
+                            ruleMatch = Match.SUCCESS;
+                        }
+                    } while (scanner.hasNext() && ++count <= this.max);
+                }
+                handler.receive(new RuleEnd(rule, scanner, true));
+                return ruleMatch;
+            };
         }
 
         @Override
@@ -1420,33 +1424,31 @@ public interface Grammar {
             super(repeatableRule);
             this.min = min;
             this.max = max;
-        }
-
-        @Override
-        public Match parse(Scanner scanner, Handler handler) throws IOException {
-            int count = 0;
-            Match ruleMatch = Match.FAIL;
-            if (this.min > 0) {
-                handler.mark();
-                ruleMatch = Match.EMPTY;
-            } // else never fail, don't need to mark
-            handler.receive(new RuleStart(this, scanner));
-            if (scanner.hasNext()) {
-                do {
-                    Match match = getComponent().parse(scanner, handler);
-                    if (match.empty()) {
-                        break;
-                    } else if (++count == this.min) {
-                        ruleMatch = Match.SUCCESS;
-                    }
-                } while (scanner.hasNext() && count++ <= this.max);
-            }
-            handler.receive(new RuleEnd(this, scanner, true));
-            if (this.min > 0) {
-                handler.commit(! ruleMatch.fail());
-                return ruleMatch.asMandatory();
-            }
-            return ruleMatch;
+            this.parser = (Parser<Bounds>) (rule, scanner, handler) -> {
+                int count = 0;
+                Match ruleMatch = Match.FAIL;
+                if (this.min > 0) {
+                    handler.mark();
+                    ruleMatch = Match.EMPTY;
+                } // else never fail, don't need to mark
+                handler.receive(new RuleStart(rule, scanner));
+                if (scanner.hasNext()) {
+                    do {
+                        Match match = rule.getComponent().parse(scanner, handler);
+                        if (match.empty()) {
+                            break;
+                        } else if (++count == this.min) {
+                            ruleMatch = Match.SUCCESS;
+                        }
+                    } while (scanner.hasNext() && count++ <= this.max);
+                }
+                handler.receive(new RuleEnd(rule, scanner, true));
+                if (this.min > 0) {
+                    handler.commit(! ruleMatch.fail());
+                    return ruleMatch.asMandatory();
+                }
+                return ruleMatch;
+            };
         }
 
         @Override
@@ -1605,6 +1607,7 @@ public interface Grammar {
          */
         public Choice(Rule alt) {
             super(alt);
+            setParser();
         }
 
         /**
@@ -1614,31 +1617,35 @@ public interface Grammar {
          */
         public Choice(Stream<? extends Rule> rules) {
             super(rules);
+            setParser();
         }
 
-        @Override
-        public Match parse(Scanner scanner, Handler handler) throws IOException {
-            handler.mark();
-            handler.receive(new RuleStart(this, scanner));
-            applyWhitespacePolicyBefore(scanner);
+        void setParser() {
+            this.parser = (Parser<Choice>) (choice, scanner, handler) -> {
+                return Thrower.safeCall(() -> {
+                    handler.mark();
+                    handler.receive(new RuleStart(choice, scanner));
+                    applyWhitespacePolicyBefore(scanner);
 
-            scanner.mark();
-            for (Rule rule: getComponent()) {
-                if (scanner.hasNext()) {
-                    Match match = rule.parse(scanner, handler);
-                    if (! match.empty()) {
-                        applyWhitespacePolicyAfter(scanner);
-                        scanner.consume();
-                        handler.receive(new RuleEnd(this, scanner, true));
-                        handler.commit(true);
-                        return match;
+                    scanner.mark();
+                    for (Rule rule: choice.getComponent()) {
+                        if (scanner.hasNext()) {
+                            Match match = rule.parse(scanner, handler);
+                            if (! match.empty()) {
+                                applyWhitespacePolicyAfter(scanner);
+                                scanner.consume();
+                                handler.receive(new RuleEnd(choice, scanner, true));
+                                handler.commit(true);
+                                return match;
+                            }
+                        }
                     }
-                }
-            }
-            scanner.cancel();
-            handler.receive(new RuleEnd(this, scanner, false));
-            handler.commit(false);
-            return Match.FAIL;
+                    scanner.cancel();
+                    handler.receive(new RuleEnd(choice, scanner, false));
+                    handler.commit(false);
+                    return Match.FAIL;
+                });
+            };
         }
 
         @Override
@@ -1702,6 +1709,7 @@ public interface Grammar {
          */
         public Sequence(Rule sequence) {
             super(sequence);
+            setParser();
         }
 
         /**
@@ -1711,27 +1719,29 @@ public interface Grammar {
          */
         public Sequence(Stream<? extends Rule> rules) {
             super(rules);
+            setParser();
         }
 
-        @Override
-        public Match parse(Scanner scanner, Handler handler) throws IOException {
-            handler.mark();
-            handler.receive(new RuleStart(this, scanner));
-            scanner.mark();
-            Match ruleMatch = Match.EMPTY;
-            for (Rule r: getComponent()) {
-                Match match = r.parse(scanner, handler);
-                if (match.fail()) {
-                    ruleMatch = Match.FAIL;
-                    break;
-                } else if (! match.empty()) {
-                    ruleMatch = Match.SUCCESS;
+        void setParser() {
+            this.parser = (Parser<Sequence>) (sequence, scanner, handler) -> {
+                handler.mark();
+                handler.receive(new RuleStart(sequence, scanner));
+                scanner.mark();
+                Match ruleMatch = Match.EMPTY;
+                for (Rule rule: sequence.getComponent()) {
+                    Match match = rule.parse(scanner, handler);
+                    if (match.fail()) {
+                        ruleMatch = Match.FAIL;
+                        break;
+                    } else if (! match.empty()) {
+                        ruleMatch = Match.SUCCESS;
+                    }
                 }
-            }
-            scanner.commit(! ruleMatch.fail());
-            handler.receive(new RuleEnd(this, scanner, ! ruleMatch.fail()));
-            handler.commit(! ruleMatch.fail());
-            return ruleMatch;
+                scanner.commit(! ruleMatch.fail());
+                handler.receive(new RuleEnd(sequence, scanner, ! ruleMatch.fail()));
+                handler.commit(! ruleMatch.fail());
+                return ruleMatch;
+            };
         }
 
         @Override
@@ -1757,6 +1767,19 @@ public interface Grammar {
          */
         public Token() {
             this.fragment = false;
+            this.parser = (Parser<Token>) (token, scanner, handler) -> {
+                return Thrower.safeCall(() -> {
+                    boolean alreadyMarked = token.applyWhitespacePolicyBefore(scanner);
+                    boolean parsed = token.parse(scanner, handler, alreadyMarked);
+                    if (alreadyMarked) {
+                        scanner.commit(parsed);
+                    }
+                    if (parsed) {
+                        token.applyWhitespacePolicyAfter(scanner);
+                    }
+                    return parsed ? Match.SUCCESS : Match.FAIL;
+                });
+            };
         }
 
         java.util.Optional<Predicate<Integer>> whitespacePolicy = java.util.Optional.empty();
@@ -1769,19 +1792,6 @@ public interface Grammar {
         @Override
         public java.util.Optional<Predicate<Integer>>  getWhitespacePolicy() {
             return this.whitespacePolicy;
-        }
-
-        @Override
-        public final Match parse(Scanner scanner, Handler handler) throws IOException {
-            boolean alreadyMarked = applyWhitespacePolicyBefore(scanner);
-            boolean parsed = parse(scanner, handler, alreadyMarked);
-            if (alreadyMarked) {
-                scanner.commit(parsed);
-            }
-            if (parsed) {
-                applyWhitespacePolicyAfter(scanner);
-            }
-            return parsed ? Match.SUCCESS : Match.FAIL;
         }
 
         /**
@@ -1799,22 +1809,22 @@ public interface Grammar {
          */
         public abstract boolean parse(Scanner scanner, Handler handler, boolean alreadyMarked) throws IOException;
 
-        /**
-         * Return the underlying char token if any ; useful for
-         * combining it.
-         *
-         * @return This token if it is a char token,
-         *      or the wrapped token if it is a char token.
-         *
-         * @throws IllegalArgumentException It this token is
-         *      not a char token or doesn't wrap a char token.
-         *
-         * @see CharToken
-         * @see TraversableRule
-         */
-        public CharToken unwrap() {
-            return CharToken.unwrap(this);
-        }
+//        /**
+//         * Return the underlying char token if any ; useful for
+//         * combining it.
+//         *
+//         * @return This token if it is a char token,
+//         *      or the wrapped token if it is a char token.
+//         *
+//         * @throws IllegalArgumentException It this token is
+//         *      not a char token or doesn't wrap a char token.
+//         *
+//         * @see CharToken
+//         * @see TraversableRule
+//         */
+//        public CharToken unwrap_() {
+//            return CharToken.unwrap_(this);
+//        }
 
     }
 
@@ -1843,44 +1853,44 @@ public interface Grammar {
             this.charRange = charRange;
         }
 
-        /**
-         * Return the char token wrapped in the given token, if any.
-         *
-         * @param token The token to examine, may be or may wrap a char token.
-         *
-         * @return The char token if any.
-         *
-         * @see TraversableRule
-         */
-        public static java.util.Optional<CharToken> unwrapSafely(Token token) {
-            while (! (token instanceof CharToken) && token instanceof TraversableRule.SimpleRule) {
-                token = (Token) ((TraversableRule.SimpleRule) token).getComponent();
-            }
-            if (token instanceof CharToken) {
-                return java.util.Optional.of((CharToken) token);
-            } else {
-                return java.util.Optional.empty();
-            }
-        }
-
-        /**
-         * Return the char token wrapped in the given token, if any.
-         *
-         * @param token The token to examine, must be or must wrap a char token.
-         *
-         * @return The char token if any.
-         *
-         * @throws IllegalArgumentException If the token is not a char token and
-         *      doesn't wrap a char token.
-         *
-         * @see TraversableRule
-         */
-        public static CharToken unwrap(Token token) {
-            return unwrapSafely(token).orElseThrow(
-                () -> new IllegalArgumentException("The token argument MUST BE CharToken"
-                    + " or MUST WRAP CharToken, but " + token + " is not ; it is "
-                    + token.getClass()));
-        };
+//        /**
+//         * Return the char token wrapped in the given token, if any.
+//         *
+//         * @param token The token to examine, may be or may wrap a char token.
+//         *
+//         * @return The char token if any.
+//         *
+//         * @see TraversableRule
+//         */
+//        static java.util.Optional<CharToken> unwrap_Safely(Token token) {
+//            while (! (token instanceof CharToken) && token instanceof TraversableRule.SimpleRule) {
+//                token = (Token) ((TraversableRule.SimpleRule) token).getComponent();
+//            }
+//            if (token instanceof CharToken) {
+//                return java.util.Optional.of((CharToken) token);
+//            } else {
+//                return java.util.Optional.empty();
+//            }
+//        }
+//
+//        /**
+//         * Return the char token wrapped in the given token, if any.
+//         *
+//         * @param token The token to examine, must be or must wrap a char token.
+//         *
+//         * @return The char token if any.
+//         *
+//         * @throws IllegalArgumentException If the token is not a char token and
+//         *      doesn't wrap a char token.
+//         *
+//         * @see TraversableRule
+//         */
+//        static CharToken unwrap_(Token token) {
+//            return unwrap_Safely(token).orElseThrow(
+//                () -> new IllegalArgumentException("The token argument MUST BE CharToken"
+//                    + " or MUST WRAP CharToken, but " + token + " is not ; it is "
+//                    + token.getClass()));
+//        };
 
         /**
          * Combine this char token with the given Unicode codepoint.
@@ -1934,31 +1944,12 @@ public interface Grammar {
         /**
          * Combine this char token with the given char tokens.
          *
-         * @param charTokens The char ranges to combine, should be
-         *      CharToken or wrap a CharToken.
+         * @param charTokens The char ranges to combine, MUST BE
+         *      CharToken.
          *
          * @return A char token made of this char token union the given char tokens.
          */
-        public CharToken union(CharToken... charTokens) {
-//            List<Rule> list = new ArrayList<>(charTokens.length);
-//            int i = 0;
-//            for ( ; i < charTokens.length ; i++) {
-//                if (charTokens[i] instanceof CharToken) {
-//                    list.add(charTokens[i]);
-//                } else {
-//                    break;
-//                }
-//            }
-//            if (list.isEmpty()) {
-//                return or(charTokens);
-//            } else {
-//                return new Composed(
-//                    this.charRange,
-//                    list,
-//                    CharRange::union // Composed by union
-//                ).union(charTokens);
-//            }
-
+        public CharToken union(Token... charTokens) {
             return new Composed(
                     this.charRange,
                     Arrays.asList(charTokens).stream()
@@ -2020,8 +2011,8 @@ public interface Grammar {
         /**
          * Remove from this char token the given char tokens.
          *
-         * @param charTokens The char tokens to combine, must be
-         *      CharToken or wrap a CharToken.
+         * @param charTokens The char tokens to combine, MUST BE
+         *      CharToken.
          *
          * @return A char token made of this char token minus the given char tokens.
          */
