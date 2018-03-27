@@ -27,7 +27,7 @@
         <version.github.site-maven-plugin>0.12</version.github.site-maven-plugin>
         <!-- https://github.com/github/maven-plugins/issues/69 -->
         <version.maven-checkstyle-plugin>3.0.0</version.maven-checkstyle-plugin>
-        <version.maven-compiler-plugin>3.7.0</version.maven-compiler-plugin><!-- FAIL with 3.5.1 or higher -->
+        <version.maven-compiler-plugin>3.7.0</version.maven-compiler-plugin><!-- alternet-tools and alternet-parsing FAIL with 3.5.1 or higher -->
         <version.maven-invoker-plugin>3.0.1</version.maven-invoker-plugin>
         <version.maven-jar-plugin>3.0.2</version.maven-jar-plugin>
         <version.maven-javadoc-plugin>3.0.0</version.maven-javadoc-plugin>

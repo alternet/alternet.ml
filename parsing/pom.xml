@@ -16,6 +16,8 @@
     <url>http://alternet.ml/alternet-libs/parsing/parsing.html</url>
 
     <properties>
+        <version.maven-compiler-plugin>3.5</version.maven-compiler-plugin><!-- FAIL with 3.5.1 or higher -->
+
         <shortName>parsing</shortName>
         <site.deploy.dir>${project.build.directory}/../../alternet-libs/target/staging/${shortName}</site.deploy.dir>
     </properties>
