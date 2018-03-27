@@ -14,12 +14,13 @@ Published version of this page available HERE</a></div>
     1. [Tokens](#tokens)
         1. [Enum tokens](#enumTokens)
         1. [Fragment tokens and composed tokens](#fragments)
+        1. [Char tokens](#charTokens)
     1. [Rules](#rules)
         1. [Repeating](#repeating)
         1. [Self rule and deferred rules](#self)
         1. [Proxy rules](#proxy)
         1. [Direct reference](#directRef)
-        1. [Handling whitespaces](#whitespaces)
+        1. [Skipping whitespaces and other characters](#whitespaces)
         1. [Extending grammars and overriding rules](#extending)
 1. [Grammar with custom token types](#customTypes)
     1. [The target custom classes](#targetClasses)
@@ -50,13 +51,13 @@ Published version of this page available HERE</a></div>
 
 ## Overview
 
-<a name="features"></a>
-
-### Features
-
 Some tools are already existing for designing grammars.
 
 **Alternet Parsing** takes the bet that you don't want to learn a new DSL (such as with the well-known ANTLR tool), and therefore allow you to write your grammar in pure Java code.
+
+<a name="features"></a>
+
+### Features
 
 A grammar in **Alternet Parsing** is just an interface, which allow to avoid pollute the code with Java modifiers (namely "`public static final`") ; the other benefits with interfaces is that you can have multiple inheritence, which allow you to extend by composition new grammars. Overriding a rule is as simple as you expect.
 
@@ -72,7 +73,7 @@ Alternet Parsing comes with out-of-the-box convenient features such as :
 * rules written in Java are following the natural writing of (most) formal grammar languages
 * easy extension, combining facilities, and overriding
 * can scan strings or streams of characters
-* whitespace handling policy set by annotation on a grammar and overridable on any token
+* whitespace skipping set by annotation on a grammar and overridable on any token
 * clean separation of grammar and parser
 * nice token to custom object mappings facilities
 * out-of-the-box abstract syntax tree builder
@@ -347,6 +348,10 @@ We can reuse the previously fragments defined elsewhere by using [`.asToken()`](
 All non-fragments tokens can be get in the so-called "tokenizer rule" by the 
 method [`Calc.$.tokenizer()`](apidocs/ml/alternet/parser/Grammar.html#tokenizer--) (more on this later).
 
+<a name="charTokens"></a>
+
+#### Char tokens
+
 As an alternative, you can combine character tokens ([`CharToken`](apidocs/ml/alternet/parser/Grammar.CharToken.html)) directly :
 
 ```java
@@ -617,7 +622,7 @@ The engine won't let you write that and reject such grammar. Rules must hold a s
 
 <a name="whitespaces"></a>
 
-#### Handling whitespaces
+#### Skipping whitespaces and other characters
 
 In fact, we would like to parse inputs like this :
 
@@ -625,47 +630,86 @@ In fact, we would like to parse inputs like this :
 sin (x) * ( 1 + var_12 )
 ```
 
-So simple in Alternet Parsing ;) with [`@WhitespacePolicy`](apidocs/ml/alternet/parser/Grammar.WhitespacePolicy.html)
+So simple in Alternet Parsing ;) with [`@Skip`](apidocs/ml/alternet/parser/Grammar.Skip.html)
 
-By default, whitespaces are left as-is, but if you want to ignore them, simply set this annotation to your grammar :
+By default, whitespaces are left as-is, but if you want to ignore them (or any other characters), simply set this annotation to your grammar that refer to the token that contain the characters to skip (the referred token must be a `@Fragment`) :
 
 ```java
-@WhitespacePolicy(preserve=false, isWhitespace=ml.alternet.scan.JavaWhitespace.class)
+@Skip(token="WS") // the WS token is defined below
 public interface Calc extends Grammar {
 
     // tokens and rules definition here
+
+    @Fragment
+    CharToken WS = isOneOf(" \t\n\r"); // the characters that we want to skip
 
     Calc $ = $();
 }
 ```
 
-In fact, the values above are the default, therefore, you can simply write :
+You may want to define the skip token in a separate grammar :
 
-```java
-@WhitespacePolicy
+<div style="columns: 2">
+<div>
+<pre class="prettyprint"><![CDATA[
+@Skip(token="WS", grammar=WS.class)
 public interface Calc extends Grammar {
 
     // tokens and rules definition here
 
     Calc $ = $();
-}
-```
+}]]>
+</pre>
+</div>
+<div style="break-before: column">
+<pre class="prettyprint"><![CDATA[
+public interface WS extends Grammar {
 
-Another kind of whitespaces are pre-defined, it is [`ml.alternet.scan.XMLWhitespace.class`](apidocs/ml/alternet/scan/XMLWhitespace.html) but you can write your own class, it just has to implement `Predicate<Character>`.
+    @Fragment
+    CharToken WS = isOneOf(" \t\n\r");
 
-But wait, setting the `@WhitespacePolicy` annotation on the grammar affect every token. It's nice for the `NUMBER` token, but not appropriate for what it is made of, the `DIGIT` tokens. In the grammar, we have to change accordingly on its declaration :
+    WS $ = $();
+}]]>
+</pre>
+</div>
+</div>
+
+The `@Skip` annotation can be set :
+
+* on a grammar, which affect **all the named tokens** except the fields annotated with `@Fragment`,
+* on any token in order to overriding the grammar value.
 
 ```java
-    // DIGIT ::= [0-9]
-    @WhitespacePolicy(preserve=true)
-    @Fragment Token DIGIT = range('0', '9').asNumber();
+@Skip(token="WS")                           // applied to all non-@Fragment tokens
+public interface Example extends Grammar {
 
-    // NUMBER ::= DIGIT+
-    Token NUMBER = DIGIT.oneOrMore()
+    @Fragment
+    CharToken WS = isOneOf(" \t\n\r");      // not affected by itself !
+
+    Token COMMA = is(',');                  // affected by the grammar definition
+
+    @Fragment
+    Token UNDERSCORE = is('_');             // not affected because it is a fragment
+
+    @Fragment
+    @Skip(token="WS")
+    Token SHARP = is('#');                  // affected by its own definition
+
+    @Skip(token="special", grammar=Special.class)
+    Token ALPHABET = range('A', 'Z');       // overriding by another token of another grammar
+
+    @Skip(token="$empty")
+    Token DIGIT = range('0', '9')           // unset by overriding with $empty
             .asNumber();
+
+    Example $ = $();
+}
 ```
 
-Now, whereas `NUMBER` inherit the whitespace policy defined by the grammar, `DIGIT` override it with its own requirements. In our grammar we are setting `@WhitespacePolicy(preserve=true)` on other fragments tokens, actually `UPPERCASE`, `LOWERCASE`, and `UNDERSCORE`.
+Above :
+
+* `WS` is a simple `CharToken`, but any arbitrary complex rule exposed as a token with `.asToken()` is acceptable too (as long as its subrules are not affected by the grammar annotation).
+* [`$empty`](apidocs/ml/alternet/parser/Grammar.html#Z:Z:Dany) is a built-in token that matches NO character, used here to skip... nothing, which disable skipping.
 
 <a name="extending"></a>
 
@@ -889,27 +933,38 @@ quoted-pair    = "\" CHAR
 
 ### Dropping tokens
 
+`@Skip` was used for ignoring some characters around a token, but sometimes you don't want the token value either ; for that purpose we will use [`@Drop`](apidocs/ml/alternet/parser/Grammar.Drop.html). Having such annotated token means that we ensure that the input satisfies the grammar, but the value itself is useless, we just drop it.
+
 Let's start the Java grammar :
 
 ```java
 public interface WAuth extends Grammar {
 
-    @Fragment Token SEPARATORS = isOneOf("()<>@,;:\\\"/[]?={} \t"); // '\', '"' and TAB are escaped with \ in Java
-    @Fragment Token CTRLS = range(0, 31).union(127); // octets 0 - 31 and DEL (127)
+    @Fragment
+    CharToken SP = is(' ');
 
-    @WhitespacePolicy(preserve=true)
-    @Fragment Token TOKEN_CHAR = isNot(SEPARATORS, CTRLS);
+    @Fragment
+    Token SEPARATORS = isOneOf("()<>@,;:\\\"/[]?={} \t"); // '\', '"' and TAB are escaped with \ in Java
 
-    @WhitespacePolicy
+    @Fragment
+    Token CTRLS = range(0, 31).union(127); // octets 0 - 31 and DEL (127)
+
+    @Fragment
+    Token TOKEN_CHAR = isNot(SEPARATORS, CTRLS);
+
+    @Skip(token="SP")
     Token TOKEN = TOKEN_CHAR.oneOrMore()   // we have a Token called TOKEN, why not...
             .asToken();
 
-    @Fragment Token DOUBLE_QUOTE = is('"');
-    @Fragment Token BACKSLASH = is('\\')
-            .drop();
+    @Fragment
+    Token DOUBLE_QUOTE = is('"');
 
-    @WhitespacePolicy(preserve=true)
-    @Fragment Token QuotedPair = BACKSLASH.seq( $any ).asToken();
+    @Fragment
+    @Drop
+    Token BACKSLASH = is('\\');
+
+    @Fragment
+    Token QuotedPair = BACKSLASH.seq( $any ).asToken();
 
     // other tokens here
 
@@ -922,22 +977,24 @@ We defined various tokens as ranges of characters, and tokens made of other toke
 
 * [`$any`](apidocs/ml/alternet/parser/Grammar.html#Z:Z:Dany) is a built-in token that matches any character.
 * Remember that as soon as you use modifiers such as [`.oneOrMore()`](apidocs/ml/alternet/parser/Grammar.Rule.html#oneOrMore--) or combiners such as [`.seq()`](apidocs/ml/alternet/parser/Grammar.Rule.html#seq-ml.alternet.parser.Grammar.Rule...-) you get a `Rule`, but you can turn it back to a `Token` with [`.asToken()`](apidocs/ml/alternet/parser/Grammar.Rule.html#asToken--).
-* The `BACKSLASH` token is dropped with [`.drop()`](apidocs/ml/alternet/parser/Grammar.Rule.html#drop--). It means that the handler won't ever receive this token, but the grammar ensure that the following character is properly escaped, and that the relevant value received is properly stripped from the `\` character.
+* The `BACKSLASH` token is dropped with [`@Drop`](apidocs/ml/alternet/parser/Grammar.Drop.html). It means that the handler won't ever receive this token, but the grammar ensure that the following character is properly escaped, and that the relevant value received is properly stripped from the `\` character.
 
 Conversely, the `DOUBLE_QUOTE` token is not dropped at the token definition, because sometimes it stands for a delimiter (and in that case it has to be removed), and some other times it stands for itself (as `"`). Therefore, we use [`.drop()`](apidocs/ml/alternet/parser/Grammar.Rule.html#drop--) at the places we don't want to get `"` as data :
 
 ```java
-    @WhitespacePolicy(preserve=true)
-    @Fragment Token QdText = isNot(DOUBLE_QUOTE);
+    @Fragment
+    Token QdText = isNot(DOUBLE_QUOTE);
 
     Token QuotedString = DOUBLE_QUOTE.drop().seq( // " is a separator
             QuotedPair.or(QdText).zeroOrMore(),
             DOUBLE_QUOTE.drop())                  // " is a separator too
         .asToken();
 
+    @Skip(token="SP")
     Token ParameterValue = TOKEN.or(QuotedString).asToken();
 
-    @Fragment Token EQUAL = is('=');
+    @Fragment
+    Token EQUAL = is('=');
 ```
 
 <a name="mapping"></a>
@@ -966,21 +1023,71 @@ Below, the rule will match `aName = aValue` in 3 tokens (`aName` then `=` then `
         ));
 ```
 
-Similarly, a list of parameters –`List<Parameter>`– can be produced easily, but since we don't know how many tokens will be available in that list, we are streaming the list of tokens. Since the <tt>Parameter<b>s</b></tt> rule is made of `Parameter` rules that create new instances of our `Parameter` POJO (yes, we have the same name for a rule and our POJO), we can safely cast the token value. Below, instead of dropping the `COMMA` token, as an alternative we filter it while processing the stream (but both techniques would work) :
+Similarly, a list of parameters –`List<Parameter>`– can be produced easily, but since we don't know how many tokens will be available in that list, we are streaming the list of tokens. Since the <code>Parameter<b>s</b></code> rule is made of `Parameter` rules that create new instances of our `Parameter` POJO (yes, we have the same name for a rule and our POJO), we can safely cast the token value.
 
-```java
-    @WhitespacePolicy
-    @Fragment Token COMMA = is(',');
+Below, we explore 3 other strategies for stripping out the comma from the token values :
+
+<div class="tabs">
+
+<input class="tab1" id="tabFilterOut" type="radio" name="filtering" checked="checked"><label for="tabFilterOut">reject rule</label></input>
+<input class="tab2" id="tabFilterWithDrop" type="radio" name="filtering" checked="checked"><label for="tabFilterWithDrop">using @Drop</label></input>
+<input class="tab3" id="tabFilterIn" type="radio" name="filtering" checked="checked"><label for="tabFilterIn">accept token</label></input>
+
+<div class="tab1">
+<ul><li>For filtering out the unwanted tokens, we reject those that are different than <code>COMMA</code> : in that case, you can either compare the rule name or its <code>.id()</code></li>
+<li>Don't compare Java references directly like this <code>t.getRule() != COMMA</code>, because Java references may change during the initialization phase of the grammars, typically on grammar extensions where rules are cloned from the original grammar to the extension grammar.</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
+    @Skip(token="SP")
+    @Fragment
+    Token COMMA = is(',');
 
     //                          Parameters ::= Parameter    (COMMA     Parameter?)*
     TypedToken<List<Parameter>> Parameters =   Parameter.seq(COMMA.seq(Parameter.optional()).zeroOrMore())
         .asToken(tokens ->
             tokens.stream()
-                .filter(t -> t.getRule() != COMMA)   // drop ","
-                .map(t -> (Parameter) t.getValue())  // extract the value as a Parameter object
-                .collect(toList())                   // collect to List<Parameter>
-        );
-```
+                .filter(t -> t.getRule().id() != COMMA.id())   // reject ","
+                .map(t -> (Parameter) t.getValue())            // extract the value as a Parameter object
+                .collect(toList())                             // collect to List<Parameter>
+        );]]></pre>
+</div>
+
+<div class="tab2">
+<ul><li>A better solution would be to remove the filter and instead using <code>@Drop</code> :</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
+    @Skip(token="SP")
+    @Fragment
+    @Drop                                           // DROP !!!!
+    Token COMMA = is(',');
+
+    //                          Parameters ::= Parameter    (COMMA     Parameter?)*
+    TypedToken<List<Parameter>> Parameters =   Parameter.seq(COMMA.seq(Parameter.optional()).zeroOrMore())
+        .asToken(tokens ->
+            tokens.stream()
+                .map(t -> (Parameter) t.getValue()) // COMMA has been dropped
+                .collect(toList())                  // collect to List<Parameter>
+        );]]></pre>
+</div>
+
+<div class="tab3">
+<ul><li>We could also simply accept token values that are <code>Parameter</code>s :</li></ul>
+<pre class="prettyprint linenums"><![CDATA[
+    @Skip(token="SP")
+    @Fragment
+    Token COMMA = is(',');
+
+    // Parameters ::= Parameter (COMMA Parameter?)*
+    TypedToken<List<Parameter>> Parameters = WAuth.Parameters
+        .asToken(tokens ->
+                tokens.stream()
+                    .map(TokenValue::getValue)           // extract the value
+                    .filter(p -> p instanceof Parameter) // accept Parameter only
+                    .map(p -> (Parameter) p)
+                    .collect(toList())                   // collect to List<Parameter>
+        );]]></pre>
+</div>
+
+</div>
+<hr/>
 
 It's worth to mention that the tokens available in the list are instances of [`TokenValue<V>`](apidocs/ml/alternet/parser/EventsHandler.TokenValue.html) from which you can extract the rule/token that matched the input ([`.getRule()`](apidocs/ml/alternet/parser/EventsHandler.RuleEvent.html#getRule--)) and the actual value ([`.getValue()`](apidocs/ml/alternet/parser/EventsHandler.TokenValue.html#getValue--)). You can also retrieve the type of the value or set a new value.
 
@@ -1011,7 +1118,6 @@ public class WAuthParser {
 ```
 
 We are using the [`NodeBuilder<T>`](apidocs/ml/alternet/parser/ast/NodeBuilder.html) class that can supply an instance of `T` if the parsing succeeds, actually our POJO `Challenge`. The boolean parameter indicates when set to `true` to consume all the characters from the input (it would be a failure if some characters remain at the end).
-
 
 <a name="augmented"></a>
 
@@ -1063,7 +1169,7 @@ public interface WAuthAugmented extends WAuth {
         .asToken(tokens ->
             tokens.stream()
                 // drop ","
-                .filter(t -> t.getRule() != COMMA)
+                .filter(t -> t.getRule().id() != COMMA.id())
                 // extract the value as a Parameter
                 .map(t -> (Parameter) t.getValue())
                 .collect(toList())

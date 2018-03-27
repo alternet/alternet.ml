@@ -15,10 +15,10 @@ public class CalcTest {
 
     @Test
     public void calcGrammarSingleton_ShouldBe_generated() {
-        CalcGrammar g = CalcGrammar.Calc;
-        assertThat(g).isInstanceOf(CalcGrammar.class);
+        Calc g = Calc.$;
+        assertThat(g).isInstanceOf(Calc.class);
         assertThat(g).isInstanceOf(Grammar.class);
-        CalcGrammar g2 = Grammar.$(CalcGrammar.class);
+        Calc g2 = Grammar.$(Calc.class);
         assertThat(g).isSameAs(g2);
     }
 

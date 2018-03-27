@@ -16,14 +16,14 @@ public class CalcTest {
 
     @Test
     public void calcGrammarSingleton_ShouldBe_generated() {
-        CalcGrammar g = CalcGrammar.Calc;
-        assertThat(g).isInstanceOf(CalcGrammar.class);
+        Calc g = Calc.$;
+        assertThat(g).isInstanceOf(Calc.class);
         assertThat(g).isInstanceOf(Grammar.class);
-        CalcGrammar g2 = Grammar.$(CalcGrammar.class);
+        Calc g2 = Grammar.$(Calc.class);
         assertThat(g).isSameAs(g2);
     }
 
-    @Test(enabled=false)
+    @Test
     public void calcExpression_CanBe_evaluated() throws IOException {
         Map<String, Double> variables = new HashMap<>();
         variables.put("x", 1.0);

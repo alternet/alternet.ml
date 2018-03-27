@@ -8,13 +8,13 @@ import ml.alternet.parser.Grammar.MainRule;
 import ml.alternet.parser.Grammar.Proxy;
 import ml.alternet.parser.Grammar.Replace;
 import ml.alternet.parser.Grammar.Rule;
+import ml.alternet.parser.Grammar.Skip;
 import ml.alternet.parser.Grammar.Token;
-import ml.alternet.parser.Grammar.WhitespacePolicy;
 import ml.alternet.parser.step6.Operation.Function;
 import ml.alternet.parser.step6.Operation.Multiplication;
 import ml.alternet.util.EnumUtil;
 
-@WhitespacePolicy
+@Skip(token="WS", grammar=Calc.class)
 public interface Math extends Calc {
 
     // MULTIPLICATIVE ::= '×' | '÷'

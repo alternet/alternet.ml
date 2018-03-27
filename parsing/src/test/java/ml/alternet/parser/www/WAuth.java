@@ -41,24 +41,32 @@ public interface WAuth extends Grammar {
     quoted-pair    = "\" CHAR
 */
 
-    @Fragment Token SEPARATORS = isOneOf("()<>@,;:\\\"/[]?={} \t");
-    @Fragment Token CTRLS = range(0, 31).union(127); // octets 0 - 31 and DEL (127)
+    @Fragment
+    CharToken SP = is(' ');
 
-    @WhitespacePolicy(preserve=true)
-    @Fragment Token TOKEN_CHAR = isNot(SEPARATORS, CTRLS);
+    @Fragment
+    Token SEPARATORS = isOneOf("()<>@,;:\\\"/[]?={} \t");
+    @Fragment
+    Token CTRLS = range(0, 31).union(127); // octets 0 - 31 and DEL (127)
 
-    @WhitespacePolicy
+    @Fragment
+    Token TOKEN_CHAR = isNot(SEPARATORS, CTRLS);
+
+    @Skip(token="SP")
     Token TOKEN = TOKEN_CHAR.oneOrMore().asToken();
 
-    @Fragment Token DOUBLE_QUOTE = is('"');
-    @Fragment Token BACKSLASH = is('\\')
-            .drop();
+    @Fragment
+    Token DOUBLE_QUOTE = is('"');
 
-    @WhitespacePolicy(preserve=true)
-    @Fragment Token QdText = isNot(DOUBLE_QUOTE);
+    @Fragment
+    @Drop
+    Token BACKSLASH = is('\\');
 
-    @WhitespacePolicy(preserve=true)
-    @Fragment Token QuotedPair = BACKSLASH.seq($any).asToken();
+    @Fragment
+    Token QdText = isNot(DOUBLE_QUOTE);
+
+    @Fragment
+    Token QuotedPair = BACKSLASH.seq($any).asToken();
 //        .asToken(tokens -> {
 //            tokens.removeFirst(); // skip BACKSLASH
 //            return tokens.getFirst().getValue();
@@ -78,7 +86,8 @@ public interface WAuth extends Grammar {
 
     Token ParameterValue = TOKEN.or(QuotedString).asToken();
 
-    @Fragment Token EQUAL = is('=');
+    @Fragment
+    Token EQUAL = is('=');
 
     TypedToken<Parameter> Parameter = TOKEN.seq(EQUAL, ParameterValue)
         .asToken(tokens ->
@@ -87,7 +96,7 @@ public interface WAuth extends Grammar {
                     tokens.getLast().getValue()   // ParameterValue
         ));
 
-    @WhitespacePolicy
+    @Skip(token="SP")
     @Fragment Token COMMA = is(',');
 
     // Parameters ::= Parameter (COMMA Parameter?)*
@@ -95,7 +104,7 @@ public interface WAuth extends Grammar {
         .asToken(tokens ->
                 tokens.stream()
                     // drop ","
-                    .filter(t -> t.getRule() != COMMA)
+                    .filter(t -> t.getRule().id() != COMMA.id())
                     // extract the value as a Parameter
                     .map(t -> (Parameter) t.getValue())
                     .collect(toList())

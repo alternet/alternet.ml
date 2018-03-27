@@ -15,10 +15,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 import ml.alternet.facet.Initializable;
 import ml.alternet.facet.Presentable;
 import ml.alternet.facet.Trackable;
+import ml.alternet.facet.Unwrappable;
 import ml.alternet.misc.CharRange;
 import ml.alternet.misc.Thrower;
 import ml.alternet.misc.Type;
@@ -40,14 +41,12 @@ import ml.alternet.parser.handlers.DataHandler;
 import ml.alternet.parser.handlers.TokensCollector;
 import ml.alternet.parser.util.ComposedRule;
 import ml.alternet.parser.util.Grammar$;
-import ml.alternet.parser.util.HasWhitespacePolicy;
 import ml.alternet.parser.util.Parser;
+import ml.alternet.parser.util.Parser.Match;
 import ml.alternet.parser.visit.TraversableRule;
 import ml.alternet.scan.EnumValues;
-import ml.alternet.scan.JavaWhitespace;
 import ml.alternet.scan.NumberConstraint;
 import ml.alternet.scan.Scanner;
-import ml.alternet.scan.StringConstraint;
 import ml.alternet.util.ByteCodeFactory;
 import ml.alternet.util.NumberUtil;
 import ml.alternet.util.StringBuilderUtil;
@@ -62,11 +61,13 @@ import ml.alternet.util.StringBuilderUtil;
  * <pre>import static ml.alternet.parser.Grammar.*;
  *import ml.alternet.parser.Grammar;
  *
- *&#x40;WhitespacePolicy
+ *&#x40;Skip(token="WS")
  *public interface NumbersGrammar extends Grammar {
  *
+ *    &#x40;Fragment
+ *    CharToken WS = isOneOf(" \t\n\r");
+ *
  *    // DIGIT ::= [0-9]
- *    &#x40;WhitespacePolicy(preserve=true)
  *    &#x40;Fragment
  *    Token DIGIT = range('0', '9').asNumber();
  *
@@ -83,6 +84,10 @@ import ml.alternet.util.StringBuilderUtil;
  *    NumbersGrammar $ = $(); // must be the last field
  *
  *}</pre>
+ *
+ * A grammar is composed of rules and tokens, that may themselves be composed of rules and tokens ;
+ * the rules and tokens that are fields in the grammar are called "grammar field" and have a name,
+ * the others doesn't have a name.
  *
  * @author Philippe Poulard
  *
@@ -165,11 +170,15 @@ public interface Grammar {
      * <pre>// NOT_EVAL ::= ! 'eval'
      *Token NOT_EVAL = isNot("eval");</pre>
      *
-     *The token value is a string of the same length. Uh ?
+     * Unlike other tokens, no token value is produced :
+     * this definition just ensure that the next input
+     * is not the one given ; this definition can be
+     * consider only as a constraint to fulfill.
      *
      * @param string The string to exclude.
      *
-     * @return A string token
+     * @return A string token that won't supply any value
+     *      if the condition succeeds.
      */
     static StringToken isNot(String string) {
         return new StringToken(string, false);
@@ -395,9 +404,16 @@ public interface Grammar {
      * that is a fragment of a nested rule.
      * Such annotated token doesn't appear in
      * {@link Grammar#tokenizer()}.
+     *
      * Such annotated rule will have its
      * content merged with the content of
      * its nested rule.
+     *
+     * A fragment is by default not affected
+     * by skipped characters when specified
+     * at the grammar level, but will be
+     * affected by a specific {@link Skip}
+     * annotation on it.
      *
      * @author Philippe Poulard
      */
@@ -407,37 +423,77 @@ public interface Grammar {
     @interface Fragment { }
 
     /**
-     * Indicates how to process whitespaces during
-     * parsing. When specified on a grammar, the annotation
-     * applies on every token not annotated.
-     * A non-annotated token of a non-annotated grammar
-     * will preserve whitespaces.
+     * The token value produced by the annotated token
+     * won't be transmitted to the event handler while parsing.
      *
      * @author Philippe Poulard
      */
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
-    @Target({ ElementType.TYPE, ElementType.FIELD })
-    @interface WhitespacePolicy {
-        /**
-         * Indicates whether whitespaces have to be
-         * preserved or not. An annotated item will
-         * ignore them by default, but a specific token can
-         * preserve them while its grammar is annotated
-         * to ignore them.
-         *
-         * @return <code>true</code> to preserve
-         * whitespaces, <code>false</code> otherwise.
-         */
-        boolean preserve() default false;
+    @Target({ ElementType.FIELD })
+    @interface Drop { }
+
+    /**
+     * Indicates the characters to skip (typically, some
+     * whitespaces) before and after parsing a token.
+     *
+     * When set on a grammar, the annotation is inherited
+     * on every field that is not a {@link Fragment} and that doesn't
+     * override this annotation. Anonymous subrules or subrules
+     * from other grammars are not affected.
+     *
+     * @author Philippe Poulard
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.FIELD, ElementType.TYPE })
+    @interface Skip {
 
         /**
-         * A predicate that tells whether a character is a
-         * whitespace or not.
+         * The name of the token field that define the
+         * characters to skip. May be {@code $empty}
+         * to override the grammar {@code Skip}
+         * annotation for disable skipping.
          *
-         * @return The predicate by default is {@link JavaWhitespace}.
+         * The field that define the characters to
+         * skip is defined in the same grammar of the
+         * annotated field, except if the {@code grammar}
+         * attribute is set.
+         *
+         * If the annotation is set on a grammar and
+         * that the target token is in the same grammar,
+         * the token is not affected by the {@code Skip}
+         * annotation set on the grammar and must not
+         * have it on itself.
+         *
+         * The target token may be arbitrary complex
+         * as long as it is exposed as a token. None of
+         * the subrules can be annotated with {@code Skip}.
+         *
+         * @see CharToken
          */
-        Class<? extends Predicate<Integer>> isWhitespace() default JavaWhitespace.class;
+        String token();
+
+        /**
+         * Indicates the grammar that host the char token.
+         * When missing, the default value <code>Grammar.class</code>
+         * means that the grammar is the same grammar of
+         * the annotated field.
+         *
+         * @return The grammar.
+         */
+        Class<? extends Grammar> grammar() default Grammar.class;
+
+        /**
+         * Skip the characters before the token.
+         */
+        boolean before() default true;
+
+        /**
+         * Skip the characters after the token.
+         */
+        boolean after() default true;
+
     }
 
     /**
@@ -471,7 +527,8 @@ public interface Grammar {
          *      has the same name of the annotated field  */
         String field() default "";
 
-        /** Indicates the grammar that hold the field to replace.
+        /**
+         * Indicates the grammar that hold the field to replace.
          * The default value <code>Grammar.class</code>
          * means <b>unspecified</b>, and a lookup on all the
          * inherited grammars will be performed.
@@ -490,103 +547,6 @@ public interface Grammar {
     }
 
     /**
-     * Hold the parsing status.
-     *
-     * <table border="1" summary="Parsing status" style="padding-before: 12px">
-     *     <tr><td></td><td>fail ?</td><td>empty ?</td><td>as Optional</td><td>as Mandatory</td></tr>
-     *     <tr><th>FAIL</th><td>true</td><td>true</td><td>EMPTY</td><td>FAIL</td></tr>
-     *     <tr><th>SUCCESS</th><td>false</td><td>false</td><td>SUCCESS</td><td>SUCCESS</td></tr>
-     *     <tr><th>EMPTY</th><td>false</td><td>true</td><td>EMPTY</td><td>FAIL</td></tr>
-     * </table>
-     *
-     * @author Philippe Poulard
-     */
-    enum Match {
-
-        /**
-         * When a rule Fails, this Match is Empty
-         */
-        FAIL {
-            @Override
-            public boolean fail() {
-                return true;
-            }
-            @Override
-            public Match asOptional() {
-                return EMPTY;
-            }
-        },
-
-        /**
-         * When a rule is a Success, this Match is NOT Empty
-         */
-        SUCCESS {
-            @Override
-            public boolean empty() {
-                return false;
-            }
-        },
-
-        /**
-         * Not Failed but Empty is a useful status to avoid infinite
-         * loops in repeatable rules, but that don't have to be reported
-         * as a failure (since after the last hypothetic match we would
-         * get a failure).
-         */
-        EMPTY {
-            @Override
-            public Match asMandatory() {
-                return FAIL;
-            }
-        };
-
-        /**
-         * When a rule or token didn't match the input.
-         *
-         * @return <code>true</code> for FAIL,
-         *      <code>false</code> for EMPTY or SUCCESS.
-         */
-        public boolean fail() {
-            return false;
-        };
-
-        /**
-         * An optional rule or token that didn't match the input
-         * should be turned to EMPTY.
-         *
-         * @return <code>true</code> for FAIL or EMPTY,
-         *      <code>false</code> for SUCCESS.
-         */
-        public boolean empty() {
-            return true;
-        }
-
-        /**
-         * Turn this match to an optional match,
-         * that is to say an optional won't fail
-         * but is empty, which allow repeatable
-         * rules to avoid looping.
-         *
-         * @return SUCCES or EMPTY, never FAIL.
-         */
-        public Match asOptional() {
-            return this;
-        }
-
-        /**
-         * Turn this match to a mandatory match,
-         * that is to say a mandatory is never
-         * empty.
-         *
-         * @return SUCCES or FAIL, never EMPTY.
-         */
-        public Match asMandatory() {
-            return this;
-        }
-
-    }
-
-    /**
      * A grammar is composed of rules that
      * can be tokens or so-called rules.
      *
@@ -598,6 +558,10 @@ public interface Grammar {
      * @author Philippe Poulard
      */
     abstract class Rule implements Cloneable, Presentable, TraversableRule {
+
+        private static final AtomicInteger IDS = new AtomicInteger();
+
+        int id = IDS.incrementAndGet(); // shared by rule clones
 
         String name;
         boolean fragment = true; // by default false for Token
@@ -699,8 +663,22 @@ public interface Grammar {
             return this.parser.parse(this, scanner, handler);
         };
 
+        /**
+         * The active part of the rule when it is applied on the input to parse.
+         */
         @SuppressWarnings("rawtypes")
-        protected Parser parser;
+        public Parser parser;
+
+        /**
+         * Return the identifier of this rule, should be used for
+         * logically comparing 2 rules : rules may be cloned when
+         * extending a grammar, but they will share the same ID.
+         *
+         * @return The identifier of this rule.
+         */
+        public int id() {
+            return this.id;
+        }
 
         /**
          * Compose this rule with a <b>choice</b> of other rules.
@@ -869,12 +847,31 @@ public interface Grammar {
         }
 
         /**
-         * Drop the tokens produced by this rule.
+         * Drop the tokens produced by this rule ;
+         * grammar fields are modified, and other
+         * rules will be wrapped.
          *
          * @return A drop element.
+         *
+         * @param <T> The type of the dropped rule.
+         *
+         * @see DropToken
          */
-        public Drop drop() {
-            return new Drop(this);
+        @SuppressWarnings("unchecked")
+        public <T extends Rule> T drop() {
+            if (isGrammarField()) {
+                @SuppressWarnings("rawtypes")
+                Parser p = this.parser;
+                this.parser = new Parser<Rule>() {
+                    @Override
+                    public Match parse(Rule rule, Scanner scanner, Handler handler) {
+                        return p.parse(rule, scanner, Handler.NULL_HANDLER);
+                    }
+                };
+                return (T) this;
+            } else {
+                return (T) new DropToken(this);
+            }
         }
 
     }
@@ -886,7 +883,7 @@ public interface Grammar {
      *
      * @author Philippe Poulard
      */
-    class Drop extends Token implements TraversableRule.SimpleRule {
+    class DropToken extends Token implements TraversableRule.SimpleRule, Unwrappable<Rule> {
 
         Rule rule;
 
@@ -896,7 +893,7 @@ public interface Grammar {
          *
          * @param rule The rule that will have its matched tokens dropped.
          */
-        public Drop(Rule rule) {
+        public DropToken(Rule rule) {
             this.rule = rule;
         }
 
@@ -921,6 +918,11 @@ public interface Grammar {
                 return true;
             }
             return false;
+        }
+
+        @Override
+        public Rule unwrap() {
+            return this.rule;
         }
 
     }
@@ -969,7 +971,7 @@ public interface Grammar {
      *
      * @author Philippe Poulard
      */
-    class Proxy extends Wrapper {
+    class Proxy extends Wrapper implements Unwrappable<Rule> {
 
         /**
          * Create a proxy rule from a rule.
@@ -979,6 +981,7 @@ public interface Grammar {
         public Proxy(Rule proxiedRule) {
             super(proxiedRule);
             setParser();
+            this.id = proxiedRule.id;
         }
 
         /**
@@ -1000,6 +1003,12 @@ public interface Grammar {
                 handler.commit(! match.fail());
                 return match;
             };
+        }
+
+        @Override
+        public void setComponent(Rule rule) {
+            super.setComponent(rule);
+            this.id = rule.id;
         }
 
         @Override
@@ -1028,6 +1037,11 @@ public interface Grammar {
         @Override
         public StringBuilder toPrettyString(StringBuilder buf) {
             return this.rule.toPrettyString(buf);
+        }
+
+        @Override
+        public Rule unwrap() {
+            return this.rule;
         }
 
         /**
@@ -1586,19 +1600,7 @@ public interface Grammar {
      *
      * @author Philippe Poulard
      */
-    class Choice extends Combine implements Combine.Simplifiable, HasWhitespacePolicy {
-
-        java.util.Optional<Predicate<Integer>> whitespacePolicy = java.util.Optional.empty();
-
-        @Override
-        public void setWhitespacePolicy(java.util.Optional<Predicate<Integer>> whitespacePolicy) {
-            this.whitespacePolicy = whitespacePolicy;
-        }
-
-        @Override
-        public java.util.Optional<Predicate<Integer>> getWhitespacePolicy() {
-            return this.whitespacePolicy;
-        }
+    class Choice extends Combine implements Combine.Simplifiable {
 
         /**
          * Create a choice rule.
@@ -1622,29 +1624,25 @@ public interface Grammar {
 
         void setParser() {
             this.parser = (Parser<Choice>) (choice, scanner, handler) -> {
-                return Thrower.safeCall(() -> {
-                    handler.mark();
-                    handler.receive(new RuleStart(choice, scanner));
-                    applyWhitespacePolicyBefore(scanner);
+                handler.mark();
+                handler.receive(new RuleStart(choice, scanner));
 
-                    scanner.mark();
-                    for (Rule rule: choice.getComponent()) {
-                        if (scanner.hasNext()) {
-                            Match match = rule.parse(scanner, handler);
-                            if (! match.empty()) {
-                                applyWhitespacePolicyAfter(scanner);
-                                scanner.consume();
-                                handler.receive(new RuleEnd(choice, scanner, true));
-                                handler.commit(true);
-                                return match;
-                            }
+                scanner.mark();
+                for (Rule rule: choice.getComponent()) {
+                    if (scanner.hasNext()) {
+                        Match match = rule.parse(scanner, handler);
+                        if (! match.empty()) {
+                            scanner.consume();
+                            handler.receive(new RuleEnd(choice, scanner, true));
+                            handler.commit(true);
+                            return match;
                         }
                     }
-                    scanner.cancel();
-                    handler.receive(new RuleEnd(choice, scanner, false));
-                    handler.commit(false);
-                    return Match.FAIL;
-                });
+                }
+                scanner.cancel();
+                handler.receive(new RuleEnd(choice, scanner, false));
+                handler.commit(false);
+                return Match.FAIL;
             };
         }
 
@@ -1760,7 +1758,7 @@ public interface Grammar {
      *
      * @author Philippe Poulard
      */
-    abstract class Token extends Rule implements HasWhitespacePolicy {
+    abstract class Token extends Rule {
 
         /**
          * Unless annotated, a Token is not a fragment.
@@ -1769,29 +1767,17 @@ public interface Grammar {
             this.fragment = false;
             this.parser = (Parser<Token>) (token, scanner, handler) -> {
                 return Thrower.safeCall(() -> {
-                    boolean alreadyMarked = token.applyWhitespacePolicyBefore(scanner);
-                    boolean parsed = token.parse(scanner, handler, alreadyMarked);
-                    if (alreadyMarked) {
-                        scanner.commit(parsed);
+                    boolean alreadyMarked = this.parser instanceof Parser.Skip;
+                    if (! alreadyMarked) {
+                        scanner.mark();
                     }
-                    if (parsed) {
-                        token.applyWhitespacePolicyAfter(scanner);
+                    boolean parsed = token.parse(scanner, handler, alreadyMarked);
+                    if (! alreadyMarked) {
+                        scanner.commit(parsed);
                     }
                     return parsed ? Match.SUCCESS : Match.FAIL;
                 });
             };
-        }
-
-        java.util.Optional<Predicate<Integer>> whitespacePolicy = java.util.Optional.empty();
-
-        @Override
-        public void setWhitespacePolicy(java.util.Optional<Predicate<Integer>> whitespacePolicy) {
-            this.whitespacePolicy = whitespacePolicy;
-        }
-
-        @Override
-        public java.util.Optional<Predicate<Integer>>  getWhitespacePolicy() {
-            return this.whitespacePolicy;
         }
 
         /**
@@ -1808,23 +1794,6 @@ public interface Grammar {
          * @throws IOException When an I/O exception occur.
          */
         public abstract boolean parse(Scanner scanner, Handler handler, boolean alreadyMarked) throws IOException;
-
-//        /**
-//         * Return the underlying char token if any ; useful for
-//         * combining it.
-//         *
-//         * @return This token if it is a char token,
-//         *      or the wrapped token if it is a char token.
-//         *
-//         * @throws IllegalArgumentException It this token is
-//         *      not a char token or doesn't wrap a char token.
-//         *
-//         * @see CharToken
-//         * @see TraversableRule
-//         */
-//        public CharToken unwrap_() {
-//            return CharToken.unwrap_(this);
-//        }
 
     }
 
@@ -1852,45 +1821,6 @@ public interface Grammar {
         public CharToken(CharRange charRange) {
             this.charRange = charRange;
         }
-
-//        /**
-//         * Return the char token wrapped in the given token, if any.
-//         *
-//         * @param token The token to examine, may be or may wrap a char token.
-//         *
-//         * @return The char token if any.
-//         *
-//         * @see TraversableRule
-//         */
-//        static java.util.Optional<CharToken> unwrap_Safely(Token token) {
-//            while (! (token instanceof CharToken) && token instanceof TraversableRule.SimpleRule) {
-//                token = (Token) ((TraversableRule.SimpleRule) token).getComponent();
-//            }
-//            if (token instanceof CharToken) {
-//                return java.util.Optional.of((CharToken) token);
-//            } else {
-//                return java.util.Optional.empty();
-//            }
-//        }
-//
-//        /**
-//         * Return the char token wrapped in the given token, if any.
-//         *
-//         * @param token The token to examine, must be or must wrap a char token.
-//         *
-//         * @return The char token if any.
-//         *
-//         * @throws IllegalArgumentException If the token is not a char token and
-//         *      doesn't wrap a char token.
-//         *
-//         * @see TraversableRule
-//         */
-//        static CharToken unwrap_(Token token) {
-//            return unwrap_Safely(token).orElseThrow(
-//                () -> new IllegalArgumentException("The token argument MUST BE CharToken"
-//                    + " or MUST WRAP CharToken, but " + token + " is not ; it is "
-//                    + token.getClass()));
-//        };
 
         /**
          * Combine this char token with the given Unicode codepoint.
@@ -2069,7 +1999,7 @@ public interface Grammar {
 
             // we must keep the memory of the base char range and its components,
             // because they may be affected by substitutions ; in this case, the
-            // composition() function must be run again
+            // simplify() function must be run again
             CharRange base;
             List<Rule> charTokens;
             BiFunction<CharRange, CharRange[], CharRange> composition;
@@ -2153,9 +2083,13 @@ public interface Grammar {
                 if (equal) {
                     handler.receive(new StringValue(this, string, scanner));
                 } else {
-                    StringBuilder buf = new StringBuilder(string.length());
-                    scanner.nextString(new StringConstraint.ReadLength(string.length()), buf);
-                    handler.receive(new StringValue(this, buf.toString(), scanner));
+                    // the next string didn't match, if this token was to check exclusion
+                    // it is the case, and NO TOKEN VALUE is produced here
+
+                    // typical code if we would have to produce a string of the same length of the one to exclude :
+                    // StringBuilder buf = new StringBuilder(string.length());
+                    // scanner.nextString(new StringConstraint.ReadLength(string.length()), buf);
+                    // handler.receive(new StringValue(this, buf.toString(), scanner));
                 }
                 return true;
             }
@@ -2173,7 +2107,12 @@ public interface Grammar {
     }
 
     /**
-     * A token made from an enum class or a list of string values.
+     * A token made from an enum class or a list of string values ;
+     * the order of the enum values doesn’t matter ; the longest value
+     * if available will be read from the input.
+     *
+     * Internally, commons characters are grouped together to avoid testing
+     * the same sequence several times while parsing.
      *
      * @see Grammar#is(Class)
      * @see Grammar#is(String...)
@@ -2216,7 +2155,7 @@ public interface Grammar {
     }
 
     /**
-     * An enum value token.
+     * An enum value token, just like a string, but with an enum value.
      *
      * @see Grammar#is(Enum)
      *
@@ -2643,6 +2582,11 @@ public interface Grammar {
      */
     CharToken $empty = new CharToken.Single(CharRange.EMPTY) {
 
+        { // because the names won't be set by Grammar$.init()
+            this.name = "$empty";
+            $any.name = "$any";
+        }
+
         @Override
         public boolean parse(Scanner scanner, Handler handler, boolean alreadyMarked) throws IOException {
             return true;
@@ -2752,22 +2696,26 @@ public interface Grammar {
      * specified by this grammar, in their natural
      * order.
      *
+     * DO NOT IMPLEMENT THIS METHOD IN YOUR GRAMMAR !
+     *
      * @return A rule with all the tokens that are not fragments :
      *      the rule <code>(T1 | T2 | T3 ...)*</code>
      *
      * @see Fragment
      */
-    Rule tokenizer();
+    Rule tokenizer(); // see Grammar$
 
     /**
      * Return the main rule of the grammar.
+     *
+     * DO NOT IMPLEMENT THIS METHOD IN YOUR GRAMMAR !
      *
      * @return The main rule if one has been set
      *      on the grammar or one of its interfaces.
      *
      * @see MainRule
      */
-    java.util.Optional<Rule> mainRule();
+    java.util.Optional<Rule> mainRule(); // see Grammar$
 
     /**
      * Adopt a rule of another grammar in this grammar, that
@@ -2776,11 +2724,13 @@ public interface Grammar {
      * The rule to adopt should be a field in a grammar that
      * is extended by this grammar.
      *
+     * DO NOT IMPLEMENT THIS METHOD IN YOUR GRAMMAR !
+     *
      * @param rule The rule to adopt, should be a rule of this
      *      grammar or an inherited grammar.
      * @return The same rule if this rule is already a field of
      *      this grammar, or a clone otherwise.
      */
-    Rule adopt(Rule rule);
+    Rule adopt(Rule rule); // see Grammar$
 
 }

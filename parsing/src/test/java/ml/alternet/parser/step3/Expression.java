@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import ml.alternet.parser.step3.CalcGrammar.Additive;
-import ml.alternet.parser.step3.CalcGrammar.Multiplicative;
+import ml.alternet.parser.step3.Calc.Additive;
+import ml.alternet.parser.step3.Calc.Multiplicative;
 
 /**
  * The user data model is a tree of expressions.

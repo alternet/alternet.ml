@@ -8,6 +8,9 @@ import java.util.Objects;
 import java.util.stream.Collector;
 
 import ml.alternet.parser.EventsHandler.StringValue;
+import ml.alternet.parser.Grammar.CharToken;
+import ml.alternet.parser.Grammar.Fragment;
+import ml.alternet.parser.Grammar.Skip;
 
 /**
  * <pre># Challenge Basic
@@ -38,25 +41,33 @@ public interface WAuth extends Grammar {
     qdtext         = <any TEXT except <">>
     quoted-pair    = "\" CHAR
 */
+    @Fragment
+    CharToken SP = is(' ');
 
-    @Fragment Token SEPARATORS = isOneOf("()<>@,;:\\\"/[]?={} \t");
-    @Fragment Token CTRLS = range(0, 31).union(127); // octets 0 - 31 and DEL (127)
+    @Fragment
+    Token SEPARATORS = isOneOf("()<>@,;:\\\"/[]?={} \t");
+    @Fragment
+    Token CTRLS = range(0, 31).union(127); // octets 0 - 31 and DEL (127)
 
-    @WhitespacePolicy(preserve=true)
-    @Fragment Token TOKEN_CHAR = isNot(SEPARATORS, CTRLS);
+    @Fragment
+    Token TOKEN_CHAR = isNot(SEPARATORS, CTRLS);
 
-    @WhitespacePolicy
+    @Skip(token="SP")
     Token TOKEN = TOKEN_CHAR.oneOrMore().asToken();
 
-    @Fragment Token DOUBLE_QUOTE = is('"');
-    @Fragment Token BACKSLASH = is('\\')
+    @Fragment
+    Token DOUBLE_QUOTE = is('"');
+
+    @Fragment
+    @Drop
+    Token BACKSLASH = is('\\')
             .drop();
 
-    @WhitespacePolicy(preserve=true)
-    @Fragment Token QdText = isNot(DOUBLE_QUOTE);
+    @Fragment
+    Token QdText = isNot(DOUBLE_QUOTE);
 
-    @WhitespacePolicy(preserve=true)
-    @Fragment Token QuotedPair = BACKSLASH.seq($any).asToken();
+    @Fragment
+    Token QuotedPair = BACKSLASH.seq($any).asToken();
 
     Token QuotedString = DOUBLE_QUOTE.drop().seq(
             QuotedPair.or(QdText).zeroOrMore(),
@@ -65,13 +76,15 @@ public interface WAuth extends Grammar {
 
     Token ParameterValue = TOKEN.or(QuotedString).asToken();
 
-    @Fragment Token EQUAL = is('=');
+    @Fragment
+    Token EQUAL = is('=');
 
     // Parameter ::= TOKEN     EQUAL  ParameterValue
     Rule Parameter = TOKEN.seq(EQUAL, ParameterValue);
 
-    @WhitespacePolicy
-    @Fragment Token COMMA = is(',');
+    @Skip(token="SP")
+    @Fragment
+    Token COMMA = is(',');
 
     // Parameters ::= Parameter (COMMA Parameter?)*
     Rule Parameters = Parameter

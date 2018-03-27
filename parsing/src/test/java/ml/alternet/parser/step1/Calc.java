@@ -37,18 +37,22 @@ public interface Calc extends Grammar {
     Token MULTIPLICATIVE = is(Multiplicative.class);
 
     // DIGIT ::= [0-9]
-    @Fragment Token DIGIT = range('0', '9').asNumber();
+    @Fragment
+    Token DIGIT = range('0', '9').asNumber();
 
     // NUMBER ::= DIGIT+
     Token NUMBER = DIGIT.oneOrMore()
             .asNumber();
 
     // UPPERCASE ::= [A-Z]
-    @Fragment Token UPPERCASE = range('A', 'Z');
+    @Fragment
+    Token UPPERCASE = range('A', 'Z');
     // LOWERCASE ::= [a-z]
-    @Fragment Token LOWERCASE = range('a', 'z');
+    @Fragment
+    Token LOWERCASE = range('a', 'z');
 
-    @Fragment Token UNDERSCORE = is('_');
+    @Fragment
+    Token UNDERSCORE = is('_');
 
     // VARIABLE ::= ([a-z] | [A-Z]) ([a-z] | [A-Z] | DIGIT | '_')*
     Token VARIABLE = LOWERCASE.or(UPPERCASE).seq(
@@ -56,11 +60,13 @@ public interface Calc extends Grammar {
             .asToken();
 
     // Value ::= NUMBER | VARIABLE
-    @Fragment Rule Value = NUMBER.or(VARIABLE);
+    @Fragment
+    Rule Value = NUMBER.or(VARIABLE);
 
     @MainRule Proxy Expression = $();
     // Argument ::= Value | FUNCTION Argument | '(' Expression ')'
-    @Fragment Rule Argument = Value.or( FUNCTION.seq($self) ).or( LBRACKET.seq( Expression, RBRACKET ) );
+    @Fragment
+    Rule Argument = Value.or( FUNCTION.seq($self) ).or( LBRACKET.seq( Expression, RBRACKET ) );
 
     Proxy SignedFactor = $();
     // Factor ::= Argument ('^' SignedFactor)?

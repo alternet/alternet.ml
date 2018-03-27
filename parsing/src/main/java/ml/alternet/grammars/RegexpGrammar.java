@@ -1,9 +1,16 @@
 package ml.alternet.grammars;
 
 import static ml.alternet.parser.Grammar.is;
+
+import java.io.IOException;
+
+import ml.alternet.misc.TodoException;
+
 import static ml.alternet.parser.Grammar.$;
 
+import ml.alternet.parser.EventsHandler;
 import ml.alternet.parser.Grammar;
+import ml.alternet.scan.Scanner;
 
 /**
  * TODO
@@ -13,6 +20,11 @@ import ml.alternet.parser.Grammar;
  * @see <a href="http://www.unicode.org/reports/tr18/">Unicode TR 18</a>
  */
 public interface RegexpGrammar extends Grammar {
+
+    @Override
+    default boolean parse(Scanner scanner, EventsHandler handler, Rule rule, boolean matchAll) throws IOException {
+        throw new TodoException("GRAMMAR NOT YET IMPLEMENTED");
+    }
 
     Proxy SimpleExp = $();
 

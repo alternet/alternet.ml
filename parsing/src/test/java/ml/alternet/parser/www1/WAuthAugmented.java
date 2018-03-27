@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.stream.Collector;
 
 import ml.alternet.parser.EventsHandler.StringValue;
+import ml.alternet.parser.EventsHandler.TokenValue;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.joining;
 
@@ -33,10 +34,9 @@ public interface WAuthAugmented extends WAuth {
     TypedToken<List<Parameter>> Parameters = WAuth.Parameters
         .asToken(tokens ->
                 tokens.stream()
-                    // drop ","
-                    .filter(t -> ! t.getRule().getName().equals("COMMA"))
-                    // extract the value as a Parameter
-                    .map(t -> (Parameter) t.getValue())
+                    .map(TokenValue::getValue)
+                    .filter(p -> p instanceof Parameter)
+                    .map(p -> (Parameter) p)
                     .collect(toList())
         );
 

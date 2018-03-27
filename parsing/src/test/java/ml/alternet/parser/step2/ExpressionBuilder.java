@@ -9,8 +9,8 @@ import java.util.Optional;
 import ml.alternet.parser.Grammar.Rule;
 import ml.alternet.parser.handlers.TreeHandler;
 import ml.alternet.parser.step2.Expression;
-import ml.alternet.parser.step2.CalcGrammar.Additive;
-import ml.alternet.parser.step2.CalcGrammar.Multiplicative;
+import ml.alternet.parser.step2.Calc.Additive;
+import ml.alternet.parser.step2.Calc.Multiplicative;
 import ml.alternet.parser.step2.Expression.Constant;
 import ml.alternet.parser.step2.Expression.Exponent;
 import ml.alternet.parser.step2.Expression.Product;
@@ -20,7 +20,7 @@ import ml.alternet.parser.step2.Expression.Variable;
 import ml.alternet.scan.Scanner;
 
 /**
- * Build evaluable expressions based on the {@link CalcGrammar}.
+ * Build evaluable expressions based on the {@link Calc}.
  *
  * @see #build(String)
  *
@@ -63,11 +63,11 @@ public class ExpressionBuilder extends TreeHandler<Expression, Expression> {
      *
      * @throws IOException
      *
-     * @see CalcGrammar
+     * @see Calc
      */
     public static Optional<Expression> build(String input) throws IOException {
         ExpressionBuilder eb = new ExpressionBuilder();
-        if (CalcGrammar.Calc.parse(Scanner.of(input), eb, true)) {
+        if (Calc.$.parse(Scanner.of(input), eb, true)) {
             return Optional.of(eb.get());
         } else {
             return Optional.empty();
@@ -132,7 +132,7 @@ public class ExpressionBuilder extends TreeHandler<Expression, Expression> {
                 // Factor ::= Argument ('^' SignedFactor)?
                 Expression base = args.pollFirst().getTarget();
                 Value<Expression> raised = args.peekFirst();
-                if (raised != null && raised.isSource() && raised.getSource().getRule() == CalcGrammar.RAISED) {
+                if (raised != null && raised.isSource() && raised.getSource().getRule() == Calc.RAISED) {
                     args.pollFirst(); // ^
                     Expression exponent = args.pollFirst().getTarget();
                     return new Exponent(base, exponent);
@@ -158,7 +158,7 @@ public class ExpressionBuilder extends TreeHandler<Expression, Expression> {
             public Expression asExpression(TokenValue<?> token, Deque<Value<Expression>> next) {
                 // e.g.   sin  x
                 //   function  argument
-                CalcGrammar.Function function = token.getValue();   // e.g.   CalcGrammar.Function.sin
+                Calc.Function function = token.getValue();   // e.g.   CalcGrammar.Function.sin
                 Expression argument = next.pollFirst().getTarget(); // e.g.   Expression.Variable("x")
                 return new Expression.Function(function, argument);
             }

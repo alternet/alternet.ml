@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -25,10 +24,8 @@ import ml.alternet.parser.EventsHandler;
 import ml.alternet.parser.Grammar;
 import ml.alternet.parser.Handler;
 import ml.alternet.parser.visit.Dump;
-import ml.alternet.parser.visit.Transform;
 import ml.alternet.parser.visit.TransformTrackingHost;
 import ml.alternet.parser.visit.TraversableRule;
-import ml.alternet.parser.visit.Visitor;
 import ml.alternet.scan.Scanner;
 import ml.alternet.util.ByteCodeFactory;
 import ml.alternet.util.ClassUtil;
@@ -52,7 +49,26 @@ import ml.alternet.util.gen.ByteCodeSpec;
  */
 public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
 
+    /*
+     * Things to be aware of :
+     * -named rules are fields in a grammar
+     * -when extending a grammar, rules are cloned in the new grammar
+     * -named rules are subject to extension and must be preserved
+     */
+
     // =============== LOW-LEVEL TOOLS
+
+    static { // global logging
+        String logLevel = System.getProperty("ml.alternet.parser.Grammar.logLevel");
+        if (logLevel != null) {
+            try {
+                Level level = Level.parse(logLevel);
+                Arrays.stream(LogManager.getLogManager().getLogger("").getHandlers()).forEach(h -> h.setLevel(level));
+            } catch (Exception e) {
+                System.err.println(logLevel + " is a bad Log Level value for ml.alternet.parser.Grammar.logLevel");
+            }
+        }
+    }
 
     // this byte code factory creates an instance of a Grammar interface
     @ByteCodeSpec(parentClass = Grammar$.class, factoryPkg = "ml.alternet.parser.util",
@@ -251,8 +267,8 @@ public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
                 processOptimizations();
                 // substitutions and extensions
                 processSubstitutions();
-                // ws
-                processWhitespacePolicy();
+                // @Skip and @Drop
+                processAnnotations();
             } catch (IllegalArgumentException | IllegalAccessException e) {
                 return Thrower.doThrow(e);
             }
@@ -327,10 +343,10 @@ public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
         Rule r = adopt(rule);
         log.fine(() -> "Parsing with rule " + r.toPrettyString() + "\n" + Dump.tree(r));
 
-        Match match = r.parse(scanner, h);
+        Parser.Match match = r.parse(scanner, h);
         // TODO : notification that characters are available
         if (matchAll && scanner.hasNext()) {
-//            handler.warning();
+//            handler.warning(); // TODO
         }
         return ! match.fail();
     };
@@ -347,30 +363,6 @@ public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
             this.substitutions.put(fromRule.getName(), new Substitution(fromRule, to));
         } catch (IllegalArgumentException | IllegalAccessException e) {
             Thrower.doThrow(e);
-        }
-    }
-
-    /**
-     * Get the whitespace policy from the annotation.
-     *
-     * @param whitespacePolicy The whitespace policy annotation,
-     * @param defaultValue Supply the default value
-     *      when <code>whitespacePolicy</code> is <code>null</code>.
-     *
-     * @return A function that filters out Unicode codepoints.
-     */
-    static java.util.Optional<Predicate<Integer>> getWhitespacePolicy(
-        WhitespacePolicy whitespacePolicy,
-        Supplier<java.util.Optional<Predicate<Integer>>> defaultValue)
-    {
-        if (whitespacePolicy == null) {
-            return defaultValue.get();
-        } else if (whitespacePolicy.preserve()) {
-            return java.util.Optional.empty();
-        } else {
-            return java.util.Optional.of(
-                safeCall(() -> whitespacePolicy.isWhitespace().newInstance())
-            );
         }
     }
 
@@ -501,34 +493,38 @@ public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
     private void processPlaceHolders() {
         getRuleFields().forEach(rf -> {
             Rule rule = rf.rule();
-            rule.accept(new TransformTrackingHost(rule) {
-                @Override
-                public Rule apply(Rule rule) {
-                    if (rule == Grammar.$self) {
-                        rule = getHostRule();
-                        {
-                            Rule r = rule;
-                            log.finest(() -> "Resolving $self to " + r.getName());
-                        }
-                    } else if (rule instanceof Grammar.Proxy.Named) {
-                        Grammar.Proxy.Named proxy = (Grammar.Proxy.Named) rule;
-                        if (proxy.getProxyName() != null) {
-                            try {
-                                Field f = Grammar$.this.grammar.getDeclaredField(proxy.getProxyName());
-                                rule = (Rule) f.get(Grammar$.this.grammar);
-                                log.finest(() -> "Resolving $" + proxy.getProxyName() + " in "
-                                                                        + getHostRule().getName());
-                            } catch (NoSuchFieldException | SecurityException
-                                    | IllegalArgumentException | IllegalAccessException e)
-                            {
-                                Thrower.doThrow(e);
-                            }
-                        }
-                    }
-                    return rule;
-                }
-            });
+            rule.accept(new PlaceHolderResolver(rule));
         });
+    }
+    private class PlaceHolderResolver extends TransformTrackingHost {
+        public PlaceHolderResolver(Rule rule) {
+            super(rule);
+        }
+        @Override
+        public Rule apply(Rule rule) {
+            if (rule == Grammar.$self) {
+                rule = getHostRule();
+                {
+                    Rule r = rule;
+                    log.finest(() -> "Resolving $self to " + r.getName());
+                }
+            } else if (rule instanceof Grammar.Proxy.Named) {
+                Grammar.Proxy.Named proxy = (Grammar.Proxy.Named) rule;
+                if (proxy.getProxyName() != null) {
+                    try {
+                        Field f = Grammar$.this.grammar.getDeclaredField(proxy.getProxyName());
+                        rule = (Rule) f.get(Grammar$.this.grammar);
+                        log.finest(() -> "Resolving $" + proxy.getProxyName() + " in "
+                                                                + getHostRule().getName());
+                    } catch (NoSuchFieldException | SecurityException
+                            | IllegalArgumentException | IllegalAccessException e)
+                    {
+                        Thrower.doThrow(e);
+                    }
+                }
+            }
+            return rule;
+        }
     }
 
     // flatten sequences or choices of unnamed rules
@@ -603,154 +599,161 @@ public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
             getRuleFields().forEach(rf -> {
                 Rule rule = rf.rule();
                 log.finest(() -> "Looking for substitution in " + Dump.getHash(rule) + ' ' + rf.field.getName());
-                rule.accept(getSubstitutionResolver(rule, traversed));
+                rule.accept(new SusbstitutionResolver(rule, traversed));
             });
         }
     }
 
-    Visitor getSubstitutionResolver(Rule start, Set<Rule> traversed) {
-        Transform t = new TransformTrackingHost(start) {
-            @Override
-            public Rule apply(Rule from) {
-                if (from.isGrammarField()) {
-                    Substitution s = substitutions.get(from.getName());
-                    if (s != null) {
-                        log.finest(() -> "Substitution found in " + Dump.getHash(getHostRule()) + ' '
-                            + getHostRule().getName()
-                            + " for " + Dump.getHash(from) + ' ' + from.getName() + " FROM "
-                            + Dump.getHash(s.from) + ' ' + s.from.getName() + " TO "
-                            + Dump.getHash(s.to) + ' ' + s.to.getName()
-                            + "\nTraversed : " + traversed.stream().map(r -> Dump.getHash(r) + ' '
-                            + r.getName()).collect(Collectors.joining(", "))
-                        );
-                        if (getHostRule() != s.to) // prevent substitution on extension
-                           // e.g.  Grammar g2 extends g1 {
-                           //          Rule r = g1.r.asToken(...);
-                        {
-                            return s.to; // from -> to
-                        } else { // unchanged
-                            return from;
-                        }
+    private class SusbstitutionResolver extends TransformTrackingHost {
+        SusbstitutionResolver(Rule start, Set<Rule> traversed) {
+            super(start);
+            this.traversed = traversed;
+        }
+        @Override
+        public Rule apply(Rule from) {
+            if (from.isGrammarField()) {
+                Substitution s = substitutions.get(from.getName());
+                if (s != null) {
+                    log.finest(() -> "Substitution found in " + Dump.getHash(getHostRule()) + ' '
+                        + getHostRule().getName()
+                        + " for " + Dump.getHash(from) + ' ' + from.getName() + " FROM "
+                        + Dump.getHash(s.from) + ' ' + s.from.getName() + " TO "
+                        + Dump.getHash(s.to) + ' ' + s.to.getName()
+                        + "\nTraversed : " + traversed.stream().map(r -> Dump.getHash(r) + ' '
+                        + r.getName()).collect(Collectors.joining(", "))
+                    );
+                    if (getHostRule() != s.to) // prevent substitution on extension
+                       // e.g.  Grammar g2 extends g1 {
+                       //          Rule r = g1.r.asToken(...);
+                    {
+                        return s.to; // from -> to
+                    } else { // unchanged
+                        return from;
                     }
                 }
-                return adopted.computeIfAbsent(from, r ->
-                    r instanceof TraversableRule.StandaloneRule
-                    ? r
-                    : (Rule) safeCall(r::clone)
-                );
             }
-        };
-        t.traversed = traversed;
-        return t;
-        // return new LogVisitor(t, log);
+            return adopted.computeIfAbsent(from, r ->
+                r instanceof TraversableRule.StandaloneRule
+                ? r
+                : (Rule) safeCall(r::clone)
+            );
+        }
     }
 
-    @SuppressWarnings("unchecked")
-    private void processWhitespacePolicy() throws IllegalArgumentException, IllegalAccessException {
-        java.util.Optional<Predicate<Integer>> globalWhitespacePolicy = getWhitespacePolicy(
-                this.grammar.getAnnotation(Grammar.WhitespacePolicy.class),
-                () -> java.util.Optional.empty()
-//                () -> java.util.Optional.of(new JavaWhitespace()) // by default, ignore Java WS
-        );
-        // set whitespace policy on each field
+    // @Drop & @Skip
+    private void processAnnotations() {
+        Skip globalSkip = this.grammar.getAnnotation(Skip.class);
         getRuleFields().forEach(rf -> {
-            if (rf.rule() instanceof HasWhitespacePolicy) {
-                HasWhitespacePolicy token = (HasWhitespacePolicy) rf.rule();
-                java.util.Optional<Predicate<Integer>> whitespacePolicy = getWhitespacePolicy(
-                        rf.field.getAnnotation(Grammar.WhitespacePolicy.class),
-                        () -> globalWhitespacePolicy // by default, inherit the default of the grammar
-                );
-//System.out.println("WhitespacePolicy = " + Dump.detailed((Rule) token) + " " + whitespacePolicy);
-                token.setWhitespacePolicy(whitespacePolicy);
+            Rule rule = rf.rule();
+            if (rf.field.getAnnotation(Drop.class) != null) {
+                rule.drop();
+            };
+            boolean isFragment = rf.field.getAnnotation(Fragment.class) != null;
+            Skip skip = rf.field.getAnnotation(Skip.class);
+            if (skip == null) {
+                if (! isFragment && globalSkip != null) {
+                    // apply global skip
+                    skip = globalSkip;
+                }
+            }
+            if (skip != null && ! skip.token().equals($empty.getName())) {
+                boolean before = skip.before();
+                boolean after = skip.after();
+                if (before || after) {
+                    String skipName = skip.token();
+                    Class<? extends Grammar> g = skip.grammar() == Grammar.class
+                        ? this.grammar
+                        : skip.grammar();
+                    try {
+                        Field f = g.getDeclaredField(skipName);
+                        Rule skipRule = ((Rule) f.get(null)).zeroOrMore();
+                        @SuppressWarnings("rawtypes")
+                        Parser p = rule.parser;
+                        rule.parser = new Parser.Skip(skipRule, p, before, after);
+                    } catch (NoSuchFieldException e) {
+                        throw new IllegalArgumentException("Skip token "
+                                + (g == this.grammar ? "" : ((Grammar$) $(g)).getGrammarName() + ".")
+                                + skipName + " not found for " + rule.getName() +" in " + getGrammarName());
+                    } catch (Exception e) {
+                        Thrower.doThrow(e);
+                    }
+                }
             }
         });
-//        // inherit the whitespace policy
-//        getRuleFields().forEach(rf -> {
-//System.out.println(rf.field.getName() + " === ");
-//            rf.rule.traverse(rf.rule,
-//                new HashSet<Rule>(),
-//                (hostRule, rule) -> {
-//                    System.out.println(rf.field.getName() + " <<<<< " + rule);
-//                    if (rule instanceof HasWhitespacePolicy) {
-//                        HasWhitespacePolicy token = (HasWhitespacePolicy) rule;
+//        // optimization for consecutive @Skip
+//        // don't try to mix this loop with the one above
+//        getRuleFields()
+//            .map(rf -> rf.rule())
+//            .forEach(rule -> {
+//                // optimize for Choice : if all items have the same @Skip.token(),
+//                // remove it and apply it on the Choice
 //
-//                        if (! token.getWhitespacePolicy().isPresent()) {
-//                            // inherit
+//                // optimize for Sequence : if the @Skip[after].token() of an item is the same
+//                // than @Skip[before].token() of its next item, remove one of them.
+//                // remove it and apply it on the Choice
 //
+//// TODO : if we have a named rule, should we allow to change that on substitution ???
+//// FIXME : stupid optimization : it is filtered on named rules, but only named rule may have @Skip !!!!!!!!!!!!!!!
 //
-//                            java.util.Optional<Predicate<Integer>> whitespacePolicy = getWhitespacePolicy(
-//                                    rf.field.getAnnotation(Grammar.WhitespacePolicy.class),
-//                                    () -> globalWhitespacePolicy // by default, inherit the default of the grammar
-//                            );
-//                            token.setWhitespacePolicy(whitespacePolicy);
+//                rule.accept(new Traverse() {
+//                    @Override
+//                    public void accept(Rule r) {
+//                        if (r instanceof Choice) {
+//                            Choice choice = (Choice) r;
+//                            Rule ref = choice.parser instanceof Parser.Skip
+//                                    ? choice
+//                                    : choice.getComponent().get(0);
+//                            SkipRule sr = ref.parser instanceof Parser.Skip
+//                                ? ((Parser.Skip) ref.parser).skipRule
+//                                : null;
+//                            // all items have the same skip rule ?
+//                            if (choice.getComponent().stream()
+//                                .allMatch(comp -> {
+//                                    if (comp.isGrammarField()) {
+//                                        return false; // don't change named rules
+//                                    }
+//                                    if (comp.parser instanceof Parser.Skip) {
+//                                        if (sr == null) {
+//                                            return false; // we are after the first that wasn't skip
+//                                        } else {
+//                                            SkipRule skip = ((Parser.Skip) r.parser).skipRule;
+//                                            return skip.skipRule.isGrammarField()
+//                                                    && skip.after == sr.after
+//                                                    && skip.before == sr.before
+//                                                    && skip.skipRule.getName().equals(sr.skipRule.getName());
+//                                        }
+//                                    } else {
+//                                        return sr == null;
+//                                    }
+//                                })
+//                            ) {
+//                                // YES
+//                                if (sr != null) {
+//                                    if (! (choice.parser instanceof Parser.Skip)) {
+//                                        // => set the common @Skip to the choice
+//                                        choice.parser = new Parser.Skip(sr.skipRule, choice.parser, sr.before, sr.after);
+//                                    } // else it already has it
+//                                    // => unset @Skip of each items
+//                                    choice.setComponent(choice.getComponents().peek(cr -> {
+//                                        Parser.Skip skip = (Parser.Skip) cr.parser;
+//                                        cr.parser = skip.parser; // unwrap
+////                                        // we must create a clone if the rule has a name
+////                                        // because it may be reused elsewhere (with a different
+////                                        // inherited WSP)
+////                                        if (cr.isGrammarField()) {
+////                                            cr = (Rule) safeCall(cr::clone);
+////    //                                            cr = cloneRule(cr);
+////                                        }
+////                                        ((HasWhitespacePolicy) cr)
+////                                              .setWhitespacePolicy(java.util.Optional.empty());
+////                                        return cr;
+//                                    }).collect(Collectors.toList()));
+//                                }
+//                            }
 //                        }
 //                    }
-//                    return rule;
-//                },
-//                r -> r); // apply the changes directly
-//        });
-        // don't try to mix this loop with the one above
-        Set<Rule> traversed = new HashSet<>();
-            getRuleFields()
-            .map(rf -> rf.rule())
-
-// can't optimize on NAMED rules, it cause fail when replaced
-//.filter(r -> false)
-
-            .forEach(rule -> {
-                // optimize for Choice : if all items have the same WSP, remove it and apply it on the choice
-                // TODO : if we have a named rule, should we allow to change that on substitution ???
-                rule.accept(new Transform(traversed) {
-                    @Override
-                    public Rule apply(Rule r) {
-                        if (r instanceof Choice) {
-                            Choice choice = (Choice) r;
-                            choice.setWhitespacePolicy(java.util.Optional.empty());
-                            Rule first = choice.getComponent().get(0);
-                            if (first instanceof HasWhitespacePolicy) {
-                                java.util.Optional<Predicate<Integer>> wsp =
-                                    ((HasWhitespacePolicy) first).getWhitespacePolicy();
-                                // get the first WSP that is the referent for comparing others
-                                wsp.ifPresent(p -> {
-                                    // the predicate is defined by a class in @WhitespacePolicy
-                                    Class<Predicate<Integer>> isWhitespace =
-                                        (Class<Predicate<Integer>>) p.getClass();
-                                    // all items have the same WSP ?
-                                    if (choice.getComponent().stream().allMatch(t -> {
-                                            if (t instanceof HasWhitespacePolicy) {
-                                                java.util.Optional<Predicate<Integer>> twsp =
-                                                    ((HasWhitespacePolicy) t).getWhitespacePolicy();
-                                                if (twsp.isPresent()) {
-                                                    // compare class ; see @WhitespacePolicy
-                                                    return twsp.get().getClass().equals(isWhitespace);
-                                                }
-                                            }
-                                            return false;
-                                        }))
-                                    { // YES
-                                        // => set the common WSP to the choice
-                                        choice.setWhitespacePolicy(wsp);
-                                        // => unset WSP of each items
-                                        choice.setComponent(choice.getComponent().stream().map(cr -> {
-                                            // we must create a clone if the rule has a name
-                                            // because it may be reused elsewhere (with a different
-                                            // inherited WSP)
-                                            if (cr.isGrammarField()) {
-                                                cr = (Rule) safeCall(cr::clone);
-    //                                            cr = cloneRule(cr);
-                                            }
-                                            ((HasWhitespacePolicy) cr)
-                                                  .setWhitespacePolicy(java.util.Optional.empty());
-                                            return cr;
-                                        }).collect(Collectors.toList()));
-                                    }
-                                });
-                            }
-                        }
-                        return r;
-                    }
-                });
-            });
+//                });
+//            });
     }
 
     /**
@@ -791,7 +794,7 @@ public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
                   ? (Rule) safeCall(rule::clone)
                   : s.to;
                 // ...and perform substitutions
-                copy.accept(getSubstitutionResolver(copy, new HashSet<>()));
+                copy.accept(new SusbstitutionResolver(copy, new HashSet<>()));
                 log.fine(() -> "Adopted rule is " + copy.toPrettyString() + "\n" + Dump.tree(copy));
                 return copy;
             }
@@ -799,14 +802,6 @@ public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
         // add an entry for itself for a next lookup with the result
         this.adopted.put(adoptedRule, adoptedRule);
         return adoptedRule;
-    }
-
-    static {
-        String logLevel = System.getProperty("ml.alternet.parser.Grammar.logLevel");
-        if (logLevel != null) {
-            Level level = Level.parse(logLevel);
-            Arrays.stream(LogManager.getLogManager().getLogger("").getHandlers()).forEach(h -> h.setLevel(level));
-        }
     }
 
 }

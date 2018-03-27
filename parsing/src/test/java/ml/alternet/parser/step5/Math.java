@@ -2,19 +2,21 @@ package ml.alternet.parser.step5;
 
 import static ml.alternet.parser.Grammar.$;
 import static ml.alternet.parser.Grammar.is;
+import static ml.alternet.parser.Grammar.isOneOf;
 
+import ml.alternet.parser.Grammar.CharToken;
 import ml.alternet.parser.Grammar.Fragment;
 import ml.alternet.parser.Grammar.MainRule;
 import ml.alternet.parser.Grammar.Proxy;
 import ml.alternet.parser.Grammar.Replace;
 import ml.alternet.parser.Grammar.Rule;
+import ml.alternet.parser.Grammar.Skip;
 import ml.alternet.parser.Grammar.Token;
-import ml.alternet.parser.Grammar.WhitespacePolicy;
 import ml.alternet.parser.step4.Calc;
 import ml.alternet.parser.step4.EvaluableFunction;
 import ml.alternet.util.EnumUtil;
 
-@WhitespacePolicy
+@Skip(token="WS", grammar=Calc.class)
 public interface Math extends Calc {
 
     // MULTIPLICATIVE ::= '×' | '÷'

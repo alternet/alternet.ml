@@ -6,10 +6,15 @@ import static ml.alternet.util.EnumUtil.replace;
 import java.util.function.Supplier;
 
 import ml.alternet.parser.Grammar;
-import ml.alternet.parser.Grammar.WhitespacePolicy;
+import ml.alternet.parser.Grammar.CharToken;
+import ml.alternet.parser.Grammar.Fragment;
+import ml.alternet.parser.Grammar.Skip;
 
-@WhitespacePolicy
+@Skip(token="WS")
 public interface Calc extends Grammar {
+
+    @Fragment
+    CharToken WS = isOneOf(" \t\n\r");
 
     // FUNCTION ::= 'sin' | 'cos' | 'exp' | 'ln' | 'sqrt'
     enum Function implements EvaluableFunction {
@@ -68,7 +73,7 @@ public interface Calc extends Grammar {
     Token MULTIPLICATIVE = is(Multiplicative.class);
 
     // DIGIT ::= [0-9]
-    @WhitespacePolicy(preserve=true)
+    @Skip(token="$empty")
     Token DIGIT = range('0', '9').asNumber();
 
     // NUMBER ::= DIGIT+
@@ -76,13 +81,13 @@ public interface Calc extends Grammar {
             .asNumber();
 
     // UPPERCASE ::= [A-Z]
-    @WhitespacePolicy(preserve=true)
+    @Skip(token="$empty")
     Token UPPERCASE = range('A', 'Z');
     // LOWERCASE ::= [a-z]
-    @WhitespacePolicy(preserve=true)
+    @Skip(token="$empty")
     Token LOWERCASE = range('a', 'z');
 
-    @WhitespacePolicy(preserve=true)
+    @Skip(token="$empty")
     Token UNDERSCORE = is('_');
 
     // VARIABLE ::= ([a-z] | [A-Z]) ([a-z] | [A-Z] | DIGIT | '_')*

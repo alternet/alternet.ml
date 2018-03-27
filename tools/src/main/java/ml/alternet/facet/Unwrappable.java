@@ -6,42 +6,28 @@ package ml.alternet.facet;
  *
  * @author Philippe Poulard
  *
- * @param <T>
- *            The type of the class to unwrap.
+ * @param <T> The type of the class to unwrap.
  */
 public interface Unwrappable<T> {
 
     /**
-     * The singleton unwrapper.
-     */
-    Unwrapper UNWRAPPER = new Unwrapper();
-
-    /**
      * Unwrap recursively an unwrappable if necessary.
-     *
-     * @see Unwrappable#UNWRAPPER
      *
      * @author Philippe Poulard
      */
-    class Unwrapper {
-        /**
-         * Unusable constructor.
-         */
-        private Unwrapper() { }
+    abstract static class Unwrapper {
 
         /**
          * Unwrap an object.
          *
-         * @param o
-         *            The object to unwrap
-         * @param <T>
-         *            The type of the class to unwrap.
+         * @param o The object to unwrap
+         * @param <T> The type of the class to unwrap.
          *
          * @return The object itself if it not unwrappable, or the unwrapped
          *         object (recursively).
          */
         @SuppressWarnings("unchecked")
-        <T> T unwrap(Object o) {
+        public static <T> T unwrap(Object o) {
             while (o instanceof Unwrappable) {
                 @SuppressWarnings("rawtypes")
                 Object unwrapped = ((Unwrappable) o).unwrap();
