@@ -23,6 +23,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import ml.alternet.parser.visit.TraversableRule;
 import ml.alternet.facet.Initializable;
 import ml.alternet.facet.Presentable;
 import ml.alternet.facet.Trackable;
@@ -43,7 +44,6 @@ import ml.alternet.parser.util.ComposedRule;
 import ml.alternet.parser.util.Grammar$;
 import ml.alternet.parser.util.Parser;
 import ml.alternet.parser.util.Parser.Match;
-import ml.alternet.parser.visit.TraversableRule;
 import ml.alternet.scan.EnumValues;
 import ml.alternet.scan.NumberConstraint;
 import ml.alternet.scan.Scanner;
@@ -470,6 +470,8 @@ public interface Grammar {
          * as long as it is exposed as a token. None of
          * the subrules can be annotated with {@code Skip}.
          *
+         * @return The name of the token field in the grammar.
+         *
          * @see CharToken
          */
         String token();
@@ -486,11 +488,15 @@ public interface Grammar {
 
         /**
          * Skip the characters before the token.
+         *
+         * @return {@code true} by default.
          */
         boolean before() default true;
 
         /**
          * Skip the characters after the token.
+         *
+         * @return {@code true} by default.
          */
         boolean after() default true;
 
