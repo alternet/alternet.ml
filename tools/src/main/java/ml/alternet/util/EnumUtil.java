@@ -160,7 +160,8 @@ public class EnumUtil {
          * @throws InvocationTargetException When an error occurs
          */
         void init(Class<? extends Enum<?>> baseEnumClass, Class<? extends Enum<?>> targetEnumClass)
-            throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException;
+            throws NoSuchMethodException, SecurityException, IllegalAccessException,
+            IllegalArgumentException, InvocationTargetException;
 
         /**
          * Build an enum value.

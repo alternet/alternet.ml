@@ -15,7 +15,7 @@ public interface Unwrappable<T> {
      *
      * @author Philippe Poulard
      */
-    abstract static class Unwrapper {
+    abstract class Unwrapper {
 
         /**
          * Unwrap an object.

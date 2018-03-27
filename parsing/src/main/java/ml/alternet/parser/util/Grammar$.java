@@ -497,7 +497,7 @@ public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
         });
     }
     private class PlaceHolderResolver extends TransformTrackingHost {
-        public PlaceHolderResolver(Rule rule) {
+        PlaceHolderResolver(Rule rule) {
             super(rule);
         }
         @Override
@@ -647,14 +647,12 @@ public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
             Rule rule = rf.rule();
             if (rf.field.getAnnotation(Drop.class) != null) {
                 rule.drop();
-            };
+            }
             boolean isFragment = rf.field.getAnnotation(Fragment.class) != null;
             Skip skip = rf.field.getAnnotation(Skip.class);
-            if (skip == null) {
-                if (! isFragment && globalSkip != null) {
-                    // apply global skip
-                    skip = globalSkip;
-                }
+            if (skip == null && ! isFragment && globalSkip != null) {
+                // apply global skip
+                skip = globalSkip;
             }
             if (skip != null && ! skip.token().equals($empty.getName())) {
                 boolean before = skip.before();
@@ -673,7 +671,7 @@ public abstract class Grammar$ implements Grammar, Initializable<Grammar> {
                     } catch (NoSuchFieldException e) {
                         throw new IllegalArgumentException("Skip token "
                                 + (g == this.grammar ? "" : ((Grammar$) $(g)).getGrammarName() + ".")
-                                + skipName + " not found for " + rule.getName() +" in " + getGrammarName());
+                                + skipName + " not found for " + rule.getName() + " in " + getGrammarName());
                     } catch (Exception e) {
                         Thrower.doThrow(e);
                     }

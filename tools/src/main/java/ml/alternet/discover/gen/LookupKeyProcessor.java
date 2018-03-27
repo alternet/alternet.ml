@@ -153,7 +153,7 @@ public class LookupKeyProcessor extends AbstractProcessor {
             implClass = AnnotationProcessorUtil.getClassName(tm);
         }
         if (implClass.equals(Void.class.getName()) && element.getKind().isClass()) {
-            implClass = AnnotationProcessorUtil.getClassName(((TypeElement) element));
+            implClass = AnnotationProcessorUtil.getClassName((TypeElement) element);
         }
         forClass = forClass.replace('$', '.');
         String xservice;

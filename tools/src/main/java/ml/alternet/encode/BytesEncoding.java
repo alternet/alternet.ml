@@ -119,7 +119,7 @@ public interface BytesEncoding {
      *
      * @author Philippe Poulard
      */
-    public static class $ {
+    class $ {
 
         /**
          * Create a custom Base64 encoding.

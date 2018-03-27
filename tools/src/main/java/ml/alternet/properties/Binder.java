@@ -1,6 +1,7 @@
 package ml.alternet.properties;
 
-import static ml.alternet.misc.Thrower.*;
+import static ml.alternet.misc.Thrower.safeCall;
+import static ml.alternet.misc.Thrower.doThrow;
 
 import java.beans.FeatureDescriptor;
 import java.io.File;

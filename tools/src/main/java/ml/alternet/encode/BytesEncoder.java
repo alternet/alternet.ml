@@ -202,7 +202,8 @@ public enum BytesEncoder implements BytesEncoding {
                             int h = hexToBin(it.next());
                             int l = hexToBin(it.next());
                             if (h == -1 || l == -1) {
-                                throw new IllegalArgumentException("contains illegal character for hexBinary: " + (h == -1 ? h:l) );
+                                throw new IllegalArgumentException("contains illegal character for hexBinary: "
+                                                                    + (h == -1 ? h : l) );
                             }
                             action.accept(h * 16 + l);
                             return true;
@@ -218,7 +219,7 @@ public enum BytesEncoder implements BytesEncoding {
 
     static class Base64 implements BytesEncoding {
 
-        static enum PaddingMode {
+        enum PaddingMode {
             PADDING, // ends incomplete sequences with '='
             NO_PADDING, // shift the bits like with padding
             NO_PADDING_SKIP_HIGH_BITS; // left as-is
@@ -326,7 +327,7 @@ public enum BytesEncoder implements BytesEncoding {
                                         }
                                         // next byte incomplete, this is why it is skipped
                                         // b[n++] = (byte) (quadruplet[1] << 4);
-                                    } else if ( q==3 ) {
+                                    } else if ( q == 3 ) {
                                         b[n++] = (byte) ((quadruplet[0] << 2) | (quadruplet[1] >> 4));
                                         if (padding == PaddingMode.NO_PADDING_SKIP_HIGH_BITS) {
                                             // mode for $5$
@@ -434,6 +435,7 @@ public enum BytesEncoder implements BytesEncoding {
      * @author Philippe Poulard
      */
     public enum ValueSpace {
+
         /** Represent bytes in base 64 string : [A-Za-z0-9+/] */
         base64(   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"),
         /** Represent bytes in base 64 string : [A-Za-z0-9-_], see RFC 4648 Table 2. */
@@ -451,7 +453,7 @@ public enum BytesEncoder implements BytesEncoding {
 
         String chars;
 
-        private ValueSpace(String chars) {
+        ValueSpace(String chars) {
             this.chars = chars;
         }
 

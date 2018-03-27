@@ -36,7 +36,7 @@ public interface Parser<T extends Rule>  {
      *
      * @author Philippe Poulard
      */
-    public enum Match {
+    enum Match {
 
         /**
          * When a rule Fails, this Match is Empty

@@ -1,6 +1,7 @@
 package ml.alternet.misc;
 
-import static ml.alternet.misc.Thrower.*;
+import static ml.alternet.misc.Thrower.safeCall;
+import static ml.alternet.misc.Thrower.doThrow;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
