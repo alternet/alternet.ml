@@ -74,6 +74,22 @@ git commit -m "Update Website"
 git push -u origin master
 ```
 
+## Release
+
+```
+mvn -DperformRelease=true deploy
+```
+
+Verify : [https://oss.sonatype.org/#stagingRepositories](https://oss.sonatype.org/#stagingRepositories)
+(repo name is `mlalternet-nnnn`) then hit "Release"
+
+Set a tag :
+
+```
+git tag -a v1.0 -m 'Release v1.0'
+git push origin v1.0
+```
+
 ### Issues
 
 A first attempt with 2 separate profiles (the former for the maven build/report, the latter for Github) had failed :
