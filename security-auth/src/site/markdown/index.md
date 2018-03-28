@@ -15,7 +15,6 @@ Published version of this page available HERE</a></div>
 JavaDoc API :
 
 * [JavaDoc API documentation](apidocs/index.html)
-* [Auth Impl JavaDoc API documentation](../security-auth-impl/apidocs/index.html)
 * [Jetty JavaDoc API documentation](../security-jetty-9.1/apidocs/index.html)
 * [Tomcat JavaDoc API documentation](../security-tomcat/apidocs/index.html)
 
