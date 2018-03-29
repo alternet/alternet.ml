@@ -361,8 +361,7 @@ As an alternative, you can combine character tokens ([`CharToken`](apidocs/ml/al
             .asToken();
 ```
 
-[`CharToken`](apidocs/ml/alternet/parser/Grammar.CharToken.html) contains all the material to define
-and combine by inclusion `union()` or exclusion `except()` other ranges of characters.
+[`CharToken`](apidocs/ml/alternet/parser/Grammar.CharToken.html) contains all the material to define and combine by inclusion `union()` or exclusion `except()` other ranges of characters, and can be created by various static methods of the `Grammar` class : [`is()`](apidocs/ml/alternet/parser/Grammar.html#is-int-), [`isNot()`](apidocs/ml/alternet/parser/Grammar.html#isNot-int-), [`isOneOf()`](apidocs/ml/alternet/parser/Grammar.html#isOneOf-java.lang.String-), [`range()`](apidocs/ml/alternet/parser/Grammar.html#range-int-int-), etc.
 
 <a name="rules"></a>
 
@@ -1732,7 +1731,7 @@ Now we can focus on the mappers inside `enum CalcTokens`, starting with the simp
         // mapper for : Token FUNCTION = is(Calc.Function.class);
         // e.g.   sin  x
         //   function  argument
-        Operation.Function function = token.getValue();            // e.g.   Calc.Function.sin
+        EvaluableFunction function = token.getValue();             // e.g.   Calc.Function.sin
         NumericExpression argument = next.pollFirst().getTarget(); // e.g.   Expression.Variable("x")
         return new Function(function, argument);
     }),]]></pre>
