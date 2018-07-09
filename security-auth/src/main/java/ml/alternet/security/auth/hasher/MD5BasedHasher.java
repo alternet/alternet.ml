@@ -8,6 +8,7 @@ import ml.alternet.security.algorithms.MD5Crypt;
 import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.Hasher;
 import ml.alternet.security.auth.crypt.SaltedParts;
+import ml.alternet.security.binary.Transposer;
 
 /**
  * The MD5 based BSD password algorithm 1 and apr1 (Apache variant).
@@ -56,36 +57,8 @@ public class MD5BasedHasher extends HasherBase<SaltedParts> {
                         2, 8, 14,
                         3, 9, 15,
                         4, 10, 5,
-                        11};
-        // and 3 consecutive 8-bits gives 4 *reverted* 6-bits
-        // that is to say with the following mapping :
-        // 0       6       12       // source index
-        // ........________........ // 8-bits position
-        // abcdefghijklmnopqrstuvwx // 24 bits input (3 bytes)
-        // ++++++------++++++------ // 6 bits position marks (4 * 6-bits)
-        // stuvwxmnopqrghijklabcdef // 24 bits output (3 bytes)
-        // ........________........ // 8-bits position
-        // 0       1       2        // target index
-        byte[] result = new byte[16];
-        // process the 15 first bytes
-        for (int i = 0 ; i < 5; i++) {
-            // process 3 by 3
-            byte pos0 = order[i * 3    ]; // starts with 0
-            byte pos1 = order[i * 3 + 1]; // starts with 6
-            byte pos2 = order[i * 3 + 2]; // starts with 12
-            // some masks are useless but ensure we don't miss a bit
-            // stuvwxmn
-            result[i * 3    ] = (byte) ( ((b[pos2] << 2) & 0b11111100) | ((b[pos1] >> 2) & 0b00000011) );
-            // opqrghij
-            result[i * 3 + 1] = (byte) ( ((b[pos1] << 6) & 0b11000000) | ((b[pos2] >> 2) & 0b00110000)
-                                       | ((b[pos0] << 2) & 0b00001100) | ((b[pos1] >> 6) & 0b00000011) );
-            // klabcdef
-            result[i * 3 + 2] = (byte) ( ((b[pos1] << 2) & 0b11000000) | ((b[pos0] >> 2) & 0b00111111 ) );
-            // and so on with 1, 7, 13, you got it ?
-        }
-        // revert the 16th byte
-        result[15] = (byte) ( ((b[11] << 2)  & 0b11111100) | ((b[11] >> 6) & 0b00000011) );
-        return result;
+                        11}; // no padding
+        return Transposer.transpose(b, order, 16);
     }
 
     @Override

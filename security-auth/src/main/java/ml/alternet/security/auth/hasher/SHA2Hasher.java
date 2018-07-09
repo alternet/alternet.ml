@@ -7,6 +7,7 @@ import ml.alternet.encode.BytesEncoder;
 import ml.alternet.security.algorithms.SHA2Crypt;
 import ml.alternet.security.auth.Credentials;
 import ml.alternet.security.auth.crypt.WorkFactorSaltedParts;
+import ml.alternet.security.binary.Transposer;
 import ml.alternet.util.EnumUtil;
 
 /**
@@ -146,91 +147,7 @@ public class SHA2Hasher extends HasherBase<WorkFactorSaltedParts> {
             algo.blockSize()
         );
         // bytes are not encoded in the original order but in that order
-        return map(bytes, algo);
-    }
-
-    /**
-     * Map the bytes to the base 64 expected order.
-     *
-     * @param b The bytes to map.
-     * @param algo The algorithm.
-     *
-     * @return The remapped bytes.
-     */
-    protected byte[] map(byte[] b, Algorithm algo) {
-        // e) the base-64 encoded final C digest. The encoding used is as
-        // follows:
-        // [...]
-        //
-        // Each group of three bytes from the digest produces four
-        // characters as output:
-        //
-        // 1. character: the six low bits of the first byte
-        // 2. character: the two high bits of the first byte and the
-        // four low bytes from the second byte
-        // 3. character: the four high bytes from the second byte and
-        // the two low bits from the third byte
-        // 4. character: the six high bits from the third byte
-        //
-        // The groups of three bytes are as follows (in this sequence).
-        // These are the indices into the byte array containing the
-        // digest, starting with index 0. For the last group there are
-        // not enough bytes left in the digest and the value zero is used
-        // in its place. This group also produces only three or two
-        // characters as output for SHA-512 and SHA-512 respectively.
-
-
-        // 3 consecutive 8-bits gives 4 *reverted* 6-bits
-        // that is to say with the following mapping :
-        // 0       10      20       // source index (see SHA_256_ORDER above)
-        // ........________........ // 8-bits position
-        // abcdefghijklmnopqrstuvwx // 24 bits input (3 bytes)
-        // ++++++------++++++------ // 6 bits position marks (4 * 6-bits)
-        // stuvwxmnopqrghijklabcdef // 24 bits output (3 bytes)
-        // ........________........ // 8-bits position
-        // 0       1       2        // target index
-
-        byte[] order = algo.order();
-        byte[] result = new byte[algo.blockSize()];
-
-        for (int i = 0 ; i < order.length / 3; i++) {
-            // process 3 by 3
-            byte pos0 = order[i * 3    ]; // starts with 0
-            byte pos1 = order[i * 3 + 1]; // starts with 10
-            byte pos2 = order[i * 3 + 2]; // starts with 20
-            byte v0 = pos0 == -1 ? 0 : b[pos0];
-            byte v1 = pos1 == -1 ? 0 : b[pos1];
-            byte v2 = b[pos2];
-            // some masks are useless but ensure we don't miss a bit
-            // stuvwxmn
-            result[i * 3] = (byte) ( ((v2 << 2) & 0b11111100) | ((v1 >> 2) & 0b00000011) );
-            if (i * 3 + 1 < result.length) {
-                if (pos0 == -1) {
-                    // what is annoying is the processing of the end,
-                    // since 43 sextets (258 bits) doesn't fit in 32 bytes (256 bits)
-
-                    // just keep the significative bits
-
-                    // opqrijkl (abcdefgh are missing)
-                    result[i * 3 + 1] = (byte) (  ((v1 << 6) & 0b11000000) | ((v2 >> 2) & 0b00110000)
-                                                | ((v1 >> 4) & 0b00001111) );
-                } else {
-                    // opqrghij
-                    result[i * 3 + 1] = (byte) (  ((v1 << 6) & 0b11000000) | ((v2 >> 2) & 0b00110000)
-                                                | ((v0 << 2) & 0b00001100) | ((v1 >> 6) & 0b00000011) );
-                }
-            }
-            if (i * 3 + 2 < result.length) {
-                // klabcdef
-                result[i * 3 + 2  ] = (byte) ( ((v1 << 2) & 0b11000000) | ((v0 >> 2) & 0b00111111 ) );
-            }
-            if (pos1 == -1) {
-                // stuvwxqr (abcdefghijklmnop are missing)
-                result[i * 3] = (byte) ( ((v2 << 2) & 0b11111100) | ((v2 >> 6) & 0b00000011) );
-            }
-            // and so on with 21, 1, 11, you got it ? (see SHA_256_ORDER above)
-        }
-        return result;
+        return Transposer.transpose(bytes, algo.order(), algo.blockSize());
     }
 
     @Override
