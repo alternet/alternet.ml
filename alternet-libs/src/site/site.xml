@@ -47,7 +47,6 @@
 <!--             <item name="Alternet Crypto" href="crypto/crypto.html" /> -->
             <item name="Alternet Parsing" href="parsing/index.html" />
             <item name="Alternet Scanner" href="scanner/index.html" />
-            <item name="Alternet Security" href="security/index.html" />
             <item name="Alternet Tools" href="tools/index.html" />
             <item name="Alternet Tools - Generator" href="tools-generator/index.html" />
             <item name="Properties Binder Maven Plugin" href="prop-bind-maven-plugin/index.html" />

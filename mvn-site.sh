@@ -4,10 +4,6 @@ List=(
     prop-bind-maven-plugin
     scanner
     parsing
-    security
-    security-auth
-    security-jetty-9.1
-    security-tomcat-8.0
 )
 
 echo "====== Cleaning alternet-libs ======"
