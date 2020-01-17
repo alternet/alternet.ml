@@ -14,7 +14,7 @@
 
     <name>Alternet Tools</name>
     <description>Alternet Tools include discovery service tools, concurrent and locking tools, and more</description>
-    <url>http://alternet.ml/alternet-libs/tools/tools.html</url>
+    <url>http://alternet.github.io/alternet-libs/tools/tools.html</url>
 
     <properties>
         <shortName>tools</shortName>
@@ -31,7 +31,7 @@
     <distributionManagement>
         <site>
             <id>${project.artifactId}-site</id>
-            <url>http://alternet.ml/alternet-libs/${shortName}</url>
+            <url>http://alternet.github.io/alternet-libs/${shortName}</url>
         </site>
     </distributionManagement>
 

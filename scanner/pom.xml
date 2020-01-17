@@ -14,7 +14,7 @@
 
     <name>Alternet Scanner</name>
     <description>Alternet Scanner supply means to scan character streams.</description>
-    <url>http://alternet.ml/alternet-libs/scanner/scanner.html</url>
+    <url>http://alternet.github.io/alternet-libs/scanner/scanner.html</url>
 
     <properties>
         <shortName>scanner</shortName>
@@ -24,7 +24,7 @@
     <distributionManagement>
         <site>
             <id>${project.artifactId}-site</id>
-            <url>http://alternet.ml/alternet-libs/${shortName}</url>
+            <url>http://alternet.github.io/alternet-libs/${shortName}</url>
         </site>
     </distributionManagement>
 

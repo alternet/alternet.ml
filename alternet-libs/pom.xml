@@ -11,7 +11,7 @@
     <packaging>pom</packaging>
     <name>Alternet Libs</name>
     <description>Alternet Libs : a bunch of Java libraries</description>
-    <url>http://alternet.ml/alternet-libs/</url>
+    <url>http://alternet.github.io/alternet-libs/</url>
 
     <properties>
         <site.deploy.dir>${project.build.directory}/staging/</site.deploy.dir>
@@ -50,7 +50,7 @@
     <distributionManagement>
         <site>
             <id>${project.artifactId}-site</id>
-            <url>http://alternet.ml/alternet-libs/</url>
+            <url>http://alternet.github.io/alternet-libs/</url>
         </site>
         <snapshotRepository>
             <id>ossrh</id>
@@ -77,13 +77,13 @@
     <licenses>
         <license>
             <name>The MIT License (MIT)</name>
-            <url>http://alternet.ml/LICENSE.txt</url>
+            <url>http://alternet.github.io/LICENSE.txt</url>
         </license>
     </licenses>
 
     <organization>
         <name>Alternet</name>
-        <url>http://alternet.ml</url>
+        <url>http://alternet.github.io</url>
     </organization>
 
     <developers>
@@ -211,7 +211,7 @@
                         <links>
                             <link>http://docs.oracle.com/javase/8/docs/api/</link>
                             <link>http://docs.oracle.com/javaee/7/api/</link>
-                            <link>http://alternet.ml/alternet-libs/apidocs/</link>
+                            <link>http://alternet.github.io/alternet-libs/apidocs/</link>
                         </links>
                         <subpackages>ml.alternet</subpackages>
                         <excludePackageNames>ml.alternet.util.gen.sample</excludePackageNames>
@@ -330,7 +330,7 @@
                     <links>
                         <link>http://docs.oracle.com/javase/8/docs/api/</link>
                         <link>http://docs.oracle.com/javaee/7/api/</link>
-                        <link>http://alternet.ml/alternet-libs/apidocs/</link>
+                        <link>http://alternet.github.io/alternet-libs/apidocs/</link>
                     </links>
                     <subpackages>ml.alternet</subpackages>
                     <excludePackageNames>ml.alternet.util.gen.sample</excludePackageNames>

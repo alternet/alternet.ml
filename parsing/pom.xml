@@ -13,7 +13,7 @@
 
     <name>Alternet Parsing</name>
     <description>Alternet Parsing allow to design Parsing Expression Grammars.</description>
-    <url>http://alternet.ml/alternet-libs/parsing/parsing.html</url>
+    <url>http://alternet.github.io/alternet-libs/parsing/parsing.html</url>
 
     <properties>
         <version.maven-compiler-plugin>3.5</version.maven-compiler-plugin><!-- FAIL with 3.5.1 or higher -->
@@ -25,7 +25,7 @@
     <distributionManagement>
         <site>
             <id>${project.artifactId}-site</id>
-            <url>http://alternet.ml/alternet-libs/${shortName}</url>
+            <url>http://alternet.github.io/alternet-libs/${shortName}</url>
         </site>
     </distributionManagement>
 
