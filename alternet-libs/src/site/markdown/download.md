@@ -37,40 +37,6 @@ a dependency on the relevant alternet module in maven project.
 </dependency>
 ```
 
-### Alternet Security
-
-```xml
-<dependency>
-    <groupId>ml.alternet</groupId>
-    <artifactId>alternet-security</artifactId>
-    <version>1.0</version>
-</dependency>
-```
-
-```xml
-<dependency>
-    <groupId>ml.alternet</groupId>
-    <artifactId>alternet-security-auth</artifactId>
-    <version>1.0</version>
-</dependency>
-```
-
-```xml
-<dependency>
-    <groupId>ml.alternet</groupId>
-    <artifactId>alternet-security-jetty-9.1</artifactId>
-    <version>1.0</version>
-</dependency>
-```
-
-```xml
-<dependency>
-    <groupId>ml.alternet</groupId>
-    <artifactId>alternet-security-tomcat-8.0</artifactId>
-    <version>1.0</version>
-</dependency>
-```
-
 ### Alternet Tools
 
 ```xml

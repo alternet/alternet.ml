@@ -1,6 +1,6 @@
 ## Build
 
-The Alternet Libs Web site (http://alternet.ml/alternet-libs/) is built and deployed to Github with Maven
+The Alternet Libs Web site (http://alternet.github.io/alternet-libs/) is built and deployed to Github with Maven
 
 ---
 
@@ -11,7 +11,6 @@ Location of the Alternet Libs projects :
 ```
 [workspace]/ml.alternet/alternet-libs/pom.xml
 [workspace]/ml.alternet/scanner/pom.xml
-[workspace]/ml.alternet/security/pom.xml
 [workspace]/ml.alternet/tools/pom.xml
 [workspace]/ml.alternet/[...]/pom.xml
 ```
