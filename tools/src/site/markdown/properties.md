@@ -1,7 +1,7 @@
 # Properties binder and class generator
 
 <div class="nopub">
-<a href="http://alternet.ml/alternet-libs/tools/properties.html">
+<a href="http://alternet.github.io/alternet-libs/tools/properties.html">
 Published version of this page available HERE</a></div>
 
 Given a Java property file, allow to populate a counterpart class with typed values.

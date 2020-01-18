@@ -1,7 +1,7 @@
 # Alternet Scanner
 
 <div class="nopub">
-<a href="http://alternet.ml/alternet-libs/scanner/index.html">
+<a href="http://alternet.github.io/alternet-libs/scanner/index.html">
 Published version of this page available HERE</a></div>
 
 **Alternet Scanner** supply means to scan character streams.
@@ -18,7 +18,6 @@ you will find advanced features in [Alternet Parsing](../parsing/parsing.html).
 Other Alternet guides :
 
 * [Alternet Parsing](../tools/parsing.html)
-* [Alternet Security](../security/security.html)
 * [Alternet Tools](../tools/tools.html)
 
 ## ![download](../images/download.png) [Download](../download.html)

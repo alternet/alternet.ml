@@ -1,7 +1,7 @@
 # Summary
 
 <div class="nopub">
-<a href="http://alternet.ml/alternet-libs/parsing/index.html">
+<a href="http://alternet.github.io/alternet-libs/parsing/index.html">
 Published version of this page available HERE</a></div>
 
 **Alternet Parsing** is a nice [Parsing Expression Grammar](https://en.wikipedia.org/wiki/Parsing_expression_grammar) framework that includes an Abstract Syntax Tree builder.
@@ -15,7 +15,6 @@ Published version of this page available HERE</a></div>
 Other Alternet guides :
 
 * [Alternet Scanner](../scanner/scanner.html)
-* [Alternet Security](../security/security.html)
 * [Alternet Tools](../tools/tools.html)
 
 ## ![download](../images/download.png) [Download](../download.html)

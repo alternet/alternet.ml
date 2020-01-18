@@ -1,7 +1,7 @@
 # Discovery Service
 
 <div class="nopub">
-<a href="http://alternet.ml/alternet-libs/tools/discovery.html">
+<a href="http://alternet.github.io/alternet-libs/tools/discovery.html">
 Published version of this page available HERE</a></div>
 
 **Alternet Tools** include discovery service tools.

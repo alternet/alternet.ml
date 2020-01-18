@@ -1,7 +1,7 @@
 # Summary
 
 <div class="nopub">
-<a href="http://alternet.ml/alternet-libs/tools/index.html">
+<a href="http://alternet.github.io/alternet-libs/tools/index.html">
 Published version of this page available HERE</a></div>
 
 **Alternet Tools** include discovery service tools, concurrent and locking tools, byte code generator and more.
@@ -20,7 +20,6 @@ Alternet Tools contains mainly :
 Other Alternet guides :
 
 * [Alternet Scanner](../scanner/scanner.html)
-* [Alternet Security](../security/security.html)
 * [Alternet Parsing](../parsing/parsing.html)
 
 ## ![download](../images/download.png) [Download](../download.html)

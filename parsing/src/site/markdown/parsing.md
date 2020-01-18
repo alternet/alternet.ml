@@ -2,7 +2,7 @@
 
 <div class="scroller"></div>
 <div class="nopub">
-<a href="http://alternet.ml/alternet-libs/parsing/parsing.html">
+<a href="http://alternet.github.io/alternet-libs/parsing/parsing.html">
 Published version of this page available HERE</a></div>
 
 **Alternet Parsing** is a nice [Parsing Expression Grammar](https://en.wikipedia.org/wiki/Parsing_expression_grammar) framework that includes an Abstract Syntax Tree builder.
@@ -1286,7 +1286,7 @@ Sometimes, you want to parse your data until no more matching is possible :
         false);  // false to stop parsing when nothing matches any longer
 ```
 
-Then, the [`scanner`](http://alternet.ml/alternet-libs/scanner/apidocs/ml/alternet/scan/Scanner.html) instance contains the remainder, ready for further processing with whatever ; you can also extract the remainder as a character `Reader` or a `String`
+Then, the [`scanner`](http://alternet.github.io/alternet-libs/scanner/apidocs/ml/alternet/scan/Scanner.html) instance contains the remainder, ready for further processing with whatever ; you can also extract the remainder as a character `Reader` or a `String`
 (in the example above, the remainder characters are "is an expression").
 
 <a name="handlers"></a>
