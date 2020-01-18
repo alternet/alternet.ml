@@ -3,6 +3,6 @@
  *
  * Byte code factory generator and specification.
  *
- * @see <a href="http://alternet.ml/alternet-libs/tools-generator/generator.html">http://alternet.ml/alternet-libs/tools-generator/generator.html</a>
+ * @see <a href="http://alternet.github.io/alternet-libs/tools-generator/generator.html">http://alternet.github.io/alternet-libs/tools-generator/generator.html</a>
  */
 package ml.alternet.util.gen;

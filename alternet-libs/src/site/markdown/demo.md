@@ -12,9 +12,9 @@ how to render a repeatable composite structure in a table cell.
 * See [the article on Semantic Mismatch] (http://semantic-mismatch.blogspot.fr/2014/04/association-de-malfaiteurs-dans-gwt.html)
 * The [source code] (https://github.com/alternet/demo-gwt/tree/master/criminal-conspiracy)
 
-<iframe width="800" height="400" border="0" src="http://alternet.ml/demo/Conspiracy/" ></iframe>
+<iframe width="800" height="400" border="0" src="http://alternet.github.io/demo/Conspiracy/" ></iframe>
 
-* As stated in the article visit the [following page] (http://alternet.ml/demo/Firefox-button/index.html) with 2 different browsers
+* As stated in the article visit the [following page] (http://alternet.github.io/demo/Firefox-button/index.html) with 2 different browsers
 
 ---
 
@@ -28,7 +28,7 @@ how to ignore diacritics and ligatures.
 
 Try it : just type "éta" in the form :
 
-<iframe width="800" height="300" border="0" src="http://alternet.ml/demo/Countries/index.html" ></iframe>
+<iframe width="800" height="300" border="0" src="http://alternet.github.io/demo/Countries/index.html" ></iframe>
 
 ---
 
